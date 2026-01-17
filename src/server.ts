@@ -9,12 +9,14 @@ initDatabase();
 const { app } = expressWs(express());
 
 import { calendarAuthRouter } from './routes/calendar-auth';
+import { twilioWebhookRouter } from './routes/twilio-webhook';
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 // Routes
 app.use(calendarAuthRouter);
+app.use(twilioWebhookRouter);
 
 // Basic health check
 app.get("/", (req, res) => {

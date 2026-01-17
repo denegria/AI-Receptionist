@@ -1,21 +1,25 @@
 import WebSocket from 'ws';
 import { DeepgramSTTService } from './deepgram-stt';
 import { DeepgramTTSService } from './deepgram-tts';
-import { LLMService } from '../ai/llm';
-import { IntentDetector } from '../ai/intent-detector';
+import { LLMService, ChatMessage } from '../ai/llm';
+import { ToolExecutor } from '../ai/tool-executor';
 
 export class StreamHandler {
     private ws: WebSocket;
     private stt: DeepgramSTTService;
     private tts: DeepgramTTSService;
     private llm: LLMService;
+    private toolExecutor: ToolExecutor;
     private streamSid: string = '';
+    private history: ChatMessage[] = [];
+    private clientId: string = 'client-abc'; // Default for MVP testing
 
     constructor(ws: WebSocket) {
         this.ws = ws;
         this.stt = new DeepgramSTTService();
         this.tts = new DeepgramTTSService();
         this.llm = new LLMService();
+        this.toolExecutor = new ToolExecutor();
 
         this.setupSocket();
         this.setupSTT();
@@ -23,14 +27,24 @@ export class StreamHandler {
 
     private setupSocket() {
         this.ws.on('message', (msg: string) => {
-            const data = JSON.parse(msg);
+            let data;
+            try {
+                data = JSON.parse(msg);
+            } catch (e) {
+                console.error("Invalid JSON from Twilio:", msg);
+                return;
+            }
 
             switch (data.event) {
                 case 'start':
                     console.log('Twilio Media Stream Started:', data.start.streamSid);
                     this.streamSid = data.start.streamSid;
+                    // Extract clientId if present in custom params
+                    if (data.start.customParameters?.clientId) {
+                        this.clientId = data.start.customParameters.clientId;
+                    }
                     // Initial Greeting
-                    this.speak("Hello! I am your AI receptionist. How can I help you today?");
+                    this.handleLLMResponse("system", "Greeting the caller. Start the conversation.");
                     break;
 
                 case 'media':
@@ -55,18 +69,35 @@ export class StreamHandler {
 
     private setupSTT() {
         this.stt.start(async (transcript, isFinal) => {
-            console.log(`STT [${isFinal ? 'FINAL' : 'PARTIAL'}]: ${transcript}`);
-
             if (isFinal && transcript.trim().length > 0) {
-                // Determine response
-                const responseText = await this.llm.generateResponse([{ role: 'user', content: transcript }]);
-                console.log('LLM Response:', responseText);
-
-                if (responseText) {
-                    await this.speak(responseText);
-                }
+                console.log(`STT [FINAL]: ${transcript}`);
+                await this.handleLLMResponse("user", transcript);
             }
         });
+    }
+
+    private async handleLLMResponse(role: 'user' | 'system' | 'tool', content: any, tool_use_id?: string) {
+        this.history.push({ role, content, tool_use_id });
+
+        try {
+            const response = await this.llm.generateResponse(this.history);
+
+            // Handle multiple content blocks (text or tool_use)
+            for (const block of response.content) {
+                if (block.type === 'text') {
+                    console.log('Assistant:', block.text);
+                    this.history.push({ role: 'assistant', content: block.text });
+                    await this.speak(block.text);
+                } else if (block.type === 'tool_use') {
+                    const result = await this.toolExecutor.execute(block.name, block.input, this.clientId);
+                    // Add tool call and result to history and re-trigger LLM
+                    this.history.push({ role: 'assistant', content: block }); // Push the actual tool_use block
+                    await this.handleLLMResponse('tool', result, block.id);
+                }
+            }
+        } catch (error) {
+            console.error('LLM Handling Error:', error);
+        }
     }
 
     private async speak(text: string) {
