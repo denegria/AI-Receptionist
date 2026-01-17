@@ -53,32 +53,84 @@ export interface ClientConfig {
     };
 }
 
-export function loadClientConfig(clientId: string): ClientConfig {
-    const configPath = path.resolve(config.paths.clientConfigs, `client-${clientId}.json`); // e.g. client-abc.json for 'abc'
+// Validation Helper
+function validateClientConfig(config: any): ClientConfig {
+    if (!config.clientId) throw new Error('clientId is required');
+    if (!config.businessName) throw new Error('businessName is required');
+    if (!config.phoneNumber) throw new Error('phoneNumber is required');
 
-    // Try exact match first, then formatted
-    let finalPath = configPath;
-    if (!fs.existsSync(finalPath)) {
-        // If clientId is 'hvac-co-123', try looking for 'client-hvac-co-123.json' ?? 
-        // Actually standardizing on: config/clients/{filename}.json
-        // Let's assume we map phone number -> filename or just load by filename directly.
-        // For now, simple implementation:
-        throw new Error(`Client config not found for ID: ${clientId} at ${configPath}`);
+    // Validate timezone
+    try {
+        Intl.DateTimeFormat(undefined, { timeZone: config.timezone });
+    } catch (e) {
+        throw new Error(`Invalid timezone: ${config.timezone}`);
     }
 
-    const raw = fs.readFileSync(finalPath, 'utf-8');
-    return JSON.parse(raw) as ClientConfig;
+    // Validate Calendar Provider
+    if (!['google', 'outlook'].includes(config.calendar.provider)) {
+        throw new Error('Calendar provider must be "google" or "outlook"');
+    }
+
+    return config as ClientConfig;
+}
+
+// Caching & Loading
+let clientCache: Map<string, ClientConfig> | null = null;
+
+function loadAllClients(): Map<string, ClientConfig> {
+    const cache = new Map<string, ClientConfig>();
+
+    if (!fs.existsSync(config.paths.clientConfigs)) {
+        console.warn(`Client config directory not found: ${config.paths.clientConfigs}`);
+        return cache;
+    }
+
+    const files = fs.readdirSync(config.paths.clientConfigs);
+
+    for (const file of files) {
+        if (file.endsWith('.json')) {
+            try {
+                const raw = fs.readFileSync(
+                    path.join(config.paths.clientConfigs, file),
+                    'utf-8'
+                );
+                const data = validateClientConfig(JSON.parse(raw));
+                // Cache by ID
+                cache.set(data.clientId, data);
+                // Also cache by Phone Number for fast lookup
+                cache.set(data.phoneNumber, data);
+            } catch (error) {
+                console.error(`Error loading client config ${file}:`, error);
+            }
+        }
+    }
+
+    return cache;
+}
+
+export function loadClientConfig(clientIdOrPhone: string): ClientConfig {
+    if (!clientCache) {
+        clientCache = loadAllClients();
+    }
+
+    const client = clientCache.get(clientIdOrPhone);
+
+    if (!client) {
+        // Logic could be improved here to handle dynamic IDs vs Phone Numbers more explicitly
+        // But for now, the cache contains both keys.
+        throw new Error(`Client config not found for: ${clientIdOrPhone}`);
+    }
+
+    return client;
 }
 
 export function getClientByPhoneNumber(phoneNumber: string): ClientConfig | null {
-    // Iterate over all configs in the dir to find matching phone. efficient? no. MVP? yes.
-    const files = fs.readdirSync(config.paths.clientConfigs);
-    for (const file of files) {
-        if (file.endsWith('.json')) {
-            const raw = fs.readFileSync(path.join(config.paths.clientConfigs, file), 'utf-8');
-            const data = JSON.parse(raw) as ClientConfig;
-            if (data.phoneNumber === phoneNumber) return data;
-        }
+    if (!clientCache) {
+        clientCache = loadAllClients();
     }
-    return null;
+    return clientCache.get(phoneNumber) || null;
+}
+
+export function clearClientCache(): void {
+    clientCache = null;
 }

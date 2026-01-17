@@ -14,8 +14,25 @@ if (!fs.existsSync(dbDir)) {
 export const db = new Database(dbPath);
 
 export function initDatabase() {
-    const schemaPath = path.join(__dirname, 'schema.sql');
-    const schema = fs.readFileSync(schemaPath, 'utf-8');
-    db.exec(schema);
-    console.log('Database initialized successfully.');
+    try {
+        const schemaPath = path.join(__dirname, 'schema.sql');
+
+        if (!fs.existsSync(schemaPath)) {
+            throw new Error(`Schema file not found at: ${schemaPath}`);
+        }
+
+        const schema = fs.readFileSync(schemaPath, 'utf-8');
+        db.exec(schema);
+        console.log('✓ Database initialized successfully.');
+
+        // Verify tables were created
+        const tables = db.prepare(
+            "SELECT name FROM sqlite_master WHERE type='table'"
+        ).all();
+        console.log(`✓ Created tables: ${tables.map((t: any) => t.name).join(', ')}`);
+
+    } catch (error) {
+        console.error('✗ Database initialization failed:', error);
+        throw error;
+    }
 }
