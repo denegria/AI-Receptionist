@@ -1,9 +1,11 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { config } from '../../config';
+import { TOOLS } from '../../functions/tools';
 
-interface ChatMessage {
-    role: 'user' | 'assistant' | 'system';
-    content: string;
+export interface ChatMessage {
+    role: 'user' | 'assistant' | 'system' | 'tool';
+    content: string | any[];
+    tool_use_id?: string;
 }
 
 export class LLMService {
@@ -12,40 +14,54 @@ export class LLMService {
     Your goal is to gather information from the caller to book an appointment or answer questions.
     Keep your responses short, conversational, and encouraging. 
     Do not be verbose. 
-    If you need to book an appt, ask for name, phone, and preferred time.`;
+    If you need to book an appt, ask for name, phone, and preferred time.
+    Current Time: ${new Date().toISOString()}`;
 
     constructor() {
         if (!config.ai.anthropicApiKey) {
             console.warn("Anthropic API Key is missing!");
         }
         this.anthropic = new Anthropic({
-            apiKey: config.ai.anthropicApiKey || 'dummy_key', // prevent crash on init if missing, but will fail calls
+            apiKey: config.ai.anthropicApiKey || 'dummy_key',
         });
     }
 
-    async generateResponse(history: ChatMessage[], newSystemPrompt?: string): Promise<string> {
-        const messages = history.filter(m => m.role !== 'system') as any; // Anthropic SDK format
+    async generateResponse(history: ChatMessage[], newSystemPrompt?: string): Promise<any> {
+        const messages = history.filter(m => m.role !== 'system').map(m => {
+            if (m.role === 'tool') {
+                return {
+                    role: 'user',
+                    content: [
+                        {
+                            type: 'tool_result',
+                            tool_use_id: m.tool_use_id,
+                            content: m.content
+                        }
+                    ]
+                };
+            }
+            return {
+                role: m.role,
+                content: m.content
+            };
+        }) as any;
 
         const system = newSystemPrompt || this.systemPrompt;
 
         try {
             const response = await this.anthropic.messages.create({
                 model: 'claude-3-haiku-20240307',
-                max_tokens: 300,
+                max_tokens: 500,
                 system: system,
                 messages: messages,
-                temperature: 0.7,
+                tools: TOOLS as any,
+                temperature: 0.5,
             });
 
-            // Extract text from ContentBlock
-            const content = response.content[0];
-            if (content.type === 'text') {
-                return content.text;
-            }
-            return "";
+            return response;
         } catch (error) {
             console.error("LLM Generation Error:", error);
-            return "I'm sorry, I'm having trouble connecting right now. Can you please say that again?";
+            throw error;
         }
     }
 }
