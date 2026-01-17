@@ -90,23 +90,31 @@ Appointment duration rules (e.g., 30/60/90 min)
 
 Buffer times between appointments (optional)
 
-5. Interbo Integration
+5. Calendar Integration (Google/Outlook)
 
 Requirements:
 
-API-based integration with Interbo.
+API-based integration with Google Calendar and Outlook (Microsoft Graph).
 
-Create appointments directly inside Interbo.
+Create appointments directly in the user's connected calendar.
 
-Pull availability data from Interbo (or connected calendar).
+Pull availability data (busy slots) to prevent double-booking.
 
-Create or update customer records:
+Create or update customer records locally or in metadata:
 
 Name
 
 Phone number
 
-Appointment history
+Service type
+
+Non-goals (for MVP):
+
+Billing
+
+Invoicing
+
+Marketing automation
 
 Non-goals (for MVP):
 
