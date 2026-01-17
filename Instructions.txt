@@ -34,7 +34,7 @@ Speech-to-Text
 
 Text-to-Speech
 
-Confirm Interbo API access and documentation.
+Confirm Google/Microsoft API access and documentation.
 
 Phase 3: Build the Call Intake Flow
 
@@ -70,7 +70,7 @@ Test intent detection using sample call transcripts.
 
 Goal: The system knows what the caller wants.
 
-Phase 5: Build Scheduling Logic (Without Interbo First)
+Phase 5: Build Scheduling Logic (Mock/Cache First)
 
 Mock availability data (fake calendar).
 
@@ -90,17 +90,17 @@ Caller gives vague times (“next week”)
 
 Goal: Scheduling logic works independently.
 
-Phase 6: Integrate Interbo
+Phase 6: Integrate Calendar APIs (Google/Outlook)
 
-Connect to Interbo API.
+Connect to Google Calendar / Microsoft Graph API.
 
-Replace mocked data with real availability.
+Replace mocked data with real availability from cached calendar events.
 
-Create appointments in Interbo.
+Create real events in the calendar.
 
-Sync customer records.
+Sync local appointment cache.
 
-Verify bookings appear correctly in Interbo.
+Verify bookings appear on your real calendar.
 
 Goal: Real appointments are created reliably.
 
