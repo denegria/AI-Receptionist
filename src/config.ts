@@ -109,3 +109,36 @@ export const config: Config = {
         apiKey: getEnvVar('ADMIN_API_KEY'),
     },
 };
+
+// Validate Configuration
+function validateConfig(cfg: Config): void {
+    // Validate AI provider has corresponding API key
+    if (cfg.ai.provider === 'claude' && !cfg.ai.anthropicApiKey) {
+        throw new Error('ANTHROPIC_API_KEY required when AI_PROVIDER=claude');
+    }
+    if (cfg.ai.provider === 'openai' && !cfg.ai.openaiApiKey) {
+        throw new Error('OPENAI_API_KEY required when AI_PROVIDER=openai');
+    }
+
+    // Validate port is valid
+    if (cfg.port < 1 || cfg.port > 65535) {
+        throw new Error(`Invalid PORT: ${cfg.port}`);
+    }
+
+    if (cfg.nodeEnv === 'development') {
+        console.log('\n📋 Configuration Status:');
+        console.log(`  - AI Provider: ${cfg.ai.provider}`);
+        console.log(`  - Database: ${cfg.database.path}`);
+        console.log(`  - Client Configs: ${cfg.paths.clientConfigs}`);
+
+        if (!cfg.google.clientId) {
+            console.warn('  ⚠️  Google Calendar not configured');
+        }
+        if (!cfg.microsoft.clientId) {
+            console.warn('  ⚠️  Outlook Calendar not configured');
+        }
+        console.log('');
+    }
+}
+
+validateConfig(config);

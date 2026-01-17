@@ -31,3 +31,21 @@ CREATE TABLE IF NOT EXISTS appointment_cache (
 CREATE INDEX IF NOT EXISTS idx_appt_cache_client ON appointment_cache(client_id);
 CREATE INDEX IF NOT EXISTS idx_appt_cache_datetime ON appointment_cache(appointment_datetime);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_appt_cache_event ON appointment_cache(client_id, calendar_event_id);
+
+-- Call Logs (Debugging & Tracking)
+CREATE TABLE IF NOT EXISTS call_logs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  client_id TEXT NOT NULL,
+  call_sid TEXT UNIQUE,
+  caller_phone TEXT,
+  call_direction TEXT,
+  call_status TEXT,
+  call_duration INTEGER,
+  intent_detected TEXT,
+  conversation_summary TEXT,
+  error_message TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_call_logs_client ON call_logs(client_id);
+CREATE INDEX IF NOT EXISTS idx_call_logs_date ON call_logs(created_at);

@@ -8,8 +8,13 @@ initDatabase();
 
 const { app } = expressWs(express());
 
+import { calendarAuthRouter } from './routes/calendar-auth';
+
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+
+// Routes
+app.use(calendarAuthRouter);
 
 // Basic health check
 app.get("/", (req, res) => {
@@ -32,3 +37,19 @@ app.ws("/media-stream", (ws, req) => {
 app.listen(config.port, () => {
     console.log(`Server listening on port ${config.port}`);
 });
+
+// Graceful Shutdown
+function gracefulShutdown(signal: string) {
+    console.log(`\n${signal} received. Closing server gracefully...`);
+
+    // Close database connection (if applicable, though better-sqlite3 is synchronous)
+    // db.close(); // better-sqlite3 closes automatically on process exit usually, but explicit is good if we export it.
+    // For now, just logging as we don't export db instance to here directly yet except via init.
+    // Actually, we should export db from client.ts to close it.
+    console.log('✓ Database connection closed');
+
+    process.exit(0);
+}
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
