@@ -1,0 +1,30 @@
+# AI Receptionist MVP Tasks
+
+- [ ] Phase 1: Setup (Project Foundation) <!-- id: 0 -->
+    - [ ] Initialize Git & Node.js/TypeScript Project <!-- id: 1 -->
+    - [ ] Install Core Dependencies (express, twilio, deepgram, better-sqlite3) <!-- id: 2 -->
+    - [ ] Setup Basic Express Server with `express-ws` <!-- id: 3 -->
+    - [ ] Verify "Hello World" & Server Run <!-- id: 4 -->
+- [ ] Phase 2: Config & Database <!-- id: 5 -->
+    - [ ] Create `config.ts` (Env Vars) <!-- id: 6 -->
+    - [ ] Define SQLite Schema (`db/schema.sql`) <!-- id: 7 -->
+    - [ ] Implement Client Config Model (`models/client-config.ts`) <!-- id: 8 -->
+    - [ ] Create Sample Client Config JSON <!-- id: 9 -->
+    - [ ] Seed Test Client DB Record <!-- id: 10 -->
+    - [ ] Verify Config Loading <!-- id: 11 -->
+- [ ] Phase 3: Core Infrastructure <!-- id: 12 -->
+    - [ ] Middleware: Business Hours Logic <!-- id: 13 -->
+    - [ ] Service: Twilio Client & Webhook <!-- id: 14 -->
+    - [ ] Service: Media Stream Handler (WebSocket) <!-- id: 15 -->
+- [ ] Phase 4: Voice & AI Services <!-- id: 16 -->
+    - [ ] Service: Deepgram STT (Streaming) <!-- id: 17 -->
+    - [ ] Service: Deepgram TTS (Aura) <!-- id: 18 -->
+    - [ ] Service: LLM Integration (Claude/GPT) <!-- id: 19 -->
+    - [ ] Implement Intent Detection Logic <!-- id: 20 -->
+- [ ] Phase 5: Business Logic & Interbo <!-- id: 21 -->
+    - [ ] Tool: Check Availability (Interbo Mock/API) <!-- id: 22 -->
+    - [ ] Tool: Book Appointment <!-- id: 23 -->
+    - [ ] Implement Conversation State Management <!-- id: 24 -->
+- [ ] Phase 6: Testing & Polish <!-- id: 25 -->
+    - [ ] End-to-End Call Flow Test <!-- id: 26 -->
+    - [ ] Failure Path Testing <!-- id: 27 -->

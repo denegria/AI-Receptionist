@@ -1,0 +1,79 @@
+{
+    "clientId": "abc",
+    "businessName": "ABC Heating & Air",
+    "phoneNumber": "+15551234567",
+    "timezone": "America/New_York",
+    "businessHours": {
+        "monday": {
+            "start": "08:00",
+            "end": "17:00",
+            "enabled": true
+        },
+        "tuesday": {
+            "start": "08:00",
+            "end": "17:00",
+            "enabled": true
+        },
+        "wednesday": {
+            "start": "08:00",
+            "end": "17:00",
+            "enabled": true
+        },
+        "thursday": {
+            "start": "08:00",
+            "end": "17:00",
+            "enabled": true
+        },
+        "friday": {
+            "start": "08:00",
+            "end": "17:00",
+            "enabled": true
+        },
+        "saturday": {
+            "start": "09:00",
+            "end": "13:00",
+            "enabled": true
+        },
+        "sunday": {
+            "enabled": false
+        }
+    },
+    "holidays": [
+        "2025-12-25",
+        "2025-01-01"
+    ],
+    "appointmentTypes": [
+        {
+            "name": "HVAC Repair",
+            "duration": 60,
+            "bufferBefore": 0,
+            "bufferAfter": 15
+        },
+        {
+            "name": "Maintenance",
+            "duration": 30,
+            "bufferBefore": 0,
+            "bufferAfter": 10
+        }
+    ],
+    "calendar": {
+        "provider": "google",
+        "calendarId": "primary",
+        "credentials": {
+            "type": "oauth2",
+            "refreshToken": "encrypted_token_here"
+        },
+        "syncEnabled": true,
+        "createMeetLinks": false
+    },
+    "routing": {
+        "afterHoursAction": "ai_receptionist",
+        "fallbackNumber": "+15559876543",
+        "voicemailEnabled": true
+    },
+    "aiSettings": {
+        "greeting": "Hello, thanks for calling ABC Heating & Air. I'm the automated assistant. How can I help you today?",
+        "maxRetries": 3,
+        "requireServiceType": false
+    }
+}

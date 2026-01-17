@@ -1,0 +1,165 @@
+DOCUMENT 2: Step-by-Step Instructions for a Junior Developer
+
+This is written as guidance, not code-level instructions.
+
+Phase 1: Understand the Problem (Before Writing Code)
+
+Clearly understand what the AI should and should not do.
+
+Write down:
+
+What happens when a call comes in?
+
+What is the happy path (successful booking)?
+
+What are failure paths (AI doesn’t understand, no availability)?
+
+Diagram the call flow on paper or a whiteboard.
+
+Phase 2: Set Up the Project Foundation
+
+Choose a backend stack (Node.js or Python recommended).
+
+Set up:
+
+Version control (Git)
+
+Basic project structure
+
+Environment variables for API keys
+
+Choose voice providers:
+
+Speech-to-Text
+
+Text-to-Speech
+
+Confirm Interbo API access and documentation.
+
+Phase 3: Build the Call Intake Flow
+
+Make the system answer a call.
+
+Play a greeting message.
+
+Capture caller speech and convert it to text.
+
+Log the raw transcript for debugging.
+
+Return a basic AI response (even a hardcoded one at first).
+
+Goal: A call can be answered and responded to.
+
+Phase 4: Implement Intent Detection
+
+Define core intents:
+
+Book appointment
+
+Reschedule
+
+Cancel
+
+For each intent, define:
+
+Required information
+
+Optional information
+
+Test intent detection using sample call transcripts.
+
+Goal: The system knows what the caller wants.
+
+Phase 5: Build Scheduling Logic (Without Interbo First)
+
+Mock availability data (fake calendar).
+
+Implement logic to:
+
+Check availability
+
+Offer alternatives
+
+Confirm time slots
+
+Handle edge cases:
+
+No availability
+
+Caller gives vague times (“next week”)
+
+Goal: Scheduling logic works independently.
+
+Phase 6: Integrate Interbo
+
+Connect to Interbo API.
+
+Replace mocked data with real availability.
+
+Create appointments in Interbo.
+
+Sync customer records.
+
+Verify bookings appear correctly in Interbo.
+
+Goal: Real appointments are created reliably.
+
+Phase 7: After-Hours & Routing Logic
+
+Implement time-based rules:
+
+Compare current time vs business hours.
+
+Decide:
+
+Should AI answer this call?
+
+Should it route elsewhere?
+
+Add fallback handling:
+
+Voicemail
+
+Callback request
+
+Goal: AI activates only when it should.
+
+Phase 8: Admin Controls (Lightweight)
+
+Create basic UI or config file for:
+
+Business hours
+
+Appointment rules
+
+Ensure changes apply without redeploying code.
+
+Phase 9: Testing & Iteration
+
+Test with real phone calls.
+
+Log failures and misunderstandings.
+
+Improve prompts and clarifying questions.
+
+Stress test with multiple calls.
+
+Phase 10: MVP Definition Check
+
+Before calling it “done,” confirm:
+
+Calls are answered after hours
+
+Appointments are booked correctly
+
+Humans are not replaced
+
+System fails gracefully
+
+If you want, next we can:
+
+Turn this into a Notion doc
+
+Create a developer task board
+
+Or turn this into a pitch / sales doc for HVAC owners
