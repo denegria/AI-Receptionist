@@ -21,17 +21,12 @@ app.get("/", (req, res) => {
     res.send("AI Receptionist Server is running.");
 });
 
-// WebSocket endpoint for Media Streams (placeholder)
+import { StreamHandler } from "./services/voice/stream-handler";
+
+// WebSocket endpoint for Media Streams
 app.ws("/media-stream", (ws, req) => {
     console.log("Client connected to media stream");
-
-    ws.on("message", (msg) => {
-        console.log("Received message:", msg);
-    });
-
-    ws.on("close", () => {
-        console.log("Client disconnected");
-    });
+    new StreamHandler(ws);
 });
 
 app.listen(config.port, () => {
