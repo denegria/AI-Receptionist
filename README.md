@@ -105,21 +105,32 @@ TWILIO_PHONE_NUMBER=+1...
 
 ---
 
+---
+
 ## 🗺️ Project Roadmap
 
-### 🚀 Phase 10: Scaling & Multi-Tenancy
-- **Admin Dashboard**: Web interface for clients to view call logs, voicemails, and analytics.
-- **Self-Serve Auth**: Automated OAuth onboarding flow for Google/Outlook.
-- **RAG for FAQ**: Business-specific knowledge base (e.g., price lists, service manuals).
+### ✅ Completed (MVP)
+- [x] **Phase 1-5**: Core infrastructure, Voice integration, and Calendar booking.
+- [x] **Phase 6**: Production hardening & Modularization.
+- [x] **Phase 7**: Resilience & Voicemail Fallback system.
+- [x] **Phase 8**: Structured Prompting & Few-Shot Learning.
+- [x] **Phase 9**: Final MVP Polish, STT Resilience, and Migration System.
 
-### 🛠️ Phase 11: Professional Features
-- **Advanced SMS**: Two-way SMS for appointment confirmations and reschedule links.
-- **Call Recording**: Compliant recording storage for quality assurance.
+### 🚀 Upcoming (Next Steps)
 
-### 📈 Phase 12: Intelligence
-- **Confidence Scoring**: Sentiment analysis on call logs.
-- **Predictive Booking**: Suggesting optimal slots based on travel time.
-- **Auto-Sync**: Background cron to keep SQLite cache 100% in sync with original calendars.
+#### Phase 10: Scaling & Multi-Tenancy (In Progress)
+- [ ] **Admin Dashboard**: Web interface for clients to view call logs, voicemails, and analytics.
+- [ ] **Self-Serve Auth**: Automated OAuth onboarding flow for Google/Outlook.
+- [ ] **RAG for FAQ**: Business-specific knowledge base (e.g., price lists, service manuals).
+
+#### Phase 11: Professional Features
+- [ ] **Advanced SMS**: Two-way SMS for appointment confirmations and reschedule links.
+- [ ] **Compliant Call Recording**: Secure recording storage for quality assurance.
+
+#### Phase 12: Intelligence
+- [ ] **Sentiment Analysis**: Confidence scoring and tone detection on call logs.
+- [ ] **Predictive Booking**: Suggesting optimal slots based on travel time.
+- [ ] **Auto-Sync**: Background cron to keep SQLite cache 100% in sync with original calendars.
 
 ---
 *Built with ❤️ by Alvaro*
