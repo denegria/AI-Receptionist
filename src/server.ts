@@ -55,32 +55,13 @@ import { twilioWebhookRouter } from './api/routes/twilio-webhook';
 app.use(calendarAuthRouter);
 app.use(twilioWebhookRouter);
 
-// Health check
-app.get('/health', (req, res) => {
-    res.json({
-        status: 'ok',
-        version: require('../package.json').version,
-        database: 'connected'
-    });
-});
-
-app.get('/', (req, res) => {
-    res.json({
-        status: 'ok',
-        service: 'AI Receptionist',
-        version: '1.0.0',
-        timestamp: new Date().toISOString()
-    });
-});
-
-// Health check with database
+// Health Check
 app.get('/health', (req, res) => {
     try {
-        // Test database connection
         db.prepare('SELECT 1').get();
-
         res.json({
             status: 'healthy',
+            version: '1.0.0',
             database: 'connected',
             timestamp: new Date().toISOString()
         });
@@ -92,6 +73,17 @@ app.get('/health', (req, res) => {
         });
     }
 });
+
+app.get('/', (req, res) => {
+    res.json({
+        status: 'ok',
+        service: 'AI Receptionist',
+        version: '1.0.0',
+        timestamp: new Date().toISOString()
+    });
+});
+
+
 
 // WebSocket endpoint for Media Streams
 import { StreamHandler } from "./services/telephony/stream-handler";
