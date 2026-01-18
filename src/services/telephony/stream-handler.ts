@@ -119,6 +119,15 @@ export class StreamHandler {
                     await this.speak(block.text);
                 } else if (block.type === 'tool_use') {
                     const result = await this.toolExecutor.execute(block.name, block.input, this.clientId);
+
+                    if (result === 'TRIGGER_VOICEMAIL_FALLBACK') {
+                        console.log('Voicemail fallback triggered by AI.');
+                        // Say goodbye before closing? The TwiML fallback has its own <Say>
+                        // but we can speak one last time here if desired.
+                        this.ws.close();
+                        return;
+                    }
+
                     this.history.push({ role: 'assistant', content: block });
                     await this.handleLLMResponse('tool', result, block.id);
                 }

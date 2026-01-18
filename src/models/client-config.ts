@@ -46,6 +46,11 @@ export interface ClientConfig {
         voicemailEnabled: boolean;
     };
 
+    notifications?: {
+        sms?: string;
+        email?: string;
+    };
+
     aiSettings: {
         greeting: string;
         maxRetries: number;
