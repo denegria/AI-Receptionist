@@ -14,7 +14,7 @@ export class DeepgramSTTService {
      * Starts a live transcription stream
      * @param onTranscript Callback when a transcript part is received
      */
-    public start(onTranscript: (text: string, isFinal: boolean) => void): void {
+    public start(onTranscript: (text: string, isFinal: boolean, confidence?: number) => void): void {
         if (this.isConnected) return;
 
         this.connection = this.deepgram.listen.live({
@@ -37,7 +37,7 @@ export class DeepgramSTTService {
         this.connection.on('transcript', (data: any) => {
             const alt = data.channel?.alternatives?.[0];
             if (alt && alt.transcript) {
-                onTranscript(alt.transcript, data.is_final);
+                onTranscript(alt.transcript, data.is_final, alt.confidence);
             }
         });
 
