@@ -6,10 +6,13 @@
 
 -   **📞 Smart Voice Interface**: Conversational AI powered by **Deepgram** (STT/TTS) and **LLM** (Claude/GPT).
 -   **📅 Calendar Integration**: Seamless booking with **Google Calendar** and **Outlook**.
--   **⚙️ centralized Configuration**: Robust handling of environment variables and secrets.
--   **🏢 Multi-Client Support**: JSON-based configuration for different business hours, holidays, and settings.
--   **💾 Local Caching**: SQLite database for high-performance availability checks and appointment tracking.
--   **🔌 Extensible Architecture**: built with **Node.js**, **Express**, and **TypeScript**.
+-   **⚙️ Centralized Configuration**: Robust handling of environment variables and secrets.
+-   **🏢 Multi-Client Support**: JSON-based configuration for different business hours and settings.
+-   **💾 Local Caching**: SQLite database for high-performance availability checks.
+-   **🛡️ Resilience**: STT confidence thresholding and sliding conversation memory pruning.
+-   **🗄️ Database Evolution**: Built-in migration runner for seamless schema updates.
+-   **🩺 Health Monitoring**: Dedicated `/health` endpoint for DB and API vitality.
+-   **🔌 Extensible Architecture**: Modular **Node.js** and **TypeScript** foundation.
 
 ## 🛠️ Tech Stack
 
