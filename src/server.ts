@@ -2,6 +2,7 @@ import express from 'express';
 import expressWs from 'express-ws';
 import { config } from './config';
 import { initDatabase, db } from './db/client';
+import { MigrationManager } from './db/migration-manager';
 import { errorHandler } from './api/middleware/error-handler';
 import fs from 'fs';
 import path from 'path';
@@ -33,7 +34,6 @@ function ensureDirectories() {
 console.log(`🚀 Starting AI Receptionist Server in ${config.nodeEnv} mode...`);
 
 ensureDirectories();
-initDatabase();
 
 const { app } = expressWs(express());
 
@@ -115,9 +115,16 @@ app.use(errorHandler);
 
 // Start server
 const server = app.listen(config.port, () => {
-    console.log(`\n✓ Server listening on port ${config.port}`);
-    console.log(`✓ WebSocket endpoint: ws://localhost:${config.port}/media-stream`);
-    console.log(`✓ Health check: http://localhost:${config.port}/health\n`);
+    try {
+        initDatabase();
+        MigrationManager.runMigrations();
+        console.log(`\n✓ Server listening on port ${config.port}`);
+        console.log(`✓ WebSocket endpoint: ws://localhost:${config.port}/media-stream`);
+        console.log(`✓ Health check: http://localhost:${config.port}/health\n`);
+    } catch (error) {
+        console.error('✗ Failed to start server:', error);
+        process.exit(1);
+    }
 });
 
 // Graceful shutdown
