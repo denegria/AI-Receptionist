@@ -23,6 +23,10 @@ export class ToolExecutor {
                     });
                     return `Appointment booked successfully. Reference ID: ${apptId}`;
 
+                case 'take_voicemail':
+                    // We return a specific token that StreamHandler will recognize to stop the stream
+                    return 'TRIGGER_VOICEMAIL_FALLBACK';
+
                 default:
                     return `Unknown tool: ${name}`;
             }

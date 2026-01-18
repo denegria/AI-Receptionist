@@ -46,5 +46,15 @@ export const TOOLS = [
             },
             required: ["customerName", "customerPhone", "startTime", "endTime"]
         }
+    },
+    {
+        name: 'take_voicemail',
+        description: 'Transfers the caller to a voicemail recording. Use this if the caller wants to leave a detailed message, if you are unable to help, or if the caller wants to speak to a person.',
+        input_schema: {
+            type: 'object',
+            properties: {
+                reason: { type: 'string', description: 'Brief reason for taking voicemail' }
+            }
+        }
     }
 ];
