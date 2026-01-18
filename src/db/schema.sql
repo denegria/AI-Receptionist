@@ -46,3 +46,30 @@ CREATE TABLE IF NOT EXISTS call_logs (
 
 CREATE INDEX IF NOT EXISTS idx_call_logs_client ON call_logs(client_id);
 CREATE INDEX IF NOT EXISTS idx_call_logs_date ON call_logs(created_at);
+
+-- Conversation Turns (Transcript lines)
+CREATE TABLE IF NOT EXISTS conversation_turns (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    call_sid TEXT NOT NULL,
+    turn_number INTEGER NOT NULL,
+    role TEXT CHECK(role IN ('user', 'assistant')) NOT NULL,
+    content TEXT NOT NULL,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(call_sid) REFERENCES call_logs(call_sid)
+);
+
+-- Voicemails (Fallback)
+CREATE TABLE IF NOT EXISTS voicemails (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    call_sid TEXT NOT NULL,
+    client_id TEXT NOT NULL,
+    recording_url TEXT,
+    transcription_text TEXT,
+    duration INTEGER,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(call_sid) REFERENCES call_logs(call_sid)
+);
+
+CREATE INDEX IF NOT EXISTS idx_voicemails_call_sid ON voicemails(call_sid);
+CREATE INDEX IF NOT EXISTS idx_voicemails_client_id ON voicemails(client_id);
+CREATE INDEX IF NOT EXISTS idx_turns_call_sid ON conversation_turns(call_sid);

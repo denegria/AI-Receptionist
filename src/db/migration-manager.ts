@@ -15,10 +15,15 @@ export class MigrationManager {
 
     static runMigrations() {
         this.init();
-        const migrationsDir = path.join(__dirname, 'migrations');
+        let migrationsDir = path.join(__dirname, 'migrations');
+
+        // Fallback for compiled dist directory
+        if (!fs.existsSync(migrationsDir)) {
+            migrationsDir = path.join(process.cwd(), 'src', 'db', 'migrations');
+        }
 
         if (!fs.existsSync(migrationsDir)) {
-            fs.mkdirSync(migrationsDir, { recursive: true });
+            console.warn(`Migrations directory not found: ${migrationsDir}`);
             return;
         }
 

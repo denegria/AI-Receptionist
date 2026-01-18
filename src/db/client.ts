@@ -15,7 +15,12 @@ export const db = new Database(dbPath);
 
 export function initDatabase() {
     try {
-        const schemaPath = path.join(__dirname, 'schema.sql');
+        let schemaPath = path.join(__dirname, 'schema.sql');
+
+        // Fallback for compiled dist directory
+        if (!fs.existsSync(schemaPath)) {
+            schemaPath = path.join(process.cwd(), 'src', 'db', 'schema.sql');
+        }
 
         if (!fs.existsSync(schemaPath)) {
             throw new Error(`Schema file not found at: ${schemaPath}`);
