@@ -1,6 +1,6 @@
 import WebSocket from 'ws';
-import { DeepgramSTTService } from './deepgram-stt';
-import { DeepgramTTSService } from './deepgram-tts';
+import { DeepgramSTTService } from '../voice/stt';
+import { DeepgramTTSService } from '../voice/tts';
 import { LLMService, ChatMessage } from '../ai/llm';
 import { ToolExecutor } from '../ai/tool-executor';
 

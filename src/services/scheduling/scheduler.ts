@@ -1,6 +1,6 @@
 import { GoogleCalendarService } from './google-calendar';
 import { OutlookCalendarService } from './outlook-calendar';
-import { CacheService } from './cache';
+import { AppointmentRepository, appointmentRepository } from '../../db/repositories/appointment-repository';
 import { loadClientConfig, ClientConfig } from '../../models/client-config';
 import { TimeSlot, CalendarEvent } from './interfaces';
 
@@ -15,7 +15,7 @@ export interface AppointmentRequest {
 export class SchedulerService {
     private google = new GoogleCalendarService();
     private outlook = new OutlookCalendarService();
-    private cache = new CacheService();
+    private cache = appointmentRepository;
 
     private getProvider(config: ClientConfig) {
         if (config.calendar.provider === 'google') return this.google;
@@ -54,13 +54,18 @@ export class SchedulerService {
 
         const createdEvent = await service.createEvent(clientId, event);
 
-        // Cache it
-        await this.cache.saveAppointment(
-            clientId,
-            createdEvent.id,
-            createdEvent,
-            config.calendar.provider
-        );
+        // Cache it using Repository
+        this.cache.save({
+            client_id: clientId,
+            calendar_event_id: createdEvent.id,
+            provider: config.calendar.provider,
+            customer_name: request.customerName,
+            customer_phone: request.customerPhone,
+            appointment_datetime: request.startTime,
+            end_datetime: request.endTime,
+            duration_minutes: (new Date(request.endTime).getTime() - new Date(request.startTime).getTime()) / 60000,
+            status: 'confirmed'
+        });
 
         return createdEvent.id;
     }
