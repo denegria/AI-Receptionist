@@ -24,15 +24,12 @@ CREATE TABLE IF NOT EXISTS appointment_cache (
   appointment_datetime TEXT NOT NULL,
   end_datetime TEXT NOT NULL,
   duration_minutes INTEGER NOT NULL,
-  status TEXT DEFAULT 'confirmed',
-  synced_at TEXT DEFAULT CURRENT_TIMESTAMP
+  status TEXT DEFAULT 'confirmed' CHECK(status IN ('confirmed', 'cancelled', 'completed', 'no-show')),
+  synced_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS idx_appt_cache_client ON appointment_cache(client_id);
-CREATE INDEX IF NOT EXISTS idx_appt_cache_datetime ON appointment_cache(appointment_datetime);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_appt_cache_event ON appointment_cache(client_id, calendar_event_id);
-
--- Call Logs (Debugging & Tracking)
+-- Call Logs
 CREATE TABLE IF NOT EXISTS call_logs (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   client_id TEXT NOT NULL,

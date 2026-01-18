@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { GoogleCalendarService } from '../services/scheduling/google-calendar';
-import { OutlookCalendarService } from '../services/scheduling/outlook-calendar';
+import { GoogleCalendarService } from '../../services/scheduling/google-calendar';
+import { OutlookCalendarService } from '../../services/scheduling/outlook-calendar';
 
 export const calendarAuthRouter = Router();
 

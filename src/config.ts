@@ -1,59 +1,72 @@
 import dotenv from 'dotenv';
 import path from 'path';
+import crypto from 'crypto';
 
 dotenv.config();
 
 interface Config {
-    // Server
     port: number;
     nodeEnv: string;
+    logLevel: 'debug' | 'info' | 'warn' | 'error';
 
-    // Twilio
     twilio: {
         accountSid: string;
         authToken: string;
         phoneNumber: string;
+        statusCallbackUrl?: string;
     };
 
-    // Deepgram
     deepgram: {
         apiKey: string;
+        model: string;
+        language: string;
     };
 
-    // AI (support both Claude and OpenAI for fallback)
     ai: {
         provider: 'claude' | 'openai';
         anthropicApiKey?: string;
         openaiApiKey?: string;
+        model: string;
+        temperature: number;
+        maxTokens: number;
     };
 
-    // Google Calendar Integration
     google: {
         clientId: string;
         clientSecret: string;
         redirectUri: string;
     };
 
-    // Microsoft Graph (Outlook)
     microsoft: {
         clientId: string;
         clientSecret: string;
         tenantId: string;
     };
 
-    // Database
     database: {
         path: string;
+        backupEnabled: boolean;
+        backupPath?: string;
     };
 
-    // Paths
     paths: {
         clientConfigs: string;
+        logs: string;
+        recordings?: string;
     };
 
-    // Admin
     admin: {
         apiKey: string;
+    };
+
+    encryption: {
+        key: string;
+    };
+
+    features: {
+        callRecording: boolean;
+        webSearch: boolean;
+        smsNotifications: boolean;
     };
 }
 
@@ -65,54 +78,83 @@ function getEnvVar(key: string, defaultValue?: string): string {
     return value;
 }
 
+function generateEncryptionKey(): string {
+    if (process.env.ENCRYPTION_KEY) {
+        return process.env.ENCRYPTION_KEY;
+    }
+
+    console.warn('⚠️  ENCRYPTION_KEY not set. Generating temporary key (not for production!)');
+    return crypto.randomBytes(32).toString('hex');
+}
+
 export const config: Config = {
     port: parseInt(getEnvVar('PORT', '3000')),
     nodeEnv: getEnvVar('NODE_ENV', 'development'),
+    logLevel: (getEnvVar('LOG_LEVEL', 'info') as any),
 
     twilio: {
         accountSid: getEnvVar('TWILIO_ACCOUNT_SID'),
         authToken: getEnvVar('TWILIO_AUTH_TOKEN'),
         phoneNumber: getEnvVar('TWILIO_PHONE_NUMBER'),
+        statusCallbackUrl: process.env.TWILIO_STATUS_CALLBACK_URL,
     },
 
     deepgram: {
         apiKey: getEnvVar('DEEPGRAM_API_KEY'),
+        model: getEnvVar('DEEPGRAM_MODEL', 'nova-2'),
+        language: getEnvVar('DEEPGRAM_LANGUAGE', 'en-US'),
     },
 
     ai: {
         provider: (getEnvVar('AI_PROVIDER', 'claude') as 'claude' | 'openai'),
         anthropicApiKey: process.env.ANTHROPIC_API_KEY,
         openaiApiKey: process.env.OPENAI_API_KEY,
+        model: getEnvVar('AI_MODEL', 'claude-3-haiku-20240307'),
+        temperature: parseFloat(getEnvVar('AI_TEMPERATURE', '0.7')),
+        maxTokens: parseInt(getEnvVar('AI_MAX_TOKENS', '1024')),
     },
 
     google: {
-        clientId: process.env.GOOGLE_CLIENT_ID || "",
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
-        redirectUri: process.env.GOOGLE_REDIRECT_URI || "http://localhost:3000/auth/google/callback",
+        clientId: process.env.GOOGLE_CLIENT_ID || '',
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+        redirectUri: process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3000/auth/google/callback',
     },
 
     microsoft: {
-        clientId: process.env.MICROSOFT_CLIENT_ID || "",
-        clientSecret: process.env.MICROSOFT_CLIENT_SECRET || "",
-        tenantId: process.env.MICROSOFT_TENANT_ID || "common",
+        clientId: process.env.MICROSOFT_CLIENT_ID || '',
+        clientSecret: process.env.MICROSOFT_CLIENT_SECRET || '',
+        tenantId: process.env.MICROSOFT_TENANT_ID || 'common',
     },
 
     database: {
         path: getEnvVar('DB_PATH', './receptionist.db'),
+        backupEnabled: getEnvVar('DB_BACKUP_ENABLED', 'false') === 'true',
+        backupPath: process.env.DB_BACKUP_PATH || './backups',
     },
 
     paths: {
         clientConfigs: getEnvVar('CLIENT_CONFIGS_PATH', './config/clients'),
+        logs: getEnvVar('LOGS_PATH', './logs'),
+        recordings: process.env.RECORDINGS_PATH,
     },
 
     admin: {
         apiKey: getEnvVar('ADMIN_API_KEY'),
     },
+
+    encryption: {
+        key: generateEncryptionKey(),
+    },
+
+    features: {
+        callRecording: getEnvVar('FEATURE_CALL_RECORDING', 'false') === 'true',
+        webSearch: getEnvVar('FEATURE_WEB_SEARCH', 'false') === 'true',
+        smsNotifications: getEnvVar('FEATURE_SMS_NOTIFICATIONS', 'false') === 'true',
+    },
 };
 
-// Validate Configuration
+// Validation
 function validateConfig(cfg: Config): void {
-    // Validate AI provider has corresponding API key
     if (cfg.ai.provider === 'claude' && !cfg.ai.anthropicApiKey) {
         throw new Error('ANTHROPIC_API_KEY required when AI_PROVIDER=claude');
     }
@@ -120,25 +162,32 @@ function validateConfig(cfg: Config): void {
         throw new Error('OPENAI_API_KEY required when AI_PROVIDER=openai');
     }
 
-    // Validate port is valid
     if (cfg.port < 1 || cfg.port > 65535) {
         throw new Error(`Invalid PORT: ${cfg.port}`);
     }
 
-    if (cfg.nodeEnv === 'development') {
-        console.log('\n📋 Configuration Status:');
-        console.log(`  - AI Provider: ${cfg.ai.provider}`);
-        console.log(`  - Database: ${cfg.database.path}`);
-        console.log(`  - Client Configs: ${cfg.paths.clientConfigs}`);
-
-        if (!cfg.google.clientId) {
-            console.warn('  ⚠️  Google Calendar not configured');
-        }
-        if (!cfg.microsoft.clientId) {
-            console.warn('  ⚠️  Outlook Calendar not configured');
-        }
-        console.log('');
+    if (cfg.nodeEnv === 'production' && cfg.encryption.key.length !== 64) {
+        throw new Error('Invalid ENCRYPTION_KEY in production');
     }
 }
 
 validateConfig(config);
+
+// Development logging
+if (config.nodeEnv === 'development') {
+    console.log('\n📋 Configuration Loaded:');
+    console.log(`  Environment: ${config.nodeEnv}`);
+    console.log(`  Port: ${config.port}`);
+    console.log(`  AI Provider: ${config.ai.provider} (${config.ai.model})`);
+    console.log(`  Database: ${config.database.path}`);
+    console.log(`  Client Configs: ${config.paths.clientConfigs}`);
+
+    if (!config.google.clientId) {
+        console.warn('  ⚠️  Google Calendar not configured');
+    }
+    if (!config.microsoft.clientId) {
+        console.warn('  ⚠️  Outlook Calendar not configured');
+    }
+    console.log('');
+}
+

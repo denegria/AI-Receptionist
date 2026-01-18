@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { config } from '../config';
+import { config } from '../../config';
 import twilio from 'twilio';
 
 const VoiceResponse = twilio.twiml.VoiceResponse;
