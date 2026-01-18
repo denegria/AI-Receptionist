@@ -49,7 +49,7 @@ export const TOOLS = [
     },
     {
         name: 'take_voicemail',
-        description: 'Transfers the caller to a voicemail recording. Use this if the caller wants to leave a detailed message, if you are unable to help, or if the caller wants to speak to a person.',
+        description: 'Transfers the caller to a voicemail recording. Use this if the caller wants to leave a detailed message or if you are unable to help.',
         input_schema: {
             type: 'object',
             properties: {

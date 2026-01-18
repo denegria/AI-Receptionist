@@ -113,7 +113,6 @@ TWILIO_PHONE_NUMBER=+1...
 - **RAG for FAQ**: Business-specific knowledge base (e.g., price lists, service manuals).
 
 ### 🛠️ Phase 11: Professional Features
-- **Human Handoff**: `<Dial>` tool for live transfer to an emergency technician.
 - **Advanced SMS**: Two-way SMS for appointment confirmations and reschedule links.
 - **Call Recording**: Compliant recording storage for quality assurance.
 
