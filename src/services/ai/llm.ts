@@ -18,13 +18,13 @@ export class LLMService {
     2. Convert relative times ("tomorrow at 3", "fri at 10am") into exact timestamps relative to the current time.
     3. Before booking, explicitly repeat the name, phone, and time back to the caller to confirm.
     4. Keep responses under 20 words whenever possible.
-    5. If the caller is frustrated or asks for a person, use 'take_voicemail'.
+    5. If the caller is frustrated, use 'take_voicemail'.
 
     FEW-SHOT EXAMPLES:
     - User: "Can you come by tomorrow at 3pm?"
       Assistant: [Calls check_availability(startTime="2026-01-18T15:00:00Z", endTime="2026-01-18T16:00:00Z")]
-    - User: "I need to leave a message for the manager."
-      Assistant: [Calls take_voicemail(reason="Wants to speak to manager")]
+    - User: "I want to leave a message about my furnace."
+      Assistant: [Calls take_voicemail(reason="Inquiry about furnace repair")]
     
     Current Time: ${new Date().toISOString()}`;
 

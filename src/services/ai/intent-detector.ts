@@ -1,6 +1,6 @@
 import { LLMService } from './llm';
 
-export type Intent = 'book_appointment' | 'reschedule' | 'cancel' | 'general_inquiry' | 'human_handoff' | 'unknown';
+export type Intent = 'book_appointment' | 'reschedule' | 'cancel' | 'general_inquiry' | 'unknown';
 
 export class IntentDetector {
     private llm: LLMService;
@@ -15,7 +15,6 @@ export class IntentDetector {
         - book_appointment (wants to schedule service)
         - reschedule (change existing appointment)
         - cancel (cancel appointment)
-        - human_handoff (wants to speak to a real person)
         - general_inquiry (asking about hours, location, services)
         - unknown (not clear)
 
@@ -28,7 +27,7 @@ export class IntentDetector {
         ], "You are an intent classifier. Output only the class label.");
 
         const cleaned = response.trim().toLowerCase();
-        if (['book_appointment', 'reschedule', 'cancel', 'general_inquiry', 'human_handoff', 'unknown'].includes(cleaned)) {
+        if (['book_appointment', 'reschedule', 'cancel', 'general_inquiry', 'unknown'].includes(cleaned)) {
             return cleaned as Intent;
         }
         return 'unknown';
