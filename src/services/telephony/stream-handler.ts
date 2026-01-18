@@ -86,8 +86,15 @@ export class StreamHandler {
     }
 
     private setupSTT() {
-        this.stt.start(async (transcript, isFinal) => {
+        this.stt.start(async (transcript, isFinal, confidence) => {
             if (isFinal && transcript.trim().length > 0) {
+                // Feature: STT Confidence check
+                if (confidence && confidence < 0.4) {
+                    console.log(`STT [LOW CONFIDENCE: ${confidence}]: ${transcript}`);
+                    await this.speak("I'm sorry, I didn't quite catch that. Could you please repeat it?");
+                    return;
+                }
+
                 console.log(`STT [FINAL]: ${transcript}`);
                 this.enqueueProcessing("user", transcript);
             }
@@ -102,6 +109,16 @@ export class StreamHandler {
 
     private async handleLLMResponse(role: 'user' | 'system' | 'tool', content: any, tool_use_id?: string) {
         this.history.push({ role, content, tool_use_id });
+
+        // Feature: Memory Pruning (sliding window of last 10 messages to keep context window clean)
+        if (this.history.length > 20) {
+            // Keep first 2 (original system instructions) and last 10
+            this.history = [
+                this.history[0],
+                this.history[1],
+                ...this.history.slice(-10)
+            ];
+        }
 
         // Log user turns
         if (role === 'user' && typeof content === 'string') {

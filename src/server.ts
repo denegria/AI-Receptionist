@@ -56,6 +56,14 @@ app.use(calendarAuthRouter);
 app.use(twilioWebhookRouter);
 
 // Health check
+app.get('/health', (req, res) => {
+    res.json({
+        status: 'ok',
+        version: require('../package.json').version,
+        database: 'connected'
+    });
+});
+
 app.get('/', (req, res) => {
     res.json({
         status: 'ok',
