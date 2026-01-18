@@ -2,6 +2,7 @@ import { Client } from '@microsoft/microsoft-graph-client';
 import 'isomorphic-fetch'; // Polyfill for graph client
 import { config } from '../../config';
 import { db } from '../../db/client';
+import { CryptoUtils } from '../../utils/crypto';
 import { ICalendarService, TimeSlot, CalendarEvent } from './interfaces';
 
 interface MicrosoftTokens {
@@ -47,21 +48,25 @@ export class OutlookCalendarService implements ICalendarService {
 
         const tokens = await response.json() as MicrosoftTokens;
 
-        // Calculate expiry (expires_in is seconds)
+        // Calculate expiry
         const expiryDate = new Date();
         expiryDate.setSeconds(expiryDate.getSeconds() + tokens.expires_in);
 
-        const stmt = db.prepare(`
-      INSERT INTO calendar_credentials (client_id, provider, refresh_token, access_token, token_expires_at)
-      VALUES (?, 'outlook', ?, ?, ?)
-      ON CONFLICT(client_id) DO UPDATE SET
-        refresh_token = excluded.refresh_token,
-        access_token = excluded.access_token,
-        token_expires_at = excluded.token_expires_at,
-        updated_at = CURRENT_TIMESTAMP
-    `);
+        // Encrypt tokens
+        const encRef = tokens.refresh_token ? CryptoUtils.encrypt(tokens.refresh_token) : null;
+        const encAcc = tokens.access_token ? CryptoUtils.encrypt(tokens.access_token) : null;
 
-        stmt.run(clientId, tokens.refresh_token, tokens.access_token, expiryDate.getTime());
+        const stmt = db.prepare(`
+            INSERT INTO calendar_credentials (client_id, provider, refresh_token, access_token, token_expires_at)
+            VALUES (?, 'outlook', ?, ?, ?)
+            ON CONFLICT(client_id) DO UPDATE SET
+                refresh_token = COALESCE(excluded.refresh_token, refresh_token),
+                access_token = excluded.access_token,
+                token_expires_at = excluded.token_expires_at,
+                updated_at = CURRENT_TIMESTAMP
+        `);
+
+        stmt.run(clientId, encRef, encAcc, expiryDate.getTime());
     }
 
     private async getAuthenticatedClient(clientId: string): Promise<Client> {
@@ -72,10 +77,13 @@ export class OutlookCalendarService implements ICalendarService {
             throw new Error(`No Outlook credentials found for client ${clientId}`);
         }
 
+        // Decrypt tokens
+        const refreshToken = creds.refresh_token ? CryptoUtils.decrypt(creds.refresh_token) : '';
+        let accessToken = creds.access_token ? CryptoUtils.decrypt(creds.access_token) : '';
+
         // Check expiry and refresh if needed
-        let accessToken = creds.access_token;
         if (creds.token_expires_at < Date.now()) {
-            accessToken = await this.refreshAccessToken(clientId, creds.refresh_token);
+            accessToken = await this.refreshAccessToken(clientId, refreshToken);
         }
 
         return Client.init({
@@ -110,13 +118,17 @@ export class OutlookCalendarService implements ICalendarService {
         const expiryDate = new Date();
         expiryDate.setSeconds(expiryDate.getSeconds() + tokens.expires_in);
 
+        // Encrypt new tokens
+        const encRef = tokens.refresh_token ? CryptoUtils.encrypt(tokens.refresh_token) : null;
+        const encAcc = CryptoUtils.encrypt(tokens.access_token);
+
         const stmt = db.prepare(`
-        UPDATE calendar_credentials 
-        SET access_token = ?, refresh_token = COALESCE(?, refresh_token), token_expires_at = ?, updated_at = CURRENT_TIMESTAMP
-        WHERE client_id = ? AND provider = 'outlook'
-       `);
-        // Sometimes Graph doesn't return a new refresh token, so keep old one if so
-        stmt.run(tokens.access_token, tokens.refresh_token || null, expiryDate.getTime(), clientId);
+            UPDATE calendar_credentials 
+            SET access_token = ?, refresh_token = COALESCE(?, refresh_token), token_expires_at = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE client_id = ? AND provider = 'outlook'
+        `);
+
+        stmt.run(encAcc, encRef, expiryDate.getTime(), clientId);
 
         return tokens.access_token;
     }

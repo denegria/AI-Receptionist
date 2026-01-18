@@ -2,6 +2,7 @@ import { google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
 import { config } from '../../config';
 import { db } from '../../db/client';
+import { CryptoUtils } from '../../utils/crypto';
 import { ICalendarService, TimeSlot, CalendarEvent } from './interfaces';
 
 export class GoogleCalendarService implements ICalendarService {
@@ -27,36 +28,54 @@ export class GoogleCalendarService implements ICalendarService {
         const oauth2Client = this.createOAuthClient();
         const { tokens } = await oauth2Client.getToken(code);
 
-        // Save to DB
-        // Assuming we have a table or model for credentials. 
-        // Using direct DB access for now as we haven't built a specific model for Creds yet.
-        // Replace with a proper model method later.
-        const stmt = db.prepare(`
-      INSERT INTO calendar_credentials (client_id, provider, refresh_token, access_token, token_expires_at)
-      VALUES (?, 'google', ?, ?, ?)
-      ON CONFLICT(client_id) DO UPDATE SET
-        refresh_token = excluded.refresh_token,
-        access_token = excluded.access_token,
-        token_expires_at = excluded.token_expires_at,
-        updated_at = CURRENT_TIMESTAMP
-    `);
+        // Encrypt tokens before saving
+        const encryptedRefresh = tokens.refresh_token ? CryptoUtils.encrypt(tokens.refresh_token) : null;
+        const encryptedAccess = tokens.access_token ? CryptoUtils.encrypt(tokens.access_token) : null;
 
-        stmt.run(clientId, tokens.refresh_token, tokens.access_token, tokens.expiry_date);
+        const stmt = db.prepare(`
+            INSERT INTO calendar_credentials (client_id, provider, refresh_token, access_token, token_expires_at)
+            VALUES (?, 'google', ?, ?, ?)
+            ON CONFLICT(client_id) DO UPDATE SET
+                refresh_token = COALESCE(excluded.refresh_token, refresh_token),
+                access_token = excluded.access_token,
+                token_expires_at = excluded.token_expires_at,
+                updated_at = CURRENT_TIMESTAMP
+        `);
+
+        stmt.run(clientId, encryptedRefresh, encryptedAccess, tokens.expiry_date);
     }
 
     private async getAuthenticatedClient(clientId: string): Promise<OAuth2Client> {
         const stmt = db.prepare('SELECT refresh_token, access_token, token_expires_at FROM calendar_credentials WHERE client_id = ? AND provider = ?');
-        const creds = stmt.get(clientId, 'google') as any; // Type 'any' for quick sql result
+        const creds = stmt.get(clientId, 'google') as any;
 
         if (!creds) {
             throw new Error(`No Google credentials found for client ${clientId}`);
         }
 
+        // Decrypt tokens
+        const refreshToken = creds.refresh_token ? CryptoUtils.decrypt(creds.refresh_token) : undefined;
+        const accessToken = creds.access_token ? CryptoUtils.decrypt(creds.access_token) : undefined;
+
         const oauth2Client = this.createOAuthClient();
         oauth2Client.setCredentials({
-            refresh_token: creds.refresh_token,
-            access_token: creds.access_token,
+            refresh_token: refreshToken,
+            access_token: accessToken,
             expiry_date: creds.token_expires_at
+        });
+
+        // Handle auto-refresh updates
+        oauth2Client.on('tokens', (tokens) => {
+            if (tokens.refresh_token || tokens.access_token) {
+                const encRef = tokens.refresh_token ? CryptoUtils.encrypt(tokens.refresh_token) : null;
+                const encAcc = tokens.access_token ? CryptoUtils.encrypt(tokens.access_token) : null;
+
+                db.prepare(`
+                    UPDATE calendar_credentials 
+                    SET access_token = ?, refresh_token = COALESCE(?, refresh_token), token_expires_at = ?
+                    WHERE client_id = ? AND provider = 'google'
+                `).run(encAcc, encRef, tokens.expiry_date, clientId);
+            }
         });
 
         return oauth2Client;
