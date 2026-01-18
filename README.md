@@ -56,36 +56,40 @@ src/
 └── server.ts             # Application Entry Point
 ```
 
-## 🛠️ Setup & Installation
+## 🛠️ Configuration
 
-1.  **Clone the Repository**:
-    ```bash
-    git clone https://github.com/denegria/AI-Receptionist.git
-    cd AI-Receptionist
-    ```
+### 1. Environment Variables (`.env`)
+```env
+# Core
+PORT=3000
+ENCRYPTION_KEY=your-32-byte-hex-key
 
-2.  **Install Dependencies**:
-    ```bash
-    npm install
-    ```
+# AI
+ANTHROPIC_API_KEY=sk-ant-...
+DEEPGRAM_API_KEY=...
 
-3.  **Configure Environment Variables**:
-    Copy `.env.example` to `.env` and fill in your keys:
-    -   Twilio Account SID & Auth Token
-    -   Deepgram API Key
-    -   Anthropic / OpenAI API Key
-    -   Google/Microsoft Client IDs & Secrets
-    -   **ENCRYPTION_KEY**: A 64-character hex string (run `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` to generate one).
+# Telephony
+TWILIO_ACCOUNT_SID=AC...
+TWILIO_AUTH_TOKEN=...
+TWILIO_PHONE_NUMBER=+1...
+```
 
-4.  **Database Setup**:
-    The SQLite database and schema will automatically initialize on first run.
-
-## 🏁 Running the Application
-
--   **Development**: `npm run dev` (Runs with nodemon and ts-node)
--   **Test**: `npm test` (Runs Jest unit tests)
--   **Build**: `npm run build`
--   **Production**: `npm start`
+### 2. Client Config (`config/clients/client-abc.json`)
+```json
+{
+  "clientId": "client-abc",
+  "businessName": "Comfort HVAC",
+  "phoneNumber": "+15551234567",
+  "timezone": "America/New_York",
+  "calendar": {
+    "provider": "google",
+    "calendarId": "primary"
+  },
+  "notifications": {
+    "sms": "+15559876543"
+  }
+}
+```
 
 ## 📖 How it Works
 
@@ -93,7 +97,27 @@ src/
 2.  **Media Stream**: Server establishes a WebSocket connection for bidirectional audio.
 3.  **Processing**: Deepgram converts audio to text, Claude determines intent.
 4.  **Tool Use**: AI checks calendar availability or books an appointment via the unified `SchedulerService`.
-5.  **Response**: Text is converted back to audio and streamed to the caller.
+5.  **Fallback**: If AI is confused, the `take_voicemail` tool is triggered for a recording fallback.
+6.  **Response**: Text is converted back to audio and streamed to the caller.
+
+---
+
+## 🗺️ Project Roadmap
+
+### 🚀 Phase 10: Scaling & Multi-Tenancy
+- **Admin Dashboard**: Web interface for clients to view call logs, voicemails, and analytics.
+- **Self-Serve Auth**: Automated OAuth onboarding flow for Google/Outlook.
+- **RAG for FAQ**: Business-specific knowledge base (e.g., price lists, service manuals).
+
+### 🛠️ Phase 11: Professional Features
+- **Human Handoff**: `<Dial>` tool for live transfer to an emergency technician.
+- **Advanced SMS**: Two-way SMS for appointment confirmations and reschedule links.
+- **Call Recording**: Compliant recording storage for quality assurance.
+
+### 📈 Phase 12: Intelligence
+- **Confidence Scoring**: Sentiment analysis on call logs.
+- **Predictive Booking**: Suggesting optimal slots based on travel time.
+- **Auto-Sync**: Background cron to keep SQLite cache 100% in sync with original calendars.
 
 ---
 *Built with ❤️ by Alvaro*
