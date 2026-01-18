@@ -44,7 +44,9 @@ app.use(express.json());
 // Request logging in development
 if (config.nodeEnv === 'development') {
     app.use((req, res, next) => {
-        console.log(`${req.method} ${req.path}`);
+        console.log(`[DEBUG] ${req.method} ${req.path}`);
+        console.log(`[DEBUG] Host: ${req.headers.host}`);
+        console.log(`[DEBUG] Query: ${JSON.stringify(req.query)}`);
         next();
     });
 }
@@ -88,10 +90,11 @@ app.get('/', (req, res) => {
 // WebSocket endpoint for Media Streams
 import { StreamHandler } from "./services/telephony/stream-handler";
 app.ws('/media-stream', (ws, req) => {
-    const callSid = req.query.callSid as string;
-    console.log(`📞 Client connected to media stream (Call SID: ${callSid})`);
+    const callSid = (req.query.callSid as string) || (req.headers['x-twilio-callsid'] as string);
+    const clientId = (req.query.clientId as string) || (req.headers['x-twilio-clientid'] as string) || 'abc';
+    console.log(`📞 WebSocket requested (Call SID: ${callSid}, Client ID: ${clientId})`);
 
-    new StreamHandler(ws);
+    new StreamHandler(ws, clientId);
 
     ws.on('close', () => {
         console.log(`📞 Client disconnected (Call SID: ${callSid})`);

@@ -113,6 +113,7 @@ export class GoogleCalendarService implements ICalendarService {
                 description: event.description,
                 start: { dateTime: event.start },
                 end: { dateTime: event.end },
+                attendees: event.attendees
             }
         });
 

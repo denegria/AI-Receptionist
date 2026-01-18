@@ -31,6 +31,10 @@ export const TOOLS = [
                     type: "string",
                     description: "Phone number of the customer"
                 },
+                customerEmail: {
+                    type: "string",
+                    description: "Email address of the customer for the calendar invite"
+                },
                 startTime: {
                     type: "string",
                     description: "Start time in ISO 8601 format"
@@ -44,7 +48,7 @@ export const TOOLS = [
                     description: "Description of the service needed"
                 }
             },
-            required: ["customerName", "customerPhone", "startTime", "endTime"]
+            required: ["customerName", "customerPhone", "customerEmail", "startTime", "endTime"]
         }
     },
     {

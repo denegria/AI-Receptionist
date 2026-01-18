@@ -7,6 +7,7 @@ import { TimeSlot, CalendarEvent } from './interfaces';
 export interface AppointmentRequest {
     customerName: string;
     customerPhone: string;
+    customerEmail: string;
     startTime: string; // ISO
     endTime: string;   // ISO
     description?: string;
@@ -49,7 +50,8 @@ export class SchedulerService {
             summary: `${request.customerName} - ${request.customerPhone}`,
             description: request.description,
             start: request.startTime,
-            end: request.endTime
+            end: request.endTime,
+            attendees: [{ email: request.customerEmail }]
         };
 
         const createdEvent = await service.createEvent(clientId, event);
@@ -61,6 +63,7 @@ export class SchedulerService {
             provider: config.calendar.provider,
             customer_name: request.customerName,
             customer_phone: request.customerPhone,
+            customer_email: request.customerEmail,
             appointment_datetime: request.startTime,
             end_datetime: request.endTime,
             duration_minutes: (new Date(request.endTime).getTime() - new Date(request.startTime).getTime()) / 60000,

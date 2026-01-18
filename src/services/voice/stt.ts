@@ -14,7 +14,10 @@ export class DeepgramSTTService {
      * Starts a live transcription stream
      * @param onTranscript Callback when a transcript part is received
      */
-    public start(onTranscript: (text: string, isFinal: boolean, confidence?: number) => void): void {
+    public start(
+        onTranscript: (text: string, isFinal: boolean, confidence?: number) => void,
+        onSpeechStarted?: () => void
+    ): void {
         if (this.isConnected) return;
 
         this.connection = this.deepgram.listen.live({
@@ -25,29 +28,42 @@ export class DeepgramSTTService {
             sample_rate: 8000,
             channels: 1,
             interim_results: true,
-            endpointing: 300,
-            utterance_end_ms: 1000
         });
 
         this.connection.on('open', () => {
             this.isConnected = true;
-            console.log('Deepgram STT Connected');
+            console.log('[DEBUG] Deepgram STT Connection Opened');
         });
 
-        this.connection.on('transcript', (data: any) => {
+        this.connection.on('Results', (data: any) => {
+            console.log('[DEBUG] Deepgram Results event:', JSON.stringify(data));
             const alt = data.channel?.alternatives?.[0];
-            if (alt && alt.transcript) {
-                onTranscript(alt.transcript, data.is_final, alt.confidence);
+            const transcript = alt?.transcript;
+            if (transcript) {
+                onTranscript(transcript, data.is_final, alt.confidence);
             }
+        });
+
+        this.connection.on('Metadata', (data: any) => {
+            console.log('[DEBUG] Deepgram Metadata event:', JSON.stringify(data));
+        });
+
+        this.connection.on('error', (err: any) => {
+            console.error('[DEBUG] Deepgram STT Error event:', err);
         });
 
         this.connection.on('close', () => {
             this.isConnected = false;
-            console.log('Deepgram STT Disconnected');
+            console.log('[DEBUG] Deepgram STT Connection Closed');
         });
 
-        this.connection.on('error', (err: any) => {
-            console.error('Deepgram STT Error:', err);
+        this.connection.on('speech_started', () => {
+            console.log('[DEBUG] Deepgram Speech Started event');
+            if (onSpeechStarted) onSpeechStarted();
+        });
+
+        this.connection.on('UtteranceEnd', (data: any) => {
+            console.log('[DEBUG] Deepgram UtteranceEnd event:', JSON.stringify(data));
         });
     }
 
@@ -65,7 +81,6 @@ export class DeepgramSTTService {
      */
     public stop(): void {
         if (this.connection) {
-            // Check if finish exists, otherwise destroy or just nullify
             if (typeof this.connection.finish === 'function') {
                 this.connection.finish();
             }

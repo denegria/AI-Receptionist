@@ -26,7 +26,8 @@ CREATE TABLE IF NOT EXISTS appointment_cache (
   duration_minutes INTEGER NOT NULL,
   status TEXT DEFAULT 'confirmed' CHECK(status IN ('confirmed', 'cancelled', 'completed', 'no-show')),
   synced_at TEXT DEFAULT CURRENT_TIMESTAMP,
-  created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(client_id, calendar_event_id)
 );
 
 -- Call Logs
