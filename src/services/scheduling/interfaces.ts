@@ -11,7 +11,7 @@ export interface CalendarEvent {
     end: string;
     description?: string;
     location?: string;
-    attendees?: string[];
+    attendees?: { email: string }[];
     meetLink?: string;
 }
 

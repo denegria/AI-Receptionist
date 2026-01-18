@@ -19,6 +19,9 @@ twilioWebhookRouter.post('/voice', (req: Request, res: Response) => {
     const connect = twiml.connect();
     connect.stream({
         url: `wss://${req.headers.host}/media-stream?callSid=${callSid}&clientId=${clientId}`,
+    }).parameter({
+        name: 'clientId',
+        value: clientId
     });
 
     // Fallback: This TwiML will execute AFTER the Stream is disconnected
