@@ -110,7 +110,11 @@ TWILIO_PHONE_NUMBER=+1...
 ## 🗺️ Project Roadmap
 
 ### ✅ Completed
-- [x] **MVP Core**: Voice integration, Deepgram, LLM, and Calendar booking.
+- [x] **Phase 1-5**: Core infrastructure, Voice integration, and Calendar booking.
+- [x] **Phase 6**: Production hardening & Modularization.
+- [x] **Phase 7**: Resilience & Voicemail Fallback system.
+- [x] **Phase 8**: Structured Prompting & Few-Shot Learning.
+- [x] **Phase 9**: Final MVP Polish, STT Resilience, and Migration System.
 - [x] **Production Readiness (New)**:
     - **Deployment**: Docker, Fly.io config, Rate Limiting.
     - **Reliability**: Call State Machine, 10m limit, ASR confidence gates.
@@ -119,16 +123,16 @@ TWILIO_PHONE_NUMBER=+1...
 
 ### 🚀 Upcoming (Next Steps)
 
-#### Phase 6: Live Staging & QA
+#### Phase 10: Live Staging & QA
 - [ ] **End-to-End Testing**: Verify fallbacks and booking limits in a live staged environment.
 - [ ] **Load Testing**: Validate rate limits and concurrent call handling.
 
-#### Phase 7: Scaling & Multi-Tenancy
+#### Phase 11: Scaling & Multi-Tenancy
 - [ ] **Admin Dashboard**: Web interface for clients to view logs and voicemails.
 - [ ] **Self-Serve Auth**: Automated OAuth onboarding flow for Google/Outlook.
 - [ ] **RAG for FAQ**: Business-specific knowledge base injection.
 
-#### Phase 8: Advanced Professional Features
+#### Phase 12: Advanced Professional Features
 - [ ] **Smart Rescheduling**: Two-way SMS interaction for modifying appointments.
 - [ ] **Sentiment Analysis**: Post-call analytics for quality assurance.
 
