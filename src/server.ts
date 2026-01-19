@@ -6,6 +6,7 @@ import { MigrationManager } from './db/migration-manager';
 import { errorHandler } from './api/middleware/error-handler';
 import fs from 'fs';
 import path from 'path';
+import { logger } from './services/logging';
 
 // Ensure required directories exist
 function ensureDirectories() {
@@ -31,22 +32,31 @@ function ensureDirectories() {
     });
 }
 
-console.log(`🚀 Starting AI Receptionist Server in ${config.nodeEnv} mode...`);
+logger.info(`🚀 Starting AI Receptionist Server in ${config.nodeEnv} mode...`);
 
 ensureDirectories();
 
 const { app } = expressWs(express());
 
 // Middleware
+app.set('trust proxy', 1); // Required for Fly.io/Cloud load balancers
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+
+// Rate Limiting
+import rateLimit from 'express-rate-limit';
+const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+app.use('/api/', apiLimiter);
 
 // Request logging in development
 if (config.nodeEnv === 'development') {
     app.use((req, res, next) => {
-        console.log(`[DEBUG] ${req.method} ${req.path}`);
-        console.log(`[DEBUG] Host: ${req.headers.host}`);
-        console.log(`[DEBUG] Query: ${JSON.stringify(req.query)}`);
+        logger.info('HTTP Request', { method: req.method, path: req.path, ip: req.ip });
         next();
     });
 }
@@ -92,16 +102,16 @@ import { StreamHandler } from "./services/telephony/stream-handler";
 app.ws('/media-stream', (ws, req) => {
     const callSid = (req.query.callSid as string) || (req.headers['x-twilio-callsid'] as string);
     const clientId = (req.query.clientId as string) || (req.headers['x-twilio-clientid'] as string) || 'abc';
-    console.log(`📞 WebSocket requested (Call SID: ${callSid}, Client ID: ${clientId})`);
+    logger.info(`📞 WebSocket requested`, { callSid, clientId });
 
     new StreamHandler(ws, clientId);
 
     ws.on('close', () => {
-        console.log(`📞 Client disconnected (Call SID: ${callSid})`);
+        logger.info(`📞 Client disconnected`, { callSid });
     });
 
     ws.on('error', (error) => {
-        console.error(`WebSocket error (Call SID: ${callSid}):`, error);
+        logger.error(`WebSocket error`, { callSid, error });
     });
 });
 
@@ -113,11 +123,11 @@ const server = app.listen(config.port, () => {
     try {
         initDatabase();
         MigrationManager.runMigrations();
-        console.log(`\n✓ Server listening on port ${config.port}`);
+        logger.info(`Server listening`, { port: config.port });
         console.log(`✓ WebSocket endpoint: ws://localhost:${config.port}/media-stream`);
         console.log(`✓ Health check: http://localhost:${config.port}/health\n`);
     } catch (error) {
-        console.error('✗ Failed to start server:', error);
+        logger.error('Failed to start server', { error });
         process.exit(1);
     }
 });
