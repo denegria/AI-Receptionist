@@ -2,7 +2,9 @@ import dotenv from 'dotenv';
 import path from 'path';
 import crypto from 'crypto';
 
-dotenv.config();
+if (process.env.NODE_ENV !== 'production') {
+    dotenv.config();
+}
 
 interface Config {
     port: number;
@@ -127,14 +129,14 @@ export const config: Config = {
     },
 
     database: {
-        path: getEnvVar('DB_PATH', './receptionist.db'),
+        path: process.env.DB_PATH || (process.env.NODE_ENV === 'production' ? '/app/data/receptionist.db' : './receptionist.db'),
         backupEnabled: getEnvVar('DB_BACKUP_ENABLED', 'false') === 'true',
-        backupPath: process.env.DB_BACKUP_PATH || './backups',
+        backupPath: process.env.DB_BACKUP_PATH || (process.env.NODE_ENV === 'production' ? '/app/data/backups' : './backups'),
     },
 
     paths: {
-        clientConfigs: getEnvVar('CLIENT_CONFIGS_PATH', './config/clients'),
-        logs: getEnvVar('LOGS_PATH', './logs'),
+        clientConfigs: getEnvVar('CLIENT_CONFIGS_PATH', process.env.NODE_ENV === 'production' ? '/app/config/clients' : './config/clients'),
+        logs: getEnvVar('LOGS_PATH', process.env.NODE_ENV === 'production' ? '/app/data/logs' : './logs'),
         recordings: process.env.RECORDINGS_PATH,
     },
 
