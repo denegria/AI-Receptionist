@@ -82,24 +82,39 @@ export class GoogleCalendarService implements ICalendarService {
     }
 
     async getBusyTimes(clientId: string, start: string, end: string): Promise<TimeSlot[]> {
-        const auth = await this.getAuthenticatedClient(clientId);
-        const calendar = google.calendar({ version: 'v3', auth });
+        try {
+            const auth = await this.getAuthenticatedClient(clientId);
+            const calendar = google.calendar({ version: 'v3', auth });
 
-        const response = await calendar.freebusy.query({
-            requestBody: {
-                timeMin: start,
-                timeMax: end,
-                items: [{ id: 'primary' }]
+            const response = await calendar.freebusy.query({
+                requestBody: {
+                    timeMin: start,
+                    timeMax: end,
+                    items: [{ id: 'primary' }]
+                }
+            });
+
+            const busy = response.data.calendars?.['primary']?.busy || [];
+
+            return busy.map(b => ({
+                start: b.start!,
+                end: b.end!,
+                available: false
+            }));
+        } catch (error: any) {
+            console.error('Google Calendar API Error:', error);
+
+            // Check for specific error types
+            if (error.code === 401) {
+                throw new Error('Calendar authentication expired. Please reconnect.');
+            } else if (error.code === 403) {
+                throw new Error('Insufficient calendar permissions.');
+            } else if (error.code === 404) {
+                throw new Error('Calendar not found.');
             }
-        });
 
-        const busy = response.data.calendars?.['primary']?.busy || [];
-
-        return busy.map(b => ({
-            start: b.start!,
-            end: b.end!,
-            available: false
-        }));
+            throw new Error(`Calendar API error: ${error.message}`);
+        }
     }
 
     async createEvent(clientId: string, event: Partial<CalendarEvent>): Promise<CalendarEvent> {

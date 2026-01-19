@@ -24,7 +24,7 @@ export class IntentDetector {
 
         const response = await this.llm.generateResponse([
             { role: 'user', content: prompt }
-        ], "You are an intent classifier. Output only the class label.");
+        ], { businessName: 'Intent Classifier', timezone: 'UTC' });
 
         const cleaned = response.trim().toLowerCase();
         if (['book_appointment', 'reschedule', 'cancel', 'general_inquiry', 'unknown'].includes(cleaned)) {

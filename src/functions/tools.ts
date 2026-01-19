@@ -19,7 +19,7 @@ export const TOOLS = [
     },
     {
         name: "book_appointment",
-        description: "Book a new appointment after confirming availability.",
+        description: "Book a new appointment after confirming availability. NEVER call this tool until the user has explicitly confirmed the details (e.g. said 'Yes', 'Go ahead', etc.) after you have read them back.",
         input_schema: {
             type: "object",
             properties: {
