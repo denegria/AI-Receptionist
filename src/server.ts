@@ -124,8 +124,28 @@ const server = app.listen(config.port, () => {
 
 // Graceful shutdown
 function gracefulShutdown(signal: string) {
+    console.log(`\n🛑 Received ${signal}, shutting down gracefully...`);
 
-    process.exit(0);
+    server.close(() => {
+        console.log('✓ HTTP server closed');
+
+        // Close database
+        try {
+            db.close();
+            console.log('✓ Database closed');
+        } catch (err) {
+            console.error('✗ Error closing database:', err);
+        }
+
+        console.log('👋 Shutdown complete');
+        process.exit(0);
+    });
+
+    // Force close after 10 seconds
+    setTimeout(() => {
+        console.error('⚠️ Forced shutdown after timeout');
+        process.exit(1);
+    }, 10000);
 }
 
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));

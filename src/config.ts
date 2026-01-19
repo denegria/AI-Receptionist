@@ -154,24 +154,33 @@ export const config: Config = {
 };
 
 // Validation
-function validateConfig(cfg: Config): void {
-    if (cfg.ai.provider === 'claude' && !cfg.ai.anthropicApiKey) {
-        throw new Error('ANTHROPIC_API_KEY required when AI_PROVIDER=claude');
-    }
-    if (cfg.ai.provider === 'openai' && !cfg.ai.openaiApiKey) {
-        throw new Error('OPENAI_API_KEY required when AI_PROVIDER=openai');
+export function validateEnvironment(): void {
+    const errors: string[] = [];
+
+    // Check required variables
+    if (!process.env.TWILIO_ACCOUNT_SID) errors.push('TWILIO_ACCOUNT_SID');
+    if (!process.env.TWILIO_AUTH_TOKEN) errors.push('TWILIO_AUTH_TOKEN');
+    if (!process.env.DEEPGRAM_API_KEY) errors.push('DEEPGRAM_API_KEY');
+
+    if (config.ai.provider === 'claude' && !process.env.ANTHROPIC_API_KEY) {
+        errors.push('ANTHROPIC_API_KEY (required for Claude)');
     }
 
-    if (cfg.port < 1 || cfg.port > 65535) {
-        throw new Error(`Invalid PORT: ${cfg.port}`);
+    if (config.nodeEnv === 'production' && config.encryption.key.length !== 64) {
+        errors.push('ENCRYPTION_KEY must be 64 hex characters in production');
     }
 
-    if (cfg.nodeEnv === 'production' && cfg.encryption.key.length !== 64) {
-        throw new Error('Invalid ENCRYPTION_KEY in production');
+    if (errors.length > 0) {
+        console.error('\n❌ Missing required environment variables:');
+        errors.forEach(e => console.error(`   - ${e}`));
+        console.error('\n💡 Copy .env.example to .env and fill in your values\n');
+        process.exit(1);
     }
+
+    console.log('✓ Environment validation passed');
 }
 
-validateConfig(config);
+validateEnvironment();
 
 // Development logging
 if (config.nodeEnv === 'development') {

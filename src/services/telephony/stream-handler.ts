@@ -23,6 +23,10 @@ export class StreamHandler {
     private mediaPacketCount: number = 0;
     private isAISpeaking: boolean = false;
     private shouldCancelPending: boolean = false;
+    private inactivityTimeout?: NodeJS.Timeout;
+    private readonly INACTIVITY_LIMIT_MS = 30000; // 30 seconds
+    private readonly MAX_HISTORY = 20;
+    private readonly KEEP_RECENT = 10;
 
     constructor(ws: WebSocket, clientId?: string) {
         this.ws = ws;
@@ -119,9 +123,24 @@ export class StreamHandler {
 
         this.ws.on('close', () => {
             this.stt.stop();
+            if (this.inactivityTimeout) {
+                clearTimeout(this.inactivityTimeout);
+            }
             this.finalizeCall('completed');
             console.log('Client disconnected from media stream');
         });
+    }
+
+    private resetInactivityTimer() {
+        if (this.inactivityTimeout) {
+            clearTimeout(this.inactivityTimeout);
+        }
+
+        this.inactivityTimeout = setTimeout(async () => {
+            console.log('⏱️ Inactivity timeout - ending call');
+            await this.speak("I haven't heard from you in a while. I'll end this call now. Feel free to call back!");
+            setTimeout(() => this.ws.close(), 3000);
+        }, this.INACTIVITY_LIMIT_MS);
     }
 
     private setupSTT() {
@@ -138,6 +157,7 @@ export class StreamHandler {
                 }
 
                 console.log(`STT [FINAL]: ${transcript} (Confidence: ${confidence})`);
+                this.resetInactivityTimer();
                 this.enqueueProcessing("user", transcript);
             } else if (transcript.trim().length > 0) {
                 console.log(`STT [INTERIM]: ${transcript}`);
@@ -155,6 +175,9 @@ export class StreamHandler {
                 this.sendClearSignal();
             }
         });
+
+        // Start timer initially
+        this.resetInactivityTimer();
     }
 
     private sendClearSignal() {
@@ -192,28 +215,21 @@ export class StreamHandler {
     }
 
     private async handleLLMResponse(role: 'user' | 'system' | 'tool', content: any, tool_use_id?: string) {
-        // Check if this response was cancelled by user interruption
-        if (this.shouldCancelPending && role !== 'user') {
-            console.log('[DEBUG] Skipping cancelled pending response');
-            return;
-        }
-
-        // Clear the cancel flag when processing new user input
         if (role === 'user') {
             this.shouldCancelPending = false;
         }
 
+        // ALWAYS push to history to maintain valid tool/result sequence for the LLM
         this.history.push({ role, content, tool_use_id });
+        this.pruneHistory();
 
-        // Feature: Memory Pruning (sliding window of last 10 messages to keep context window clean)
-        if (this.history.length > 20) {
-            // Keep first 2 (original system instructions) and last 10
-            this.history = [
-                this.history[0],
-                this.history[1],
-                ...this.history.slice(-10)
-            ];
+        // Skip LLM generation if user interrupted
+        if (this.shouldCancelPending && role !== 'user') {
+            console.log('[DEBUG] Interruption: skipping LLM generation turn');
+            return;
         }
+
+        // Feature: Memory Pruning logic handled by pruneHistory()
 
         // Log user turns
         if (role === 'user' && typeof content === 'string') {
@@ -227,13 +243,23 @@ export class StreamHandler {
                 timezone: this.config!.timezone
             });
 
-            // Push the entire assistant response to history at once
-            this.history.push({ role: 'assistant', content: response.content });
+            // Tracking the assistant message to prune tool_uses if interrupted
+            const assistantMessage = { role: 'assistant' as const, content: response.content };
+            this.history.push(assistantMessage);
 
             for (const block of response.content) {
-                // Stop processing if user interrupted during this response
+                // Stop processing if user interrupted
                 if (this.shouldCancelPending) {
-                    console.log('[DEBUG] Interruption detected, aborting response blocks');
+                    console.log('[DEBUG] Interruption detected, pruning unused tool_use from history');
+                    // Remove any tool_use blocks from the assistant message that we won't be providing results for
+                    assistantMessage.content = assistantMessage.content.filter((b: any) => {
+                        // Keep text (AI might have said it) OR tool_use that we already initiated 
+                        // (we check completion by the fact that we are breaking BEFORE this block)
+                        // Actually, easier: remove ALL tool_use blocks that haven't been processed yet.
+                        if (b.type === 'text') return true;
+                        // If it's the current block we are about to process, remove it and all following tool_uses
+                        return false;
+                    });
                     break;
                 }
 
@@ -253,7 +279,7 @@ export class StreamHandler {
                         return;
                     }
 
-                    // Handle the tool result by adding it to history and triggering next LLM turn
+                    // Recursive call to add result and handle next turn
                     await this.handleLLMResponse('tool', result, block.id);
                 }
             }
@@ -273,7 +299,23 @@ export class StreamHandler {
         });
     }
 
+    private pruneHistory() {
+        if (this.history.length > this.MAX_HISTORY) {
+            // Keep system messages (instructions) and the last N recent messages
+            const systemMsgs = this.history.filter(m => m.role === 'system');
+            const otherMsgs = this.history
+                .filter(m => m.role !== 'system')
+                .slice(-this.KEEP_RECENT);
+
+            this.history = [...systemMsgs, ...otherMsgs];
+            console.log(`🧹 Pruned history: ${systemMsgs.length} system + ${otherMsgs.length} recent`);
+        }
+    }
+
     private finalizeCall(status: any) {
+        if (this.inactivityTimeout) {
+            clearTimeout(this.inactivityTimeout);
+        }
         if (!this.callSid) return;
         callLogRepository.update(this.callSid, {
             call_status: status,

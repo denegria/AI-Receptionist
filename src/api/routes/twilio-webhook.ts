@@ -3,12 +3,13 @@ import { config } from '../../config';
 import twilio from 'twilio';
 import { voicemailRepository } from '../../db/repositories/voicemail-repository';
 import { smsService } from '../../services/telephony/sms-service';
-import { loadClientConfig } from '../../models/client-config';;
+import { loadClientConfig } from '../../models/client-config';
+import { validateTwilioRequest } from '../middleware/twilio-validator';
 
 const VoiceResponse = twilio.twiml.VoiceResponse;
 export const twilioWebhookRouter = Router();
 
-twilioWebhookRouter.post('/voice', (req: Request, res: Response) => {
+twilioWebhookRouter.post('/voice', validateTwilioRequest, (req: Request, res: Response) => {
     const twiml = new VoiceResponse();
     const callSid = req.body.CallSid;
     const clientId = req.query.clientId as string || 'default';
@@ -36,6 +37,14 @@ twilioWebhookRouter.post('/voice', (req: Request, res: Response) => {
 
     res.type('text/xml');
     res.send(twiml.toString());
+});
+
+twilioWebhookRouter.post('/status-callback', validateTwilioRequest, (req: Request, res: Response) => {
+    // This route is for Twilio status updates, e.g., call completed.
+    // The actual implementation for this route would go here.
+    // For now, we'll just log the event.
+    console.log('📞 Call Status Update:', req.body);
+    res.status(200).send(); // Acknowledge Twilio's request
 });
 
 twilioWebhookRouter.post('/voicemail-callback', async (req: Request, res: Response) => {
