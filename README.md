@@ -109,28 +109,28 @@ TWILIO_PHONE_NUMBER=+1...
 
 ## 🗺️ Project Roadmap
 
-### ✅ Completed (MVP)
-- [x] **Phase 1-5**: Core infrastructure, Voice integration, and Calendar booking.
-- [x] **Phase 6**: Production hardening & Modularization.
-- [x] **Phase 7**: Resilience & Voicemail Fallback system.
-- [x] **Phase 8**: Structured Prompting & Few-Shot Learning.
-- [x] **Phase 9**: Final MVP Polish, STT Resilience, and Migration System.
+### ✅ Completed
+- [x] **MVP Core**: Voice integration, Deepgram, LLM, and Calendar booking.
+- [x] **Production Readiness (New)**:
+    - **Deployment**: Docker, Fly.io config, Rate Limiting.
+    - **Reliability**: Call State Machine, 10m limit, ASR confidence gates.
+    - **Trust**: Tiered Fallback System (Soft -> Hard -> Crash) & SMS Dispatch.
+    - **Observability**: Structural JSON Logging (Console/File) & Fly.io persistence.
 
 ### 🚀 Upcoming (Next Steps)
 
-#### Phase 10: Scaling & Multi-Tenancy (In Progress)
-- [ ] **Admin Dashboard**: Web interface for clients to view call logs, voicemails, and analytics.
+#### Phase 6: Live Staging & QA
+- [ ] **End-to-End Testing**: Verify fallbacks and booking limits in a live staged environment.
+- [ ] **Load Testing**: Validate rate limits and concurrent call handling.
+
+#### Phase 7: Scaling & Multi-Tenancy
+- [ ] **Admin Dashboard**: Web interface for clients to view logs and voicemails.
 - [ ] **Self-Serve Auth**: Automated OAuth onboarding flow for Google/Outlook.
-- [ ] **RAG for FAQ**: Business-specific knowledge base (e.g., price lists, service manuals).
+- [ ] **RAG for FAQ**: Business-specific knowledge base injection.
 
-#### Phase 11: Professional Features
-- [ ] **Advanced SMS**: Two-way SMS for appointment confirmations and reschedule links.
-- [ ] **Compliant Call Recording**: Secure recording storage for quality assurance.
-
-#### Phase 12: Intelligence
-- [ ] **Sentiment Analysis**: Confidence scoring and tone detection on call logs.
-- [ ] **Predictive Booking**: Suggesting optimal slots based on travel time.
-- [ ] **Auto-Sync**: Background cron to keep SQLite cache 100% in sync with original calendars.
+#### Phase 8: Advanced Professional Features
+- [ ] **Smart Rescheduling**: Two-way SMS interaction for modifying appointments.
+- [ ] **Sentiment Analysis**: Post-call analytics for quality assurance.
 
 ---
 *Built with ❤️ by Alvaro*
