@@ -103,4 +103,49 @@ export class LLMService {
             throw error;
         }
     }
+
+    async *generateStream(history: ChatMessage[], context?: { businessName: string, timezone: string }): AsyncGenerator<Anthropic.MessageStreamEvent> {
+        const messages = history.filter(m => m.role !== 'system').map(m => {
+            if (m.role === 'tool') {
+                return {
+                    role: 'user',
+                    content: [
+                        {
+                            type: 'tool_result',
+                            tool_use_id: m.tool_use_id,
+                            content: m.content
+                        }
+                    ]
+                };
+            }
+            return {
+                role: m.role,
+                content: m.content
+            };
+        }) as any;
+
+        const system = this.getSystemPrompt(
+            context?.businessName || 'a service business',
+            context?.timezone || 'UTC'
+        );
+
+        try {
+            console.log(`[DEBUG] Starting LLM Stream with ${messages.length} messages`);
+            const stream = this.anthropic.messages.stream({
+                model: 'claude-3-haiku-20240307',
+                max_tokens: 500,
+                system: system,
+                messages: messages,
+                tools: TOOLS as any,
+                temperature: 0.1,
+            });
+
+            for await (const event of stream) {
+                yield event;
+            }
+        } catch (error) {
+            console.error("LLM Stream Error:", error);
+            throw error;
+        }
+    }
 }
