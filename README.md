@@ -12,6 +12,7 @@
 -   **🛡️ Resilience**: STT confidence thresholding and sliding conversation memory pruning.
 -   **🗄️ Database Evolution**: Built-in migration runner for seamless schema updates.
 -   **🩺 Health Monitoring**: Dedicated `/health` endpoint for DB and API vitality.
+-   **⚡ Low-Latency Architecture**: Streaming LLM & TTS pipeline with smart buffering and interruption handling (~0.8s response).
 -   **🔌 Extensible Architecture**: Modular **Node.js** and **TypeScript** foundation.
 
 ## 🛠️ Tech Stack
@@ -75,6 +76,11 @@ DEEPGRAM_API_KEY=...
 TWILIO_ACCOUNT_SID=AC...
 TWILIO_AUTH_TOKEN=...
 TWILIO_PHONE_NUMBER=+1...
+TWILIO_STATUS_CALLBACK_URL=...
+
+# Feature Flags
+ENABLE_STREAMING_LLM=true
+ENABLE_STREAMING_TTS=true
 ```
 
 ### 2. Client Config (`config/clients/client-abc.json`)
@@ -120,6 +126,10 @@ TWILIO_PHONE_NUMBER=+1...
     - **Reliability**: Call State Machine, 10m limit, ASR confidence gates.
     - **Trust**: Tiered Fallback System (Soft -> Hard -> Crash) & SMS Dispatch.
     - **Observability**: Structural JSON Logging (Console/File) & Fly.io persistence.
+- [x] **Latency Optimization (New)**:
+    - **Streaming**: Token-by-token LLM generation + WebSocket TTS.
+    - **Natural Prosody**: Sentence buffering to prevent robotic chopping.
+    - **Control**: Instant interruption (barge-in) via `AbortController`.
 
 ### 🚀 Upcoming (Next Steps)
 

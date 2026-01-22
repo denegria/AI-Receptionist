@@ -4,6 +4,7 @@ import { config } from '../config';
 
 class Logger {
     private logFile: string;
+    private logStream: fs.WriteStream;
 
     constructor() {
         const logDir = path.resolve(config.paths.logs);
@@ -15,6 +16,13 @@ class Logger {
             }
         }
         this.logFile = path.join(logDir, 'app.log');
+
+        // Create a write stream in append mode
+        this.logStream = fs.createWriteStream(this.logFile, { flags: 'a' });
+
+        this.logStream.on('error', (err) => {
+            console.error('Failed to write to log file stream:', err);
+        });
     }
 
     private log(level: string, message: string, meta?: any) {
@@ -35,12 +43,9 @@ class Logger {
             console.log(logString);
         }
 
-        // File output (for persistence)
-        try {
-            fs.appendFileSync(this.logFile, logString + '\n');
-        } catch (e) {
-            // Don't crash if logging fails, but warn locally
-            console.error('Failed to write to log file:', e);
+        // File output (Async via Stream)
+        if (this.logStream.writable) {
+            this.logStream.write(logString + '\n');
         }
     }
 
@@ -54,6 +59,15 @@ class Logger {
 
     public error(message: string, meta?: any) {
         this.log('error', message, meta);
+    }
+
+    public latency(callSid: string, event: 'STT_FINAL' | 'LLM_START' | 'LLM_FIRST_TOKEN' | 'TTS_FIRST_SENTENCE' | 'AUDIO_SENT', relativeMs: number, meta?: any) {
+        this.log('latency', event, {
+            callSid,
+            relativeMs,
+            latencyEvent: true,
+            ...meta
+        });
     }
 }
 

@@ -12,6 +12,7 @@ if (!fs.existsSync(dbDir)) {
 }
 
 export const db = new Database(dbPath);
+db.pragma('journal_mode = WAL');
 
 export function initDatabase() {
     try {

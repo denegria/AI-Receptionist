@@ -24,6 +24,12 @@ interface Config {
         language: string;
     };
 
+    voice: {
+        asrConfidenceThreshold: number;
+        silenceTimeoutMs: number;
+        maxDurationMs: number;
+    };
+
     ai: {
         provider: 'claude' | 'openai';
         anthropicApiKey?: string;
@@ -69,6 +75,8 @@ interface Config {
         callRecording: boolean;
         webSearch: boolean;
         smsNotifications: boolean;
+        enableStreamingLLM: boolean;
+        enableStreamingTTS: boolean;
     };
 }
 
@@ -105,6 +113,12 @@ export const config: Config = {
         apiKey: getEnvVar('DEEPGRAM_API_KEY'),
         model: getEnvVar('DEEPGRAM_MODEL', 'nova-2'),
         language: getEnvVar('DEEPGRAM_LANGUAGE', 'en-US'),
+    },
+
+    voice: {
+        asrConfidenceThreshold: parseFloat(getEnvVar('ASR_CONFIDENCE_THRESHOLD', '0.6')),
+        silenceTimeoutMs: parseInt(getEnvVar('SILENCE_TIMEOUT_MS', '1000')),
+        maxDurationMs: parseInt(getEnvVar('MAX_CALL_DURATION_MS', '600000')), // 10 minutes
     },
 
     ai: {
@@ -152,6 +166,8 @@ export const config: Config = {
         callRecording: getEnvVar('FEATURE_CALL_RECORDING', 'false') === 'true',
         webSearch: getEnvVar('FEATURE_WEB_SEARCH', 'false') === 'true',
         smsNotifications: getEnvVar('FEATURE_SMS_NOTIFICATIONS', 'false') === 'true',
+        enableStreamingLLM: getEnvVar('ENABLE_STREAMING_LLM', 'false') === 'true',
+        enableStreamingTTS: getEnvVar('ENABLE_STREAMING_TTS', 'false') === 'true',
     },
 };
 
