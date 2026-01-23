@@ -1,6 +1,9 @@
 app = 'ai-receptionist-eowl3q'
 primary_region = 'iad'
 
+[env]
+  PUBLIC_URL = "https://ai-receptionist-eowl3q.fly.dev"
+
 [build]
 
 [http_service]
@@ -17,7 +20,3 @@ primary_region = 'iad'
   method = "GET"
   timeout = "5s"
   path = "/health"
-
-[mounts]
-  source = "data"
-  destination = "/app/data"

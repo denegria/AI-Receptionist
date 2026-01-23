@@ -133,7 +133,7 @@ export const config: Config = {
     google: {
         clientId: process.env.GOOGLE_CLIENT_ID || '',
         clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
-        redirectUri: process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3000/auth/google/callback',
+        redirectUri: process.env.GOOGLE_REDIRECT_URI || (process.env.PUBLIC_URL ? `${process.env.PUBLIC_URL}/auth/google/callback` : 'http://localhost:8080/auth/google/callback'),
     },
 
     microsoft: {
