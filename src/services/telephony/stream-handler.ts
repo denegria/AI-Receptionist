@@ -32,6 +32,7 @@ export class StreamHandler {
     private stateManager: CallStateManager;
     private callerPhone: string = 'unknown';
     private currentAbortController: AbortController | null = null;
+    private currentTTSLive: { send: (t: string) => void, finish: () => void } | null = null;
     private sentenceBuffer: string = '';
     private turnStartTime: number = 0;
     private speechQueue: string[] = [];
@@ -184,6 +185,11 @@ export class StreamHandler {
                             this.currentAbortController.abort();
                             this.currentAbortController = null;
                         }
+                        if (this.currentTTSLive) {
+                            this.currentTTSLive.finish();
+                            this.currentTTSLive = null;
+                            console.log('[DEBUG] 🛑 Aborted TTS Stream due to Interruption');
+                        }
                         console.log(`[DEBUG] 🛑 Aborted LLM/TTS Turn due to Interruption ("${transcript}", Conf: ${confidence})`);
                     }
                 }
@@ -311,6 +317,25 @@ export class StreamHandler {
         console.log('[DEBUG] 🔄 Reset shouldCancelPending = false (Response Stream)');
         this.currentAbortController = new AbortController();
 
+        // Start persistent TTS session for the whole turn (Fluid Pipe)
+        try {
+            this.currentTTSLive = this.tts.createLiveSession((chunk) => {
+                if (this.shouldCancelPending) return;
+                const message = {
+                    event: 'media',
+                    streamSid: this.streamSid,
+                    media: { payload: chunk.toString('base64') }
+                };
+                if (this.ws.readyState === WebSocket.OPEN) {
+                    if (Math.random() < 0.05) console.log(`[DEBUG] Sending media to Twilio (${chunk.length} bytes)`);
+                    this.ws.send(JSON.stringify(message));
+                }
+            });
+        } catch (ttsErr) {
+            console.error('[WARNING] Failed to start Fluid Pipe, falling back to REST TTS:', ttsErr);
+            this.currentTTSLive = null;
+        }
+
         const stream = this.llm.generateStream(this.history, {
             businessName: this.config!.businessName,
             timezone: this.config!.timezone
@@ -326,7 +351,14 @@ export class StreamHandler {
                 if (this.currentAbortController?.signal.aborted) throw new Error('Stream Aborted');
 
                 if (chunk.type === 'message_start') {
-                    // Init
+                    // Extract usage if available
+                    const usage = (chunk.message as any).usage;
+                    if (usage) {
+                        logger.economic(this.callSid, {
+                            tokens_input: usage.input_tokens,
+                            tokens_output: usage.output_tokens
+                        });
+                    }
                 } else if (chunk.type === 'content_block_start' && chunk.content_block.type === 'tool_use') {
                     // If we had text before the tool, push it to content array
                     if (currentText) {
@@ -353,7 +385,6 @@ export class StreamHandler {
                         });
 
                         // CRITICAL: Push Assistant message to history BEFORE executing tool
-                        // This satisfies Anthropic's requirement that tool_result follows tool_use
                         this.history.push({ role: 'assistant', content: assistantContent });
 
                         try {
@@ -388,22 +419,24 @@ export class StreamHandler {
 
                     const text = chunk.delta.text;
                     currentText += text;
-                    this.sentenceBuffer += text;
 
-                    // Flush sentences
-                    if (this.isSentenceComplete(this.sentenceBuffer)) {
-                        const sentence = this.sentenceBuffer.trim();
-                        this.sentenceBuffer = '';
-                        if (sentence) {
-                            logger.latency(this.callSid, 'TTS_FIRST_SENTENCE', Date.now() - this.turnStartTime, { sentence });
-                            this.enqueueSpeech(sentence);
+                    // DIRECT PIPE to TTS (No sentence buffering needed here!)
+                    if (this.currentTTSLive) {
+                        this.currentTTSLive.send(text);
+                    } else {
+                        // FALLBACK: Use sentence-based REST streaming
+                        this.sentenceBuffer += text;
+                        if (this.isSentenceComplete(this.sentenceBuffer)) {
+                            const sentence = this.sentenceBuffer.trim();
+                            this.sentenceBuffer = '';
+                            if (sentence) this.enqueueSpeech(sentence);
                         }
                     }
                 }
             }
 
-            // Flush remaining buffer
-            if (this.sentenceBuffer.trim()) {
+            // Flush remaining buffer (REST fallback path)
+            if (!this.currentTTSLive && this.sentenceBuffer.trim()) {
                 this.enqueueSpeech(this.sentenceBuffer.trim());
                 this.sentenceBuffer = '';
             }
@@ -412,7 +445,6 @@ export class StreamHandler {
             if (currentText) assistantContent.push({ type: 'text', text: currentText });
             if (assistantContent.length > 0) {
                 this.history.push({ role: 'assistant', content: assistantContent });
-                // Log only the text parts for better readability in logs
                 const fullText = assistantContent
                     .filter(b => b.type === 'text')
                     .map(b => b.text)
@@ -427,6 +459,10 @@ export class StreamHandler {
                 throw e;
             }
         } finally {
+            if (this.currentTTSLive) {
+                this.currentTTSLive.finish();
+                this.currentTTSLive = null;
+            }
             this.currentAbortController = null;
         }
     }

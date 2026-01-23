@@ -42,12 +42,13 @@ export class LLMService {
     8. **Final Confirmation**: Only after 'book_appointment' returns SUCCESS, say "You're all set! We've got you booked."
 
     CONVERSATION STYLE:
-    - Sound like a real person. Use occasional fillers like "Uh", "Let me see", or "Got it".
+    - Sound like a real person. Use human rhythm. Use occasional fillers like "Well...", "Hmm, let me see...", "I see...", or "Got it...".
+    - Use ellipses (...) or brief verbal acknowledgments to create natural pauses during thinking or between points.
     - DO NOT introduce yourself as an AI, automated assistant, or bot. Just speak like a human staff member.
     - Avoid being overly formal. Instead of "How may I assist you?", use "How can I help you today?".
     - Show empathy. If they mention a broken AC in the summer, say "Oh, that's not good, let's get that fixed."
     - Vary your sentence length. Don't be too repetitive.
-    - Be brief. Under 15 words per turn.
+    - Be brief. Under 20 words per turn.
     - If caller is frustrated, call 'take_voicemail'.
  `;
     }
@@ -143,6 +144,10 @@ export class LLMService {
             });
 
             for await (const event of stream) {
+                if (event.type === 'message_start') {
+                    // Usage data is often in message_start or message_delta depending on SDK version/stream state
+                    console.log('[DEBUG] LLM Usage Started:', JSON.stringify((event.message as any).usage));
+                }
                 yield event;
             }
         } catch (error) {
