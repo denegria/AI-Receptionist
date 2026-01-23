@@ -34,7 +34,7 @@ export class StreamHandler {
     private currentAbortController: AbortController | null = null;
     private sentenceBuffer: string = '';
 
-    private readonly SENTENCE_END_REGEX = /[.!?](\s|$)/;
+    private readonly SENTENCE_END_REGEX = /(?<=[.!?])\s+(?=[A-Z0-9])/g;
     private readonly ABBREVIATION_REGEX = /\b(Dr|Mr|Mrs|Ms|St|Ave|Inc|Jr|Sr|Prof|gov|com|net|org|edu)\.$/i;
 
     private readonly INACTIVITY_LIMIT_MS = 30000; // 30 seconds
