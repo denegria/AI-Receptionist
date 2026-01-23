@@ -317,6 +317,7 @@ export class StreamHandler {
                     media: { payload: chunk.toString('base64') }
                 };
                 if (this.ws.readyState === WebSocket.OPEN) {
+                    if (Math.random() < 0.05) console.log(`[DEBUG] Sending media to Twilio (${chunk.length} bytes)`);
                     this.ws.send(JSON.stringify(message));
                 }
             });
@@ -561,6 +562,7 @@ export class StreamHandler {
                         media: { payload: chunk.toString('base64') }
                     };
                     if (this.ws.readyState === WebSocket.OPEN) {
+                        if (Math.random() < 0.05) console.log(`[DEBUG] Sending media (speak) to Twilio (${chunk.length} bytes)`);
                         this.ws.send(JSON.stringify(message));
                     }
                 });
