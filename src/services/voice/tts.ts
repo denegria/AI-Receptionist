@@ -92,12 +92,31 @@ export class DeepgramTTSService {
             container: 'none',
         });
 
-        live.on('open', () => console.log('[DEBUG] ✨ Deepgram TTS Live Session OPENED (Event Fired)'));
-        live.on('close', () => console.log('[DEBUG] 🔌 Deepgram TTS Live Session CLOSED'));
+        let isOpen = false;
+        let queue: string[] = [];
+
+        const watchdog = setTimeout(() => {
+            if (!isOpen) console.warn('[WARNING] Deepgram TTS Live Session still not open after 5s');
+        }, 5000);
+
+        live.on('open', () => {
+            isOpen = true;
+            clearTimeout(watchdog);
+            console.log(`[DEBUG] ✨ Deepgram TTS Live Session OPENED. Flushing ${queue.length} queued tokens...`);
+            while (queue.length > 0) {
+                const text = queue.shift();
+                if (text) live.sendText(text);
+            }
+        });
+
+        live.on('close', () => {
+            isOpen = false;
+            console.log('[DEBUG] 🔌 Deepgram TTS Live Session CLOSED');
+        });
+
         live.on('error', (err: any) => console.error('[DEBUG] ❌ Deepgram TTS Live ERROR:', err));
         live.on('warning', (warn: any) => console.warn('[DEBUG] ⚠️ Deepgram TTS Live WARNING:', warn));
 
-        // Listen for both event name styles
         const handleAudio = (data: any, source: string) => {
             if (data) {
                 if (Math.random() < 0.1) console.log(`[DEBUG] Received TTS ${source}: ${data.length || (data.data ? data.data.length : 'unknown')} bytes`);
@@ -111,15 +130,18 @@ export class DeepgramTTSService {
 
         return {
             send: (text: string) => {
-                if (text.trim()) {
-                    // console.log(`[DEBUG] ⬆️ Pushing text to TTS: "${text}"`);
+                if (!text.trim()) return;
+                if (isOpen) {
                     live.sendText(text);
+                } else {
+                    queue.push(text);
                 }
             },
             finish: () => {
                 console.log('[DEBUG] 🏁 Closing Deepgram TTS Session (Finish Called)');
                 (live as any).requestClose();
-            }
+            },
+            get isOpen() { return isOpen; }
         };
     }
 
