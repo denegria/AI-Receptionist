@@ -75,6 +75,27 @@ export class DeepgramTTSService {
     }
 
     /**
+     * Creates a live TTS session for continuous streaming
+     */
+    public createLiveSession(onAudio: (chunk: Buffer) => void) {
+        const live = this.deepgram.speak.live({
+            model: 'aura-stella-en',
+            encoding: 'mulaw',
+            sample_rate: 8000,
+            container: 'none',
+        });
+
+        live.addListener('AudioData', (data: any) => {
+            if (data) onAudio(Buffer.from(data));
+        });
+
+        return {
+            send: (text: string) => live.sendText(text),
+            finish: () => (live as any).finish()
+        };
+    }
+
+    /**
      * Bi-directional streaming (Text Stream -> Audio Callback)
      * Uses Deepgram WebSocket API for lowest latency
      */
@@ -84,29 +105,14 @@ export class DeepgramTTSService {
         onError?: (err: any) => void
     ): Promise<void> {
         try {
-            const live = this.deepgram.speak.live({
-                model: 'aura-stella-en',
-                encoding: 'mulaw',
-                sample_rate: 8000,
-                container: 'none',
-            });
-
-            live.addListener('AudioData', (data: any) => {
-                if (data) onAudio(Buffer.from(data));
-            });
-
-            live.addListener('error', (err: any) => {
-                if (onError) onError(err);
-                else console.error('Deepgram Live TTS Error:', err);
-            });
+            const live = this.createLiveSession(onAudio);
 
             // Iterate tokens and send to Deepgram
             for await (const text of textStream) {
-                if (text) live.sendText(text);
+                if (text) live.send(text);
             }
 
-            // Explicitly cast to any if types are missing finish()
-            (live as any).finish();
+            live.finish();
         } catch (error) {
             console.error('Deepgram TTS Live Setup Error:', error);
             if (onError) onError(error);

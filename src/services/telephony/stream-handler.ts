@@ -32,6 +32,7 @@ export class StreamHandler {
     private stateManager: CallStateManager;
     private callerPhone: string = 'unknown';
     private currentAbortController: AbortController | null = null;
+    private currentTTSLive: { send: (t: string) => void, finish: () => void } | null = null;
     private sentenceBuffer: string = '';
     private turnStartTime: number = 0;
     private speechQueue: string[] = [];
@@ -178,7 +179,11 @@ export class StreamHandler {
                     if (this.currentAbortController) {
                         this.currentAbortController.abort();
                         this.currentAbortController = null;
-                        console.log('[DEBUG] 🛑 Aborted LLM/TTS Stream due to Interruption');
+                    }
+                    if (this.currentTTSLive) {
+                        this.currentTTSLive.finish();
+                        this.currentTTSLive = null;
+                        console.log('[DEBUG] 🛑 Aborted TTS Stream due to Interruption');
                     }
                 }
             }
@@ -301,6 +306,22 @@ export class StreamHandler {
 
     private async handleStreamingResponse() {
         this.currentAbortController = new AbortController();
+
+        // Start persistent TTS session for the whole turn
+        if (config.features.enableStreamingTTS) {
+            this.currentTTSLive = this.tts.createLiveSession((chunk) => {
+                if (this.shouldCancelPending) return;
+                const message = {
+                    event: 'media',
+                    streamSid: this.streamSid,
+                    media: { payload: chunk.toString('base64') }
+                };
+                if (this.ws.readyState === WebSocket.OPEN) {
+                    this.ws.send(JSON.stringify(message));
+                }
+            });
+        }
+
         const stream = this.llm.generateStream(this.history, {
             businessName: this.config!.businessName,
             timezone: this.config!.timezone
@@ -380,13 +401,17 @@ export class StreamHandler {
                     currentText += text;
                     this.sentenceBuffer += text;
 
-                    // Flush sentences
+                    // Pipe directly to TTS (WebSocket handles the buffering for naturalness)
+                    if (this.currentTTSLive) {
+                        this.currentTTSLive.send(text);
+                    }
+
+                    // Flush sentences for LOGGING purposes only
                     if (this.isSentenceComplete(this.sentenceBuffer)) {
                         const sentence = this.sentenceBuffer.trim();
                         this.sentenceBuffer = '';
                         if (sentence) {
                             logger.latency(this.callSid, 'TTS_FIRST_SENTENCE', Date.now() - this.turnStartTime, { sentence });
-                            this.enqueueSpeech(sentence);
                         }
                     }
                 }
@@ -417,6 +442,10 @@ export class StreamHandler {
                 throw e;
             }
         } finally {
+            if (this.currentTTSLive) {
+                this.currentTTSLive.finish();
+                this.currentTTSLive = null;
+            }
             this.currentAbortController = null;
         }
     }
