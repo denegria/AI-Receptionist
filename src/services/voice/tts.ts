@@ -91,7 +91,7 @@ export class DeepgramTTSService {
 
         return {
             send: (text: string) => live.sendText(text),
-            finish: () => (live as any).finish()
+            finish: () => (live as any).requestClose()
         };
     }
 
