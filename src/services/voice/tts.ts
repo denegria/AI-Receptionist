@@ -85,8 +85,19 @@ export class DeepgramTTSService {
             container: 'none',
         });
 
-        live.addListener('AudioData', (data: any) => {
-            if (data) onAudio(Buffer.from(data));
+        live.on('open', () => console.log('[DEBUG] Deepgram TTS Live Session Opened'));
+        live.on('close', () => console.log('[DEBUG] Deepgram TTS Live Session Closed'));
+        live.on('error', (err: any) => console.error('[DEBUG] Deepgram TTS Live Error:', err));
+
+        live.on('AudioData', (data: any) => {
+            if (data) {
+                // Log only occasionally or just the first chunk to avoid flooding
+                if (Math.random() < 0.1) console.log(`[DEBUG] Received TTS Audio Chunk: ${data.length || (data.data ? data.data.length : 'unknown')} bytes`);
+
+                // Extract buffer from data - handle both direct Buffer and { data: Buffer } wrappers
+                const buffer = data instanceof Buffer ? data : (data.data ? Buffer.from(data.data) : null);
+                if (buffer) onAudio(buffer);
+            }
         });
 
         return {
