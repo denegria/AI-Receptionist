@@ -34,10 +34,7 @@ export class StreamHandler {
     private currentAbortController: AbortController | null = null;
     private currentSpeechAbort: AbortController | null = null;
     private currentTTSLive: { send: (t: string) => void, finish: () => void } | null = null;
-    private sentenceBuffer: string = '';
     private turnStartTime: number = 0;
-    private speechQueue: string[] = [];
-    private isProcessingQueue: boolean = false;
 
     private readonly SENTENCE_END_REGEX = /[.!?](\s|$)/;
     private readonly ABBREVIATION_REGEX = /\b(Dr|Mr|Mrs|Ms|St|Ave|Inc|Jr|Sr|Prof|gov|com|net|org|edu)\.$/i;
@@ -47,7 +44,6 @@ export class StreamHandler {
     private readonly KEEP_RECENT = 10;
 
     constructor(ws: WebSocket, clientId?: string) {
-        // ... (constructor remains similar, just initializing services)
         this.ws = ws;
         this.clientId = clientId || null;
 
@@ -79,12 +75,11 @@ export class StreamHandler {
 
     private setupSocket() {
         this.ws.on('message', async (msg: string) => {
-            // ... (message handling remains mostly the same)
             let data;
             try {
                 data = JSON.parse(msg);
             } catch (e) {
-                console.error("[DEBUG] Invalid JSON from Twilio:", msg.substring(0, 100));
+                console.error("[DEBUG] Invalid JSON from Twilio:", msg.toString().substring(0, 100));
                 return;
             }
 
@@ -107,7 +102,6 @@ export class StreamHandler {
 
                 try {
                     this.config = loadClientConfig(this.clientId);
-                    // Create initial call log to avoid Foreign Key errors
                     callLogRepository.create({
                         client_id: this.clientId,
                         call_sid: this.callSid,
@@ -121,7 +115,6 @@ export class StreamHandler {
                     return;
                 }
 
-                // Initial Greeting (State Transition)
                 console.log(`✅ Config loaded for ${this.clientId}. Transitioning to GREETING.`);
                 this.transitionTo(CallState.GREETING);
                 this.handleInitialGreeting().catch(err => console.error('[GREETING ERROR]', err));
@@ -157,15 +150,12 @@ export class StreamHandler {
                 this.shouldCancelPending = true;
                 this.resetInactivityTimer();
 
-                // Feature: Strict Confidence Gate
                 if (confidence && confidence < config.voice.asrConfidenceThreshold) {
                     logger.warn(`STT Low Confidence`, { callSid: this.callSid, transcript, confidence });
-                    // Minimal fallback prompt
-                    this.enqueueSpeech("I'm sorry, the connection is a bit breaking up. Could you say that again?");
+                    await this.speak("I'm sorry, the connection is a bit breaking up. Could you say that again?");
                     return;
                 }
 
-                // Logging
                 this.turnStartTime = Date.now();
                 logger.latency(this.callSid, 'STT_FINAL', 0, { transcript, confidence });
 
@@ -174,7 +164,6 @@ export class StreamHandler {
             } else if (transcript.trim().length > 0) {
                 // Interruption Handling
                 if (this.isAISpeaking || this.currentAbortController) {
-                    // Only interrupt if the user is clearly saying something (high confidence or multiple words)
                     const isSubstantialSpeech = transcript.trim().split(' ').length > 3;
                     const isConfidentSpeech = confidence && confidence > 0.7;
 
@@ -186,12 +175,6 @@ export class StreamHandler {
                             this.currentAbortController.abort();
                             this.currentAbortController = null;
                         }
-                        if (this.currentTTSLive) {
-                            this.currentTTSLive.finish();
-                            this.currentTTSLive = null;
-                            console.log('[DEBUG] 🛑 Aborted TTS Stream due to Interruption');
-                        }
-                        console.log(`[DEBUG] 🛑 Aborted LLM/TTS Turn due to Interruption ("${transcript}", Conf: ${confidence})`);
                     }
                 }
             }
@@ -200,10 +183,6 @@ export class StreamHandler {
             if (this.isAISpeaking || this.currentAbortController) {
                 this.shouldCancelPending = true;
                 this.sendClearSignal();
-                if (this.currentAbortController) {
-                    this.currentAbortController.abort();
-                    this.currentAbortController = null;
-                }
             }
         });
         this.resetInactivityTimer();
@@ -221,26 +200,20 @@ export class StreamHandler {
     }
 
     private sendClearSignal() {
-        const clearMessage = {
-            event: 'clear',
-            streamSid: this.streamSid
-        };
+        const clearMessage = { event: 'clear', streamSid: this.streamSid };
         if (this.ws.readyState === WebSocket.OPEN && this.streamSid) {
             console.log('[DEBUG] Sending CLEAR signal to stop AI speech');
             this.ws.send(JSON.stringify(clearMessage));
             this.isAISpeaking = false;
 
-            // HARD KILL active REST playback
             if (this.currentSpeechAbort) {
-                console.log('[DEBUG] 🛑 Aborting REST TTS Playback due to CLEAR signal');
                 this.currentSpeechAbort.abort();
                 this.currentSpeechAbort = null;
             }
 
-            this.cleanupTTS(); // Immediately kill the pipe on barge-in
+            this.cleanupTTS();
         }
     }
-
 
     private ensureTTSSession() {
         if (this.currentTTSLive) return this.currentTTSLive;
@@ -254,7 +227,6 @@ export class StreamHandler {
                 media: { payload: chunk.toString('base64') }
             };
             if (this.ws.readyState === WebSocket.OPEN) {
-                if (Math.random() < 0.05) console.log(`[DEBUG] Sending media to Twilio (${chunk.length} bytes)`);
                 this.ws.send(JSON.stringify(message));
             }
         });
@@ -272,16 +244,12 @@ export class StreamHandler {
 
     private async speakREST(text: string) {
         if (!text.trim()) return;
-
-        // Cancel any existing REST speech before starting new one
-        if (this.currentSpeechAbort) {
-            this.currentSpeechAbort.abort();
-        }
+        if (this.currentSpeechAbort) this.currentSpeechAbort.abort();
         this.currentSpeechAbort = new AbortController();
         const signal = this.currentSpeechAbort.signal;
 
         try {
-            console.log(`[DEBUG] 🌐 Sending to REST TTS: "${text.substring(0, 30)}..."`);
+            console.log(`[DEBUG] 🌐 REST Fallback: "${text.substring(0, 30)}..."`);
             for await (const chunk of this.tts.generateStream(text)) {
                 if (signal.aborted || this.shouldCancelPending) break;
                 if (this.ws.readyState === WebSocket.OPEN) {
@@ -293,20 +261,16 @@ export class StreamHandler {
                 }
             }
         } catch (err) {
-            if ((err as any).name !== 'AbortError') {
-                console.error('[REST TTS ERROR]', err);
-            }
+            if ((err as any).name !== 'AbortError') console.error('[REST TTS ERR]', err);
         } finally {
-            if (!signal.aborted && this.currentSpeechAbort?.signal === signal) {
-                this.currentSpeechAbort = null;
-            }
+            if (!signal.aborted && this.currentSpeechAbort?.signal === signal) this.currentSpeechAbort = null;
         }
     }
 
     private enqueueProcessing(role: 'user' | 'system' | 'tool', content: any, tool_use_id?: string) {
-        this.processingChain = this.processingChain.then(() =>
-            this.handleLLMResponse(role, content, tool_use_id)
-        );
+        this.processingChain = this.processingChain
+            .then(() => this.handleLLMResponse(role, content, tool_use_id))
+            .catch(err => console.error('[CRITICAL] Chain Error:', err));
     }
 
     private async handleInitialGreeting() {
@@ -319,24 +283,20 @@ export class StreamHandler {
         this.history.push({ role: 'assistant', content: greeting });
         this.logTurn('assistant', greeting);
 
-        // ALWAYS use REST for greeting - it's 100% reliable
         this.speakREST(greeting).catch(err => console.error('[GREETING ERR]', err));
-
-        // Simultaneously pre-warm the pipe for the rest of the call
         this.ensureTTSSession();
     }
-
 
     private async handleLLMResponse(role: 'user' | 'system' | 'tool', content: any, tool_use_id?: string) {
         if (role === 'user') {
             this.shouldCancelPending = false;
-            this.ensureTTSSession(); // Start pipe for the whole interaction chain
+            this.ensureTTSSession();
         }
 
         this.history.push({ role, content, tool_use_id });
         this.pruneHistory();
 
-        if (this.shouldCancelPending && role !== 'user') return;
+        if (this.shouldCancelPending && role === 'user') return;
         if (role === 'user' && typeof content === 'string') this.logTurn('user', content);
 
         logger.latency(this.callSid, 'LLM_START', Date.now());
@@ -345,7 +305,6 @@ export class StreamHandler {
             if (config.features.enableStreamingLLM) {
                 await this.handleStreamingResponse();
             } else {
-                // Legacy path uses this.speak which is updated below
                 const response = await this.llm.generateResponse(this.history, {
                     businessName: this.config!.businessName,
                     timezone: this.config!.timezone
@@ -360,9 +319,9 @@ export class StreamHandler {
                     }
                 }
             }
+        } catch (err) {
+            console.error('[HANDLER ERR]', err);
         } finally {
-            // Only cleanup if we are finally done with the chain (not recursing into tool)
-            // Or if we were interrupted
             if (role === 'user' || this.shouldCancelPending) {
                 this.cleanupTTS();
             }
@@ -370,29 +329,9 @@ export class StreamHandler {
     }
 
     private async handleStreamingResponse() {
-        this.shouldCancelPending = false; // Reset for new turn
-        console.log('[DEBUG] 🔄 Reset shouldCancelPending = false (Response Stream)');
+        this.shouldCancelPending = false;
         this.currentAbortController = new AbortController();
-
-        // Start persistent TTS session for the whole turn (Fluid Pipe)
-        let turnSession: { send: (t: string) => void, finish: () => void } | null = null;
-        try {
-            turnSession = this.tts.createLiveSession((chunk) => {
-                if (this.shouldCancelPending) return;
-                const message = {
-                    event: 'media',
-                    streamSid: this.streamSid,
-                    media: { payload: chunk.toString('base64') }
-                };
-                if (this.ws.readyState === WebSocket.OPEN) {
-                    if (Math.random() < 0.05) console.log(`[DEBUG] Sending media to Twilio (${chunk.length} bytes)`);
-                    this.ws.send(JSON.stringify(message));
-                }
-            });
-            this.currentTTSLive = turnSession;
-        } catch (ttsErr) {
-            console.error('[WARNING] Failed to start Fluid Pipe, falling back to REST TTS:', ttsErr);
-        }
+        const session = this.ensureTTSSession();
 
         const stream = this.llm.generateStream(this.history, {
             businessName: this.config!.businessName,
@@ -406,66 +345,38 @@ export class StreamHandler {
 
         try {
             for await (const chunk of stream) {
-                if (this.currentAbortController?.signal.aborted) throw new Error('Stream Aborted');
+                if (this.currentAbortController?.signal.aborted || this.shouldCancelPending) throw new Error('Turn Aborted');
 
-                // Extract usage from any chunk that has it (start, delta, or stop)
                 const usage = (chunk as any).usage || (chunk as any).message?.usage;
                 if (usage) {
-                    logger.economic(this.callSid, {
-                        tokens_input: usage.input_tokens,
-                        tokens_output: usage.output_tokens
-                    });
+                    logger.economic(this.callSid, { tokens_input: usage.input_tokens, tokens_output: usage.output_tokens });
                 }
 
                 if (chunk.type === 'content_block_start' && chunk.content_block.type === 'tool_use') {
-                    // If we had text before the tool, push it to content array
                     if (currentText) {
                         assistantContent.push({ type: 'text', text: currentText });
                         currentText = '';
                     }
-                    currentTool = {
-                        id: chunk.content_block.id,
-                        name: chunk.content_block.name,
-                        input: ''
-                    };
+                    currentTool = { id: chunk.content_block.id, name: chunk.content_block.name, input: '' };
                 } else if (chunk.type === 'content_block_delta' && chunk.delta.type === 'input_json_delta') {
-                    if (currentTool) {
-                        currentTool.input += chunk.delta.partial_json;
-                    }
+                    if (currentTool) currentTool.input += chunk.delta.partial_json;
                 } else if (chunk.type === 'content_block_stop') {
                     if (currentTool) {
-                        // Push tool_use to assistant content
                         assistantContent.push({
                             type: 'tool_use',
                             id: currentTool.id,
                             name: currentTool.name,
                             input: JSON.parse(currentTool.input)
                         });
-
-                        // CRITICAL: Push Assistant message to history BEFORE executing tool
                         this.history.push({ role: 'assistant', content: assistantContent });
-
-                        try {
-                            this.logTurn('assistant', `[TOOL CALL] ${currentTool.name}`);
-                            const input = JSON.parse(currentTool.input);
-
-                            // Execute tool (Blocking)
-                            const result = await this.toolExecutor.execute(currentTool.name, input, this.clientId!);
-                            this.logTurn('assistant', `[TOOL RESULT] ${currentTool.name}: ${result}`);
-
-                            if (currentTool.name === 'book_appointment' && !result.includes('Error')) {
-                                this.transitionTo(CallState.CONFIRMATION);
-                            }
-
-                            // Chain the tool result back into LLM
-                            await this.handleLLMResponse('tool', result, currentTool.id);
-                            currentTool = null;
-                            return; // Stop processing this stream iteration
-                        } catch (parseError) {
-                            console.error('Failed to parse tool input:', parseError);
-                        }
+                        const input = JSON.parse(currentTool.input);
+                        const result = await this.toolExecutor.execute(currentTool.name, input, this.clientId!);
+                        this.logTurn('assistant', `[TOOL RESULT] ${currentTool.name}: ${result}`);
+                        if (currentTool.name === 'book_appointment' && !result.includes('Error')) this.transitionTo(CallState.CONFIRMATION);
+                        await this.handleLLMResponse('tool', result, currentTool.id);
+                        currentTool = null;
+                        return;
                     } else if (currentText) {
-                        // Just finished a text block
                         assistantContent.push({ type: 'text', text: currentText });
                         currentText = '';
                     }
@@ -476,77 +387,30 @@ export class StreamHandler {
                     }
                     const text = chunk.delta.text;
                     currentText += text;
-
-                    // UNIFIED PIPE: Always send to session.
-                    // The session internally queues if the WebSocket isn't open yet.
-                    const session = this.ensureTTSSession();
                     session.send(text);
                 }
             }
 
-            // Flush remaining buffer (REST fallback path)
-            if (!this.currentTTSLive && this.sentenceBuffer.trim()) {
-                this.enqueueSpeech(this.sentenceBuffer.trim());
-                this.sentenceBuffer = '';
-            }
-
-            // If we finished without tools, finalize history
             if (currentText) assistantContent.push({ type: 'text', text: currentText });
             if (assistantContent.length > 0) {
                 this.history.push({ role: 'assistant', content: assistantContent });
-                const fullText = assistantContent
-                    .filter(b => b.type === 'text')
-                    .map(b => b.text)
-                    .join(' ');
+                const fullText = assistantContent.filter(b => b.type === 'text').map(b => b.text).join(' ');
                 if (fullText) this.logTurn('assistant', fullText);
             }
-
         } finally {
-            if (turnSession) {
-                turnSession.finish();
-                // Only clear if this was the active session
-                if (this.currentTTSLive === turnSession) {
-                    this.currentTTSLive = null;
-                }
-            }
             this.currentAbortController = null;
         }
     }
 
-    private isSentenceComplete(text: string): boolean {
-        const trimmed = text.trim();
-        if (!this.SENTENCE_END_REGEX.test(trimmed)) return false;
-        if (this.ABBREVIATION_REGEX.test(trimmed)) return false;
-        return true;
-    }
-
     private async handleToolCall(block: any) {
-        console.log(`[TOOL CALL] Executing: ${block.name} with input:`, JSON.stringify(block.input));
         const result = await this.toolExecutor.execute(block.name, block.input, this.clientId!);
-        console.log(`[TOOL RESULT] ${block.name}:`, result);
         this.logTurn('assistant', `[TOOL RESULT] ${block.name}: ${result}`);
-
-        if (block.name === 'book_appointment' && !result.includes('Error')) {
-            this.transitionTo(CallState.CONFIRMATION);
-        }
-
+        if (block.name === 'book_appointment' && !result.includes('Error')) this.transitionTo(CallState.CONFIRMATION);
         if (result === 'TRIGGER_VOICEMAIL_FALLBACK') {
             this.ws.close();
             return;
         }
         await this.handleLLMResponse('tool', result, block.id);
-    }
-
-    private async triggerFallback(error: any) {
-        console.error('Triggering Fallback:', error);
-        const fallbackResponse = await fallbackService.handleFallback(
-            FallbackLevel.LEVEL_2_HARD,
-            this.callSid,
-            this.callerPhone,
-            error.message
-        );
-        await this.speak(fallbackResponse);
-        this.ws.close();
     }
 
     private logTurn(role: 'user' | 'assistant', content: string) {
@@ -561,81 +425,36 @@ export class StreamHandler {
 
     private pruneHistory() {
         if (this.history.length > this.MAX_HISTORY) {
-            // Keep system messages (instructions) 
             const systemMsgs = this.history.filter(m => m.role === 'system');
-
-            // Protect "Identify" messages that might contain Name, Phone, Email
-            // We search for keywords like "captured", "full name", "phone", "email", "@"
             const dataMsgs = this.history.filter(m => {
                 const text = typeof m.content === 'string' ? m.content.toLowerCase() : JSON.stringify(m.content).toLowerCase();
-                const isCapture = text.includes('name') || text.includes('phone') || text.includes('email') || text.includes('@') || text.includes('captured');
-                return m.role !== 'system' && isCapture;
+                return m.role !== 'system' && (text.includes('name') || text.includes('phone') || text.includes('email') || text.includes('@') || text.includes('captured'));
             });
-
-            const otherMsgs = this.history
-                .filter(m => m.role !== 'system' && !dataMsgs.includes(m))
-                .slice(-this.KEEP_RECENT);
-
+            const otherMsgs = this.history.filter(m => m.role !== 'system' && !dataMsgs.includes(m)).slice(-this.KEEP_RECENT);
             this.history = [...systemMsgs, ...dataMsgs, ...otherMsgs];
-            console.log(`🧹 Pruned history: ${systemMsgs.length} sys + ${dataMsgs.length} data + ${otherMsgs.length} recent (Total: ${this.history.length})`);
         }
-    }
-
-    private enqueueSpeech(text: string) {
-        this.speechQueue.push(text);
-        this.processSpeechQueue();
-    }
-
-    private async processSpeechQueue() {
-        if (this.isProcessingQueue) return;
-        this.isProcessingQueue = true;
-
-        while (this.speechQueue.length > 0) {
-            // Check if we should abort mid-queue (e.g. on barge-in)
-            if (this.shouldCancelPending) {
-                this.speechQueue = [];
-                break;
-            }
-
-            const text = this.speechQueue.shift();
-            if (text) {
-                await this.speak(text);
-            }
-        }
-
-        this.isProcessingQueue = false;
     }
 
     private finalizeCall(status: any) {
-        if (this.inactivityTimeout) {
-            clearTimeout(this.inactivityTimeout);
-        }
+        if (this.inactivityTimeout) clearTimeout(this.inactivityTimeout);
         if (!this.callSid) return;
-        callLogRepository.update(this.callSid, {
-            call_status: status,
-            call_duration: 0 // In real world, calculate diff from start
-        });
+        callLogRepository.update(this.callSid, { call_status: status, call_duration: 0 });
     }
 
     private async speak(text: string) {
         if (!text.trim()) return;
         this.isAISpeaking = true;
-        console.log(`[DEBUG] Attempting to speak: "${text.substring(0, 30)}..."`);
-
         try {
             const session = this.ensureTTSSession();
             if ((session as any).isOpen) {
-                console.log('[DEBUG] ⚡ Using Fluid Pipe for speech');
                 session.send(text);
                 const estimatedDuration = (text.length / 15) * 1000;
                 await new Promise(resolve => setTimeout(resolve, Math.min(2000, estimatedDuration)));
             } else {
-                console.log('[DEBUG] 🌐 Fluid Pipe not ready, using REST fallback');
                 await this.speakREST(text);
             }
         } catch (error) {
-            console.error('[TTS ERROR]', error);
-            await this.speakREST(text); // Last ditch effort
+            await this.speakREST(text);
         } finally {
             this.isAISpeaking = false;
         }
