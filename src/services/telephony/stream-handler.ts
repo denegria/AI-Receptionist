@@ -537,8 +537,9 @@ export class StreamHandler {
     }
 
     private async handleToolCall(block: any) {
-        this.logTurn('assistant', `[TOOL CALL] ${block.name}`);
+        console.log(`[TOOL CALL] Executing: ${block.name} with input:`, JSON.stringify(block.input));
         const result = await this.toolExecutor.execute(block.name, block.input, this.clientId!);
+        console.log(`[TOOL RESULT] ${block.name}:`, result);
         this.logTurn('assistant', `[TOOL RESULT] ${block.name}: ${result}`);
 
         if (block.name === 'book_appointment' && !result.includes('Error')) {
@@ -576,14 +577,23 @@ export class StreamHandler {
 
     private pruneHistory() {
         if (this.history.length > this.MAX_HISTORY) {
-            // Keep system messages (instructions) and the last N recent messages
+            // Keep system messages (instructions) 
             const systemMsgs = this.history.filter(m => m.role === 'system');
+
+            // Protect "Identify" messages that might contain Name, Phone, Email
+            // We search for keywords like "captured", "full name", "phone", "email", "@"
+            const dataMsgs = this.history.filter(m => {
+                const text = typeof m.content === 'string' ? m.content.toLowerCase() : JSON.stringify(m.content).toLowerCase();
+                const isCapture = text.includes('name') || text.includes('phone') || text.includes('email') || text.includes('@') || text.includes('captured');
+                return m.role !== 'system' && isCapture;
+            });
+
             const otherMsgs = this.history
-                .filter(m => m.role !== 'system')
+                .filter(m => m.role !== 'system' && !dataMsgs.includes(m))
                 .slice(-this.KEEP_RECENT);
 
-            this.history = [...systemMsgs, ...otherMsgs];
-            console.log(`🧹 Pruned history: ${systemMsgs.length} system + ${otherMsgs.length} recent`);
+            this.history = [...systemMsgs, ...dataMsgs, ...otherMsgs];
+            console.log(`🧹 Pruned history: ${systemMsgs.length} sys + ${dataMsgs.length} data + ${otherMsgs.length} recent (Total: ${this.history.length})`);
         }
     }
 
