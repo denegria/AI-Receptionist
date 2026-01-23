@@ -33,7 +33,7 @@ export class StreamHandler {
     private callerPhone: string = 'unknown';
     private currentAbortController: AbortController | null = null;
     private currentSpeechAbort: AbortController | null = null;
-    private currentTTSLive: { send: (t: string) => void, finish: () => void } | null = null;
+    private currentTTSLive: { send: (t: string) => void, finish: () => void, isOpen: boolean } | null = null;
     private turnStartTime: number = 0;
     private dbReady: Promise<void> = Promise.resolve();
     private turnBuffer: any[] = [];
@@ -78,14 +78,18 @@ export class StreamHandler {
                 this.stateManager = new CallStateManager(this.callSid);
                 console.log(`[DEBUG] 🚀 Stream started for ${this.callSid}`);
 
-                // 1. Resolve Identity & Config
+                // GREETING FIRST - ZERO LATENCY
+                this.transitionTo(CallState.GREETING);
+                this.handleInitialGreeting().catch(err => console.error('[GREETING ERROR]', err));
+
+                // Process identity in background
                 if (data.start.customParameters?.callerPhone) this.callerPhone = data.start.customParameters.callerPhone;
                 if (data.start.customParameters?.clientId) this.clientId = data.start.customParameters.clientId;
                 if (!this.clientId) this.clientId = 'abc';
 
                 try {
                     this.config = loadClientConfig(this.clientId);
-                    // 2. Init DB in background, but tracked
+                    // Init DB in background
                     this.dbReady = (async () => {
                         await callLogRepository.create({
                             client_id: this.clientId!,
@@ -94,19 +98,14 @@ export class StreamHandler {
                             call_direction: 'inbound',
                             call_status: 'initiated'
                         });
-                        // Flush any turns that happened during boot
                         for (const turn of this.turnBuffer) {
                             await conversationTurnRepository.create(turn);
                         }
                         this.turnBuffer = [];
                     })();
                 } catch (e) {
-                    console.error('[CRITICAL] Failed to init call record:', e);
+                    console.error('Failed to resolve config:', e);
                 }
-
-                // 3. TRIGGER GREETING (Now safe to log turn)
-                this.transitionTo(CallState.GREETING);
-                this.handleInitialGreeting().catch(err => console.error('[GREETING ERROR]', err));
             } else if (data.event === 'media') {
                 if (data.media?.payload) {
                     this.mediaPacketCount++;
@@ -148,7 +147,6 @@ export class StreamHandler {
                 logger.latency(this.callSid, 'STT_FINAL', 0, { transcript, confidence });
                 this.enqueueProcessing("user", transcript);
             } else if (transcript.trim().length > 0) {
-                // Barge-in detection
                 if (this.isAISpeaking || this.currentAbortController) {
                     if (transcript.trim().split(' ').length > 3 || (confidence && confidence > 0.8)) {
                         this.shouldCancelPending = true;
@@ -188,7 +186,7 @@ export class StreamHandler {
 
     private ensureTTSSession() {
         if (this.currentTTSLive) return this.currentTTSLive;
-        console.log('[DEBUG] 🚀 Opening Interaction-level TTS Session...');
+        console.log('[DEBUG] 🚀 Opening Global Interaction TTS Session...');
         const session = this.tts.createLiveSession((chunk) => {
             if (this.shouldCancelPending) return;
             if (this.ws.readyState === WebSocket.OPEN) {
@@ -251,15 +249,12 @@ export class StreamHandler {
         }
 
         while (true) {
-            // CRITICAL: Reset cancellation for each sub-turn of the interaction
-            this.shouldCancelPending = false;
-
+            this.shouldCancelPending = false; // Reset barge-in for each sub-turn
             if (this.ws.readyState !== WebSocket.OPEN) break;
 
             this.history.push({ role: currentRole, content: currentContent, tool_use_id: currentToolId });
             this.pruneHistory();
 
-            // NON-BLOCKING logging
             if (currentRole === 'user' && typeof currentContent === 'string') {
                 this.logTurn('user', currentContent);
             }
@@ -274,11 +269,6 @@ export class StreamHandler {
                 currentContent = result.toolResult;
                 currentToolId = result.toolId;
             }
-        }
-
-        if (initialRole === 'user' || this.shouldCancelPending) {
-            // No aggressive cleanup here - we want to keep the session alive for follow-up turns
-            // and actually let the user hear the audio.
         }
     }
 
@@ -310,11 +300,21 @@ export class StreamHandler {
                 } else if (chunk.type === 'content_block_stop') {
                     if (currentTool) {
                         const input = JSON.parse(currentTool.input);
+                        if (currentText) assistantContent.push({ type: 'text', text: currentText });
                         assistantContent.push({ type: 'tool_use', id: currentTool.id, name: currentTool.name, input });
                         this.history.push({ role: 'assistant', content: assistantContent });
+
                         const toolResult = await this.toolExecutor.execute(currentTool.name, input, this.clientId!);
                         this.logTurn('assistant', `[TOOL RESULT] ${currentTool.name}: ${toolResult}`);
                         if (currentTool.name === 'book_appointment' && !toolResult.includes('Error')) this.transitionTo(CallState.CONFIRMATION);
+
+                        if (currentText) {
+                            console.log(`[DEBUG] 🎙️ Finishing turn-leading speech: "${currentText.substring(0, 30)}..."`);
+                            this.logTurn('assistant', currentText);
+                            const delay = (currentText.length / 15) * 1000;
+                            await new Promise(r => setTimeout(r, Math.min(2500, delay)));
+                        }
+
                         return { type: 'tool', toolResult, toolId: currentTool.id };
                     } else if (currentText) {
                         assistantContent.push({ type: 'text', text: currentText });
@@ -323,9 +323,8 @@ export class StreamHandler {
                 } else if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
                     const text = chunk.delta.text;
                     if (isFirstToken && text.trim()) {
-                        console.log(`[DEBUG] 🎙️ First AI Text Token: "${text}"`);
                         isFirstToken = false;
-                        this.isAISpeaking = true; // Mark as speaking as soon as text flows
+                        this.isAISpeaking = true;
                     }
                     currentText += text;
                     session.send(text);
@@ -339,8 +338,6 @@ export class StreamHandler {
                 if (fullText) {
                     console.log(`[DEBUG] 🤖 AI Response: "${fullText}"`);
                     this.logTurn('assistant', fullText);
-
-                    // Estimate audio duration so we don't return too early
                     const estimatedDuration = (fullText.length / 15) * 1000;
                     await new Promise(r => setTimeout(r, Math.min(3000, estimatedDuration)));
                 }
@@ -357,21 +354,14 @@ export class StreamHandler {
 
     private logTurn(role: 'user' | 'assistant', content: string) {
         this.turnCount++;
-        const turn = {
-            call_sid: this.callSid,
-            turn_number: this.turnCount,
-            role,
-            content: content.substring(0, 4000) // Safety
-        };
-
-        // Fire and forget - do not await in the main loop
+        const turn = { call_sid: this.callSid, turn_number: this.turnCount, role, content: content.substring(0, 4000) };
         (async () => {
             try {
                 await this.dbReady;
                 await conversationTurnRepository.create(turn);
             } catch (err) {
                 const msg = err instanceof Error ? err.message : String(err);
-                console.warn('[DB] Buffering turn due to delay/error:', msg);
+                console.warn('[DB] Buffering turn:', msg);
                 this.turnBuffer.push(turn);
             }
         })();
@@ -392,7 +382,7 @@ export class StreamHandler {
     private finalizeCall(status: any) {
         if (this.inactivityTimeout) clearTimeout(this.inactivityTimeout);
         if (!this.callSid) return;
-        callLogRepository.update(this.callSid, { call_status: status, call_duration: 0 });
+        callLogRepository.update(this.callSid, { call_status: status });
     }
 
     private async speak(text: string) {
@@ -400,7 +390,7 @@ export class StreamHandler {
         this.isAISpeaking = true;
         try {
             const session = this.ensureTTSSession();
-            if ((session as any).isOpen) {
+            if (session.isOpen) {
                 session.send(text);
                 await new Promise(r => setTimeout(r, Math.min(2000, (text.length / 15) * 1000)));
             } else {
