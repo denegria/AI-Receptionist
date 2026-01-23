@@ -1,5 +1,5 @@
-app = "ai-receptionist-mvp"
-primary_region = "ewr"
+app = 'ai-receptionist-eowl3q'
+primary_region = 'iad'
 
 [build]
 
@@ -17,7 +17,3 @@ primary_region = "ewr"
   method = "GET"
   timeout = "5s"
   path = "/health"
-
-[mounts]
-  source = "data"
-  destination = "/app/data"
