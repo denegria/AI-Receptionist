@@ -268,6 +268,25 @@ export class StreamHandler {
         }
     }
 
+    private async speakREST(text: string) {
+        if (!text.trim()) return;
+        try {
+            console.log(`[DEBUG] 🌐 Sending to REST TTS: "${text.substring(0, 30)}..."`);
+            for await (const chunk of this.tts.generateStream(text)) {
+                if (this.shouldCancelPending) break;
+                if (this.ws.readyState === WebSocket.OPEN) {
+                    this.ws.send(JSON.stringify({
+                        event: 'media',
+                        streamSid: this.streamSid,
+                        media: { payload: chunk.toString('base64') }
+                    }));
+                }
+            }
+        } catch (err) {
+            console.error('[REST TTS ERROR]', err);
+        }
+    }
+
     private enqueueProcessing(role: 'user' | 'system' | 'tool', content: any, tool_use_id?: string) {
         this.processingChain = this.processingChain.then(() =>
             this.handleLLMResponse(role, content, tool_use_id)
@@ -284,9 +303,11 @@ export class StreamHandler {
         this.history.push({ role: 'assistant', content: greeting });
         this.logTurn('assistant', greeting);
 
-        // Instant startup: use Pipe for greeting
-        const session = this.ensureTTSSession();
-        session.send(greeting);
+        // ALWAYS use REST for greeting - it's 100% reliable
+        this.speakREST(greeting).catch(err => console.error('[GREETING ERR]', err));
+
+        // Simultaneously pre-warm the pipe for the rest of the call
+        this.ensureTTSSession();
     }
 
 
@@ -437,20 +458,20 @@ export class StreamHandler {
                         logger.latency(this.callSid, 'LLM_FIRST_TOKEN', Date.now() - this.turnStartTime);
                         isFirstToken = false;
                     }
-
                     const text = chunk.delta.text;
                     currentText += text;
 
-                    // DIRECT PIPE to TTS (No sentence buffering needed here!)
-                    if (this.currentTTSLive) {
-                        this.currentTTSLive.send(text);
+                    // SMART PIPE: Use WebSocket if ready, otherwise buffer for REST
+                    const session = this.ensureTTSSession();
+                    if ((session as any).isOpen) {
+                        session.send(text);
                     } else {
-                        // FALLBACK: Use sentence-based REST streaming
+                        // Buffered REST fallback for the turn
                         this.sentenceBuffer += text;
                         if (this.isSentenceComplete(this.sentenceBuffer)) {
                             const sentence = this.sentenceBuffer.trim();
                             this.sentenceBuffer = '';
-                            if (sentence) this.enqueueSpeech(sentence);
+                            if (sentence) this.speakREST(sentence).catch(e => console.error(e));
                         }
                     }
                 }
@@ -580,20 +601,24 @@ export class StreamHandler {
     }
 
     private async speak(text: string) {
+        if (!text.trim()) return;
+        this.isAISpeaking = true;
+        console.log(`[DEBUG] Attempting to speak: "${text.substring(0, 30)}..."`);
+
         try {
-            this.isAISpeaking = true;
-            console.log(`[DEBUG] Speaking: "${text}"`);
-
             const session = this.ensureTTSSession();
-            session.send(text);
-
-            // For one-off legacy calls, we still need to wait a bit
-            // or just rely on the next user turn to close the session
-            const estimatedDuration = (text.length / 15) * 1000;
-            await new Promise(resolve => setTimeout(resolve, Math.min(2000, estimatedDuration)));
-
+            if ((session as any).isOpen) {
+                console.log('[DEBUG] ⚡ Using Fluid Pipe for speech');
+                session.send(text);
+                const estimatedDuration = (text.length / 15) * 1000;
+                await new Promise(resolve => setTimeout(resolve, Math.min(2000, estimatedDuration)));
+            } else {
+                console.log('[DEBUG] 🌐 Fluid Pipe not ready, using REST fallback');
+                await this.speakREST(text);
+            }
         } catch (error) {
-            console.error('TTS Error:', error);
+            console.error('[TTS ERROR]', error);
+            await this.speakREST(text); // Last ditch effort
         } finally {
             this.isAISpeaking = false;
         }
