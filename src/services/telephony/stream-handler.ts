@@ -246,12 +246,14 @@ export class StreamHandler {
         let currentToolId = initialToolId;
 
         if (currentRole === 'user') {
-            this.shouldCancelPending = false;
             this.ensureTTSSession();
         }
 
         while (true) {
-            if (this.shouldCancelPending) break;
+            // CRITICAL: Reset cancellation for each sub-turn of the interaction
+            this.shouldCancelPending = false;
+
+            if (this.ws.readyState !== WebSocket.OPEN) break;
 
             this.history.push({ role: currentRole, content: currentContent, tool_use_id: currentToolId });
             this.pruneHistory();
@@ -287,6 +289,7 @@ export class StreamHandler {
         let assistantContent: any[] = [];
         let currentText = '';
         let currentTool: any = null;
+        let isFirstToken = true;
 
         try {
             for await (const chunk of stream) {
@@ -314,16 +317,24 @@ export class StreamHandler {
                         currentText = '';
                     }
                 } else if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
-                    currentText += chunk.delta.text;
-                    session.send(chunk.delta.text);
+                    const text = chunk.delta.text;
+                    if (isFirstToken && text.trim()) {
+                        console.log(`[DEBUG] 🎙️ First AI Text Token: "${text}"`);
+                        isFirstToken = false;
+                    }
+                    currentText += text;
+                    session.send(text);
                 }
             }
 
             if (currentText) assistantContent.push({ type: 'text', text: currentText });
             if (assistantContent.length > 0) {
                 this.history.push({ role: 'assistant', content: assistantContent });
-                const full = assistantContent.filter(b => b.type === 'text').map(b => b.text).join(' ');
-                if (full) this.logTurn('assistant', full);
+                const fullText = assistantContent.filter(b => b.type === 'text').map(b => b.text).join(' ');
+                if (fullText) {
+                    console.log(`[DEBUG] 🤖 AI Response: "${fullText}"`);
+                    this.logTurn('assistant', fullText);
+                }
             }
             return { type: 'final' };
         } catch (err) {
