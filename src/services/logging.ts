@@ -69,6 +69,14 @@ class Logger {
             ...meta
         });
     }
+
+    public economic(callSid: string, meta: { tokens_input?: number, tokens_output?: number, characters_sent?: number, call_duration_seconds?: number }) {
+        this.log('economic', 'UNIT_ECONOMICS', {
+            callSid,
+            economicEvent: true,
+            ...meta
+        });
+    }
 }
 
 export const logger = new Logger();
