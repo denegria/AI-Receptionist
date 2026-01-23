@@ -115,7 +115,7 @@ export class StreamHandler {
                         call_status: 'initiated'
                     });
                 } catch (e) {
-                    console.error('Failed to load config or create log:', e);
+                    console.error('Failed to load config:', e);
                     this.ws.close();
                     return;
                 }
@@ -123,7 +123,7 @@ export class StreamHandler {
                 // Initial Greeting (State Transition)
                 console.log(`✅ Config loaded for ${this.clientId}. Transitioning to GREETING.`);
                 this.transitionTo(CallState.GREETING);
-                await this.handleInitialGreeting();
+                this.handleInitialGreeting().catch(err => console.error('[GREETING ERROR]', err));
             } else if (data.event === 'media') {
                 if (data.media && data.media.payload) {
                     this.mediaPacketCount++;
@@ -318,8 +318,9 @@ export class StreamHandler {
         this.currentAbortController = new AbortController();
 
         // Start persistent TTS session for the whole turn (Fluid Pipe)
+        let turnSession: { send: (t: string) => void, finish: () => void } | null = null;
         try {
-            this.currentTTSLive = this.tts.createLiveSession((chunk) => {
+            turnSession = this.tts.createLiveSession((chunk) => {
                 if (this.shouldCancelPending) return;
                 const message = {
                     event: 'media',
@@ -331,9 +332,9 @@ export class StreamHandler {
                     this.ws.send(JSON.stringify(message));
                 }
             });
+            this.currentTTSLive = turnSession;
         } catch (ttsErr) {
             console.error('[WARNING] Failed to start Fluid Pipe, falling back to REST TTS:', ttsErr);
-            this.currentTTSLive = null;
         }
 
         const stream = this.llm.generateStream(this.history, {
@@ -350,16 +351,16 @@ export class StreamHandler {
             for await (const chunk of stream) {
                 if (this.currentAbortController?.signal.aborted) throw new Error('Stream Aborted');
 
-                if (chunk.type === 'message_start') {
-                    // Extract usage if available
-                    const usage = (chunk.message as any).usage;
-                    if (usage) {
-                        logger.economic(this.callSid, {
-                            tokens_input: usage.input_tokens,
-                            tokens_output: usage.output_tokens
-                        });
-                    }
-                } else if (chunk.type === 'content_block_start' && chunk.content_block.type === 'tool_use') {
+                // Extract usage from any chunk that has it (start, delta, or stop)
+                const usage = (chunk as any).usage || (chunk as any).message?.usage;
+                if (usage) {
+                    logger.economic(this.callSid, {
+                        tokens_input: usage.input_tokens,
+                        tokens_output: usage.output_tokens
+                    });
+                }
+
+                if (chunk.type === 'content_block_start' && chunk.content_block.type === 'tool_use') {
                     // If we had text before the tool, push it to content array
                     if (currentText) {
                         assistantContent.push({ type: 'text', text: currentText });
@@ -452,16 +453,13 @@ export class StreamHandler {
                 if (fullText) this.logTurn('assistant', fullText);
             }
 
-        } catch (e: any) {
-            if (e.name === 'AbortError' || e.message === 'Stream Aborted') {
-                console.log('Stream explicitly aborted.');
-            } else {
-                throw e;
-            }
         } finally {
-            if (this.currentTTSLive) {
-                this.currentTTSLive.finish();
-                this.currentTTSLive = null;
+            if (turnSession) {
+                turnSession.finish();
+                // Only clear if this was the active session
+                if (this.currentTTSLive === turnSession) {
+                    this.currentTTSLive = null;
+                }
             }
             this.currentAbortController = null;
         }

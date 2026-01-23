@@ -85,7 +85,7 @@ export class DeepgramTTSService {
      */
     public createLiveSession(onAudio: (chunk: Buffer) => void) {
         const live = this.deepgram.speak.live({
-            model: 'aura-stella-en',
+            model: 'aura-asteria-en', // Use stable voice
             encoding: 'mulaw',
             sample_rate: 8000,
             container: 'none',
