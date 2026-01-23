@@ -84,16 +84,18 @@ export class DeepgramTTSService {
      * Creates a live TTS session for continuous streaming
      */
     public createLiveSession(onAudio: (chunk: Buffer) => void) {
+        console.log('[DEBUG] 🚀 Requesting Deepgram TTS Live Session...');
         const live = this.deepgram.speak.live({
-            model: 'aura-asteria-en', // Use stable voice
+            model: 'aura-asteria-en',
             encoding: 'mulaw',
             sample_rate: 8000,
             container: 'none',
         });
 
-        live.on('open', () => console.log('[DEBUG] Deepgram TTS Live Session Opened'));
-        live.on('close', () => console.log('[DEBUG] Deepgram TTS Live Session Closed'));
-        live.on('error', (err: any) => console.error('[DEBUG] Deepgram TTS Live Error:', err));
+        live.on('open', () => console.log('[DEBUG] ✨ Deepgram TTS Live Session OPENED (Event Fired)'));
+        live.on('close', () => console.log('[DEBUG] 🔌 Deepgram TTS Live Session CLOSED'));
+        live.on('error', (err: any) => console.error('[DEBUG] ❌ Deepgram TTS Live ERROR:', err));
+        live.on('warning', (warn: any) => console.warn('[DEBUG] ⚠️ Deepgram TTS Live WARNING:', warn));
 
         // Listen for both event name styles
         const handleAudio = (data: any, source: string) => {
@@ -108,8 +110,16 @@ export class DeepgramTTSService {
         (live as any).on('audio', (data: any) => handleAudio(data, 'audio'));
 
         return {
-            send: (text: string) => live.sendText(text),
-            finish: () => (live as any).requestClose()
+            send: (text: string) => {
+                if (text.trim()) {
+                    // console.log(`[DEBUG] ⬆️ Pushing text to TTS: "${text}"`);
+                    live.sendText(text);
+                }
+            },
+            finish: () => {
+                console.log('[DEBUG] 🏁 Closing Deepgram TTS Session (Finish Called)');
+                (live as any).requestClose();
+            }
         };
     }
 

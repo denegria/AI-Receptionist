@@ -209,14 +209,20 @@ export class StreamHandler {
     }
 
     private resetInactivityTimer() {
-        if (this.inactivityTimeout) {
-            clearTimeout(this.inactivityTimeout);
-        }
-
+        if (this.inactivityTimeout) clearTimeout(this.inactivityTimeout);
         this.inactivityTimeout = setTimeout(async () => {
-            console.log('⏱️ Inactivity timeout - ending call');
-            await this.speak("I haven't heard from you in a while. I'll end this call now. Feel free to call back!");
-            setTimeout(() => this.ws.close(), 3000);
+            console.log('⏰ Inactivity timeout reached');
+            if (this.stateManager.getState() !== CallState.TERMINATED) {
+                // Specialized one-off session for closure
+                const session = this.tts.createLiveSession((chunk) => {
+                    this.ws.send(JSON.stringify({ event: 'media', streamSid: this.streamSid, media: { payload: chunk.toString('base64') } }));
+                });
+                session.send("I haven't heard from you in a while, so I'll go ahead and end the call. Feel free to call back if you still need help. Goodbye!");
+                setTimeout(() => {
+                    session.finish();
+                    this.ws.close();
+                }, 5000);
+            }
         }, this.INACTIVITY_LIMIT_MS);
     }
 
@@ -229,6 +235,36 @@ export class StreamHandler {
             console.log('[DEBUG] Sending CLEAR signal to stop AI speech');
             this.ws.send(JSON.stringify(clearMessage));
             this.isAISpeaking = false;
+            this.cleanupTTS(); // Immediately kill the pipe on barge-in
+        }
+    }
+
+
+    private ensureTTSSession() {
+        if (this.currentTTSLive) return this.currentTTSLive;
+
+        console.log('[DEBUG] 🚀 Opening NEW Interaction-level TTS Session...');
+        const session = this.tts.createLiveSession((chunk) => {
+            if (this.shouldCancelPending) return;
+            const message = {
+                event: 'media',
+                streamSid: this.streamSid,
+                media: { payload: chunk.toString('base64') }
+            };
+            if (this.ws.readyState === WebSocket.OPEN) {
+                if (Math.random() < 0.05) console.log(`[DEBUG] Sending media to Twilio (${chunk.length} bytes)`);
+                this.ws.send(JSON.stringify(message));
+            }
+        });
+        this.currentTTSLive = session;
+        return session;
+    }
+
+    private cleanupTTS() {
+        if (this.currentTTSLive) {
+            console.log('[DEBUG] 🧹 Cleaning up active TTS Session');
+            this.currentTTSLive.finish();
+            this.currentTTSLive = null;
         }
     }
 
@@ -242,19 +278,23 @@ export class StreamHandler {
         this.shouldCancelPending = false;
         if (!this.config) return;
 
-        // Feature: Compliance Message (Softened)
-        const complianceMsg = "Just so you know, this call might be recorded. ";
-        const greeting = complianceMsg + (this.config.aiSettings.greeting || "Hi! How can I help you today?");
+        const greeting = "Just so you know, this call might be recorded. " +
+            (this.config.aiSettings.greeting || "Hi! How can I help you today?");
 
         this.history.push({ role: 'assistant', content: greeting });
         this.logTurn('assistant', greeting);
 
-        await this.speak(greeting);
+        // Instant startup: use Pipe for greeting
+        const session = this.ensureTTSSession();
+        session.send(greeting);
     }
 
 
     private async handleLLMResponse(role: 'user' | 'system' | 'tool', content: any, tool_use_id?: string) {
-        if (role === 'user') this.shouldCancelPending = false;
+        if (role === 'user') {
+            this.shouldCancelPending = false;
+            this.ensureTTSSession(); // Start pipe for the whole interaction chain
+        }
 
         this.history.push({ role, content, tool_use_id });
         this.pruneHistory();
@@ -262,37 +302,19 @@ export class StreamHandler {
         if (this.shouldCancelPending && role !== 'user') return;
         if (role === 'user' && typeof content === 'string') this.logTurn('user', content);
 
-        logger.latency(this.callSid, 'LLM_START', Date.now()); // Using Date.now for relative calc later if needed
+        logger.latency(this.callSid, 'LLM_START', Date.now());
 
-        // --- STREAMING PATH ---
-        if (config.features.enableStreamingLLM) {
-            try {
+        try {
+            if (config.features.enableStreamingLLM) {
                 await this.handleStreamingResponse();
-                return;
-            } catch (e) {
-                console.error('Streaming failed, falling back to legacy:', e);
-                // Fallthrough to legacy
-            }
-        }
-
-        // --- LEGACY PATH (Blocking) ---
-        let retryCount = 0;
-        const maxRetries = 1;
-
-        while (retryCount <= maxRetries) {
-            try {
-                console.log(`[DEBUG] Sending to LLM (Blocking). Attempt: ${retryCount + 1}`);
+            } else {
+                // Legacy path uses this.speak which is updated below
                 const response = await this.llm.generateResponse(this.history, {
                     businessName: this.config!.businessName,
                     timezone: this.config!.timezone
                 });
-
-                const assistantMessage = { role: 'assistant' as const, content: response.content };
-                this.history.push(assistantMessage);
-
                 for (const block of response.content) {
                     if (this.shouldCancelPending) break;
-
                     if (block.type === 'text') {
                         this.logTurn('assistant', block.text);
                         await this.speak(block.text);
@@ -300,14 +322,12 @@ export class StreamHandler {
                         await this.handleToolCall(block);
                     }
                 }
-                break;
-
-            } catch (error: any) {
-                console.error(`LLM Error (Attempt ${retryCount + 1}):`, error);
-                retryCount++;
-                if (retryCount > maxRetries) {
-                    await this.triggerFallback(error);
-                }
+            }
+        } finally {
+            // Only cleanup if we are finally done with the chain (not recursing into tool)
+            // Or if we were interrupted
+            if (role === 'user' || this.shouldCancelPending) {
+                this.cleanupTTS();
             }
         }
     }
@@ -564,39 +584,14 @@ export class StreamHandler {
             this.isAISpeaking = true;
             console.log(`[DEBUG] Speaking: "${text}"`);
 
-            if (config.features.enableStreamingTTS) {
-                // For one-off speaks (greeting, confirm), use the reliable generateStream (REST)
-                // This avoids WebSocket setup overhead for short, static phrases
-                for await (const chunk of this.tts.generateStream(text)) {
-                    if (this.shouldCancelPending) break;
+            const session = this.ensureTTSSession();
+            session.send(text);
 
-                    const message = {
-                        event: 'media',
-                        streamSid: this.streamSid,
-                        media: { payload: chunk.toString('base64') }
-                    };
+            // For one-off legacy calls, we still need to wait a bit
+            // or just rely on the next user turn to close the session
+            const estimatedDuration = (text.length / 15) * 1000;
+            await new Promise(resolve => setTimeout(resolve, Math.min(2000, estimatedDuration)));
 
-                    if (this.ws.readyState === WebSocket.OPEN) {
-                        this.ws.send(JSON.stringify(message));
-                    }
-                }
-            } else {
-                // Legacy path: Wait for full buffer
-                const audioBuffer = await this.tts.generate(text);
-                const payload = audioBuffer.toString('base64');
-                const message = {
-                    event: 'media',
-                    streamSid: this.streamSid,
-                    media: { payload }
-                };
-
-                if (this.ws.readyState === WebSocket.OPEN) {
-                    this.ws.send(JSON.stringify(message));
-                    // Estimate when speaking finishes
-                    const estimatedDuration = (audioBuffer.length / 8000) * 1000;
-                    await new Promise(resolve => setTimeout(resolve, estimatedDuration));
-                }
-            }
         } catch (error) {
             console.error('TTS Error:', error);
         } finally {
