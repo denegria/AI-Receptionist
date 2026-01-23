@@ -81,7 +81,9 @@ export class DeepgramSTTService {
      */
     public stop(): void {
         if (this.connection) {
-            if (typeof this.connection.finish === 'function') {
+            if (typeof this.connection.requestClose === 'function') {
+                this.connection.requestClose();
+            } else if (typeof this.connection.finish === 'function') {
                 this.connection.finish();
             }
             this.connection = null;
