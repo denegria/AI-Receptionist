@@ -108,6 +108,7 @@ export class StreamHandler {
                 }
 
                 // Initial Greeting (State Transition)
+                console.log(`✅ Config loaded for ${this.clientId}. Transitioning to GREETING.`);
                 this.transitionTo(CallState.GREETING);
                 await this.handleInitialGreeting();
             } else if (data.event === 'media') {
