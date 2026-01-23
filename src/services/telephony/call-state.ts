@@ -3,6 +3,7 @@ import { logger } from '../logging';
 export enum CallState {
     INIT = 'INIT',
     GREETING = 'GREETING',
+    CONVERSATION = 'CONVERSATION',
     INTENT_DETECTION = 'INTENT_DETECTION',
     INFO_CAPTURE = 'INFO_CAPTURE',
     CONFIRMATION = 'CONFIRMATION',
