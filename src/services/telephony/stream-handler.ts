@@ -33,8 +33,11 @@ export class StreamHandler {
     private callerPhone: string = 'unknown';
     private currentAbortController: AbortController | null = null;
     private sentenceBuffer: string = '';
+    private turnStartTime: number = 0;
+    private speechQueue: string[] = [];
+    private isProcessingQueue: boolean = false;
 
-    private readonly SENTENCE_END_REGEX = /(?<=[.!?])\s+(?=[A-Z0-9])/g;
+    private readonly SENTENCE_END_REGEX = /[.!?](\s|$)/;
     private readonly ABBREVIATION_REGEX = /\b(Dr|Mr|Mrs|Ms|St|Ave|Inc|Jr|Sr|Prof|gov|com|net|org|edu)\.$/i;
 
     private readonly INACTIVITY_LIMIT_MS = 30000; // 30 seconds
@@ -160,6 +163,7 @@ export class StreamHandler {
                 }
 
                 // Logging
+                this.turnStartTime = Date.now();
                 logger.latency(this.callSid, 'STT_FINAL', 0, { transcript, confidence });
 
                 console.log(`STT [FINAL]: ${transcript} (Confidence: ${confidence})`);
@@ -369,7 +373,7 @@ export class StreamHandler {
                     }
                 } else if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
                     if (isFirstToken) {
-                        logger.latency(this.callSid, 'LLM_FIRST_TOKEN', Date.now());
+                        logger.latency(this.callSid, 'LLM_FIRST_TOKEN', Date.now() - this.turnStartTime);
                         isFirstToken = false;
                     }
 
@@ -382,8 +386,8 @@ export class StreamHandler {
                         const sentence = this.sentenceBuffer.trim();
                         this.sentenceBuffer = '';
                         if (sentence) {
-                            logger.latency(this.callSid, 'TTS_FIRST_SENTENCE', Date.now(), { sentence });
-                            await this.speak(sentence);
+                            logger.latency(this.callSid, 'TTS_FIRST_SENTENCE', Date.now() - this.turnStartTime, { sentence });
+                            this.enqueueSpeech(sentence);
                         }
                     }
                 }
@@ -391,7 +395,7 @@ export class StreamHandler {
 
             // Flush remaining buffer
             if (this.sentenceBuffer.trim()) {
-                await this.speak(this.sentenceBuffer.trim());
+                this.enqueueSpeech(this.sentenceBuffer.trim());
                 this.sentenceBuffer = '';
             }
 
@@ -476,6 +480,31 @@ export class StreamHandler {
         }
     }
 
+    private enqueueSpeech(text: string) {
+        this.speechQueue.push(text);
+        this.processSpeechQueue();
+    }
+
+    private async processSpeechQueue() {
+        if (this.isProcessingQueue) return;
+        this.isProcessingQueue = true;
+
+        while (this.speechQueue.length > 0) {
+            // Check if we should abort mid-queue (e.g. on barge-in)
+            if (this.shouldCancelPending) {
+                this.speechQueue = [];
+                break;
+            }
+
+            const text = this.speechQueue.shift();
+            if (text) {
+                await this.speak(text);
+            }
+        }
+
+        this.isProcessingQueue = false;
+    }
+
     private finalizeCall(status: any) {
         if (this.inactivityTimeout) {
             clearTimeout(this.inactivityTimeout);
@@ -490,32 +519,45 @@ export class StreamHandler {
     private async speak(text: string) {
         try {
             this.isAISpeaking = true;
-            const audioBuffer = await this.tts.generate(text);
-            const payload = audioBuffer.toString('base64');
+            console.log(`[DEBUG] Speaking: "${text}"`);
 
-            const message = {
-                event: 'media',
-                streamSid: this.streamSid,
-                media: {
-                    payload: payload
+            if (config.features.enableStreamingTTS) {
+                // Low-latency path: Process chunks as they arrive from Deepgram
+                for await (const chunk of this.tts.generateStream(text)) {
+                    if (this.shouldCancelPending) break;
+
+                    const message = {
+                        event: 'media',
+                        streamSid: this.streamSid,
+                        media: {
+                            payload: chunk.toString('base64')
+                        }
+                    };
+
+                    if (this.ws.readyState === WebSocket.OPEN) {
+                        this.ws.send(JSON.stringify(message));
+                    }
                 }
-            };
-
-            if (this.ws.readyState === WebSocket.OPEN) {
-                console.log(`[DEBUG] Sending ${payload.length} bytes of audio to Twilio`);
-                this.ws.send(JSON.stringify(message));
-                // Keep isAISpeaking true - it will be cleared when user interrupts or after a delay
-                // Set a timeout to clear the flag after the audio should be done playing
-                const estimatedDuration = (audioBuffer.length / 8000) * 1000; // rough estimate
-                setTimeout(() => {
-                    this.isAISpeaking = false;
-                }, estimatedDuration);
             } else {
-                console.warn('[DEBUG] WebSocket not open, could not send audio');
-                this.isAISpeaking = false;
+                // Legacy path: Wait for full buffer
+                const audioBuffer = await this.tts.generate(text);
+                const payload = audioBuffer.toString('base64');
+                const message = {
+                    event: 'media',
+                    streamSid: this.streamSid,
+                    media: { payload }
+                };
+
+                if (this.ws.readyState === WebSocket.OPEN) {
+                    this.ws.send(JSON.stringify(message));
+                    // Estimate when speaking finishes
+                    const estimatedDuration = (audioBuffer.length / 8000) * 1000;
+                    await new Promise(resolve => setTimeout(resolve, estimatedDuration));
+                }
             }
         } catch (error) {
             console.error('TTS Error:', error);
+        } finally {
             this.isAISpeaking = false;
         }
     }
