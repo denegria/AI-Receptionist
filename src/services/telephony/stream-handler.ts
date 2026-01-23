@@ -214,15 +214,8 @@ export class StreamHandler {
         this.inactivityTimeout = setTimeout(async () => {
             console.log('⏰ Inactivity timeout reached');
             if (this.stateManager.getState() !== CallState.TERMINATED) {
-                // Specialized one-off session for closure
-                const session = this.tts.createLiveSession((chunk) => {
-                    this.ws.send(JSON.stringify({ event: 'media', streamSid: this.streamSid, media: { payload: chunk.toString('base64') } }));
-                });
-                session.send("I haven't heard from you in a while, so I'll go ahead and end the call. Feel free to call back if you still need help. Goodbye!");
-                setTimeout(() => {
-                    session.finish();
-                    this.ws.close();
-                }, 5000);
+                await this.speak("I haven't heard from you in a while, so I'll go ahead and end the call. Feel free to call back if you still need help. Goodbye!");
+                setTimeout(() => this.ws.close(), 5000);
             }
         }, this.INACTIVITY_LIMIT_MS);
     }
@@ -484,19 +477,10 @@ export class StreamHandler {
                     const text = chunk.delta.text;
                     currentText += text;
 
-                    // SMART PIPE: Use WebSocket if ready, otherwise buffer for REST
+                    // UNIFIED PIPE: Always send to session.
+                    // The session internally queues if the WebSocket isn't open yet.
                     const session = this.ensureTTSSession();
-                    if ((session as any).isOpen) {
-                        session.send(text);
-                    } else {
-                        // Buffered REST fallback for the turn
-                        this.sentenceBuffer += text;
-                        if (this.isSentenceComplete(this.sentenceBuffer)) {
-                            const sentence = this.sentenceBuffer.trim();
-                            this.sentenceBuffer = '';
-                            if (sentence) this.speakREST(sentence).catch(e => console.error(e));
-                        }
-                    }
+                    session.send(text);
                 }
             }
 
