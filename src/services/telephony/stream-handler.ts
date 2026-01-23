@@ -229,11 +229,10 @@ export class StreamHandler {
     private async handleInitialGreeting() {
         if (!this.config) return;
 
-        // Feature: Compliance Message
-        const complianceMsg = "This call may be recorded for quality purposes. ";
-        const greeting = complianceMsg + (this.config.aiSettings.greeting || "Hello! How can I help you today?");
+        // Feature: Compliance Message (Softened)
+        const complianceMsg = "Just so you know, this call might be recorded. ";
+        const greeting = complianceMsg + (this.config.aiSettings.greeting || "Hi! How can I help you today?");
 
-        this.history.push({ role: 'user', content: 'Hello' });
         this.history.push({ role: 'assistant', content: greeting });
         this.logTurn('assistant', greeting);
 
