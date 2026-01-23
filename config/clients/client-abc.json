@@ -72,7 +72,7 @@
         "voicemailEnabled": true
     },
     "aiSettings": {
-        "greeting": "Hello, thanks for calling ABC Heating & Air. I'm the automated assistant. How can I help you today?",
+        "greeting": "Hi! Thanks for calling ABC Heating and Air. How can I help you today?",
         "maxRetries": 3,
         "requireServiceType": false
     }
