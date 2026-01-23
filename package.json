@@ -6,7 +6,7 @@
   "scripts": {
     "test": "jest",
     "dev": "nodemon --exec npx ts-node src/server.ts",
-    "build": "npx tsc && xcopy /E /I /Y src\\db\\migrations dist\\db\\migrations && copy src\\db\\schema.sql dist\\db\\schema.sql",
+    "build": "npx tsc && npx shx mkdir -p dist/db/migrations && npx shx cp -r src/db/migrations/* dist/db/migrations/ && npx shx cp src/db/schema.sql dist/db/schema.sql",
     "start": "node dist/server.js"
   },
   "keywords": [],
@@ -25,7 +25,8 @@
     "nodemon": "^3.1.11",
     "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "shx": "^0.3.4"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",
