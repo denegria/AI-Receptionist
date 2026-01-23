@@ -17,7 +17,7 @@ export class DeepgramTTSService {
         const response = await this.deepgram.speak.request(
             { text },
             {
-                model: 'aura-stella-en', // Use an expressive Aura voice
+                model: 'aura-asteria-en', // Use the most stable Aura voice
                 encoding: 'mulaw',        // Streaming direct to Twilio requires mulaw/8000 usually
                 sample_rate: 8000,
                 container: 'none',        // Raw audio for media streams
@@ -50,7 +50,7 @@ export class DeepgramTTSService {
             const response = await this.deepgram.speak.request(
                 { text },
                 {
-                    model: 'aura-stella-en',
+                    model: 'aura-asteria-en',
                     encoding: 'mulaw',
                     sample_rate: 8000,
                     container: 'none',
@@ -63,11 +63,17 @@ export class DeepgramTTSService {
             }
 
             const reader = stream.getReader();
+            let chunkCount = 0;
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
-                if (value) yield Buffer.from(value);
+                if (value) {
+                    chunkCount++;
+                    if (chunkCount === 1) console.log(`[DEBUG] FIRST audio chunk generated for: "${text.substring(0, 20)}..."`);
+                    yield Buffer.from(value);
+                }
             }
+            console.log(`[DEBUG] Finished generateStream for: "${text.substring(0, 20)}..." (${chunkCount} chunks)`);
         } catch (error) {
             console.error('Deepgram TTS Stream Error:', error);
             throw error;

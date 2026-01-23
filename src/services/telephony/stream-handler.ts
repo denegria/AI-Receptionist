@@ -32,7 +32,6 @@ export class StreamHandler {
     private stateManager: CallStateManager;
     private callerPhone: string = 'unknown';
     private currentAbortController: AbortController | null = null;
-    private currentTTSLive: { send: (t: string) => void, finish: () => void } | null = null;
     private sentenceBuffer: string = '';
     private turnStartTime: number = 0;
     private speechQueue: string[] = [];
@@ -173,17 +172,19 @@ export class StreamHandler {
             } else if (transcript.trim().length > 0) {
                 // Interruption Handling
                 if (this.isAISpeaking || this.currentAbortController) {
-                    this.shouldCancelPending = true;
-                    this.sendClearSignal();
+                    // Only interrupt if the user is clearly saying something (high confidence or multiple words)
+                    const isSubstantialSpeech = transcript.trim().split(' ').length > 3;
+                    const isConfidentSpeech = confidence && confidence > 0.7;
 
-                    if (this.currentAbortController) {
-                        this.currentAbortController.abort();
-                        this.currentAbortController = null;
-                    }
-                    if (this.currentTTSLive) {
-                        this.currentTTSLive.finish();
-                        this.currentTTSLive = null;
-                        console.log('[DEBUG] 🛑 Aborted TTS Stream due to Interruption');
+                    if (isSubstantialSpeech || isConfidentSpeech) {
+                        this.shouldCancelPending = true;
+                        this.sendClearSignal();
+
+                        if (this.currentAbortController) {
+                            this.currentAbortController.abort();
+                            this.currentAbortController = null;
+                        }
+                        console.log(`[DEBUG] 🛑 Aborted LLM/TTS Turn due to Interruption ("${transcript}", Conf: ${confidence})`);
                     }
                 }
             }
@@ -310,22 +311,6 @@ export class StreamHandler {
         console.log('[DEBUG] 🔄 Reset shouldCancelPending = false (Response Stream)');
         this.currentAbortController = new AbortController();
 
-        // Start persistent TTS session for the whole turn
-        if (config.features.enableStreamingTTS) {
-            this.currentTTSLive = this.tts.createLiveSession((chunk) => {
-                if (this.shouldCancelPending) return;
-                const message = {
-                    event: 'media',
-                    streamSid: this.streamSid,
-                    media: { payload: chunk.toString('base64') }
-                };
-                if (this.ws.readyState === WebSocket.OPEN) {
-                    if (Math.random() < 0.05) console.log(`[DEBUG] Sending media to Twilio (${chunk.length} bytes)`);
-                    this.ws.send(JSON.stringify(message));
-                }
-            });
-        }
-
         const stream = this.llm.generateStream(this.history, {
             businessName: this.config!.businessName,
             timezone: this.config!.timezone
@@ -405,17 +390,13 @@ export class StreamHandler {
                     currentText += text;
                     this.sentenceBuffer += text;
 
-                    // Pipe directly to TTS (WebSocket handles the buffering for naturalness)
-                    if (this.currentTTSLive) {
-                        this.currentTTSLive.send(text);
-                    }
-
-                    // Flush sentences for LOGGING purposes only
+                    // Flush sentences
                     if (this.isSentenceComplete(this.sentenceBuffer)) {
                         const sentence = this.sentenceBuffer.trim();
                         this.sentenceBuffer = '';
                         if (sentence) {
                             logger.latency(this.callSid, 'TTS_FIRST_SENTENCE', Date.now() - this.turnStartTime, { sentence });
+                            this.enqueueSpeech(sentence);
                         }
                     }
                 }
@@ -440,16 +421,12 @@ export class StreamHandler {
             }
 
         } catch (e: any) {
-            if (e.message === 'Stream Aborted') {
+            if (e.name === 'AbortError' || e.message === 'Stream Aborted') {
                 console.log('Stream explicitly aborted.');
             } else {
                 throw e;
             }
         } finally {
-            if (this.currentTTSLive) {
-                this.currentTTSLive.finish();
-                this.currentTTSLive = null;
-            }
             this.currentAbortController = null;
         }
     }
