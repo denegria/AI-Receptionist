@@ -153,12 +153,13 @@ export class StreamHandler {
         this.stt.start(async (transcript, isFinal, confidence) => {
             if (isFinal && transcript.trim().length > 0) {
                 this.shouldCancelPending = true;
+                this.resetInactivityTimer();
 
                 // Feature: Strict Confidence Gate
                 if (confidence && confidence < config.voice.asrConfidenceThreshold) {
                     logger.warn(`STT Low Confidence`, { callSid: this.callSid, transcript, confidence });
                     // Minimal fallback prompt
-                    await this.speak("I'm sorry, the connection is a bit breaking up. Could you say that again?");
+                    this.enqueueSpeech("I'm sorry, the connection is a bit breaking up. Could you say that again?");
                     return;
                 }
 
@@ -167,7 +168,6 @@ export class StreamHandler {
                 logger.latency(this.callSid, 'STT_FINAL', 0, { transcript, confidence });
 
                 console.log(`STT [FINAL]: ${transcript} (Confidence: ${confidence})`);
-                this.resetInactivityTimer();
                 this.enqueueProcessing("user", transcript);
             } else if (transcript.trim().length > 0) {
                 // Interruption Handling

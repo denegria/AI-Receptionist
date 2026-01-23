@@ -116,7 +116,7 @@ export const config: Config = {
     },
 
     voice: {
-        asrConfidenceThreshold: parseFloat(getEnvVar('ASR_CONFIDENCE_THRESHOLD', '0.6')),
+        asrConfidenceThreshold: parseFloat(getEnvVar('ASR_CONFIDENCE_THRESHOLD', '0.4')),
         silenceTimeoutMs: parseInt(getEnvVar('SILENCE_TIMEOUT_MS', '1000')),
         maxDurationMs: parseInt(getEnvVar('MAX_CALL_DURATION_MS', '600000')), // 10 minutes
     },
