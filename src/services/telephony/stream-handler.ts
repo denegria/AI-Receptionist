@@ -102,7 +102,16 @@ export class StreamHandler {
 
                 try {
                     this.config = loadClientConfig(this.clientId);
+                    // Create initial call log to avoid Foreign Key errors
+                    callLogRepository.create({
+                        client_id: this.clientId,
+                        call_sid: this.callSid,
+                        caller_phone: this.callerPhone,
+                        call_direction: 'inbound',
+                        call_status: 'initiated'
+                    });
                 } catch (e) {
+                    console.error('Failed to load config or create log:', e);
                     this.ws.close();
                     return;
                 }
