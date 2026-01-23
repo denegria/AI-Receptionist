@@ -232,6 +232,7 @@ export class StreamHandler {
     }
 
     private async handleInitialGreeting() {
+        this.shouldCancelPending = false;
         if (!this.config) return;
 
         // Feature: Compliance Message (Softened)
@@ -305,6 +306,8 @@ export class StreamHandler {
     }
 
     private async handleStreamingResponse() {
+        this.shouldCancelPending = false; // Reset for new turn
+        console.log('[DEBUG] 🔄 Reset shouldCancelPending = false (Response Stream)');
         this.currentAbortController = new AbortController();
 
         // Start persistent TTS session for the whole turn
@@ -551,30 +554,20 @@ export class StreamHandler {
             console.log(`[DEBUG] Speaking: "${text}"`);
 
             if (config.features.enableStreamingTTS) {
-                // Use the persistent session if one is already open (e.g. during an LLM turn)
-                // Otherwise create a temporary one for one-off speaks (like greeting/confirmation)
-                const isTemporarySession = !this.currentTTSLive;
-                const ttsSession = this.currentTTSLive || this.tts.createLiveSession((chunk) => {
-                    if (this.shouldCancelPending) return;
+                // For one-off speaks (greeting, confirm), use the reliable generateStream (REST)
+                // This avoids WebSocket setup overhead for short, static phrases
+                for await (const chunk of this.tts.generateStream(text)) {
+                    if (this.shouldCancelPending) break;
+
                     const message = {
                         event: 'media',
                         streamSid: this.streamSid,
                         media: { payload: chunk.toString('base64') }
                     };
+
                     if (this.ws.readyState === WebSocket.OPEN) {
-                        if (Math.random() < 0.05) console.log(`[DEBUG] Sending media (speak) to Twilio (${chunk.length} bytes)`);
                         this.ws.send(JSON.stringify(message));
                     }
-                });
-
-                ttsSession.send(text);
-
-                // For one-off speaks, we need to wait a bit and close it
-                if (isTemporarySession) {
-                    // Estimate duration + small buffer
-                    const estimatedDuration = (text.length * 60) + 500;
-                    await new Promise(resolve => setTimeout(resolve, estimatedDuration));
-                    ttsSession.finish();
                 }
             } else {
                 // Legacy path: Wait for full buffer
