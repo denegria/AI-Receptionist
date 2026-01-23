@@ -32,6 +32,7 @@ export class StreamHandler {
     private stateManager: CallStateManager;
     private callerPhone: string = 'unknown';
     private currentAbortController: AbortController | null = null;
+    private currentSpeechAbort: AbortController | null = null;
     private currentTTSLive: { send: (t: string) => void, finish: () => void } | null = null;
     private sentenceBuffer: string = '';
     private turnStartTime: number = 0;
@@ -235,6 +236,14 @@ export class StreamHandler {
             console.log('[DEBUG] Sending CLEAR signal to stop AI speech');
             this.ws.send(JSON.stringify(clearMessage));
             this.isAISpeaking = false;
+
+            // HARD KILL active REST playback
+            if (this.currentSpeechAbort) {
+                console.log('[DEBUG] 🛑 Aborting REST TTS Playback due to CLEAR signal');
+                this.currentSpeechAbort.abort();
+                this.currentSpeechAbort = null;
+            }
+
             this.cleanupTTS(); // Immediately kill the pipe on barge-in
         }
     }
@@ -270,10 +279,18 @@ export class StreamHandler {
 
     private async speakREST(text: string) {
         if (!text.trim()) return;
+
+        // Cancel any existing REST speech before starting new one
+        if (this.currentSpeechAbort) {
+            this.currentSpeechAbort.abort();
+        }
+        this.currentSpeechAbort = new AbortController();
+        const signal = this.currentSpeechAbort.signal;
+
         try {
             console.log(`[DEBUG] 🌐 Sending to REST TTS: "${text.substring(0, 30)}..."`);
             for await (const chunk of this.tts.generateStream(text)) {
-                if (this.shouldCancelPending) break;
+                if (signal.aborted || this.shouldCancelPending) break;
                 if (this.ws.readyState === WebSocket.OPEN) {
                     this.ws.send(JSON.stringify({
                         event: 'media',
@@ -283,7 +300,13 @@ export class StreamHandler {
                 }
             }
         } catch (err) {
-            console.error('[REST TTS ERROR]', err);
+            if ((err as any).name !== 'AbortError') {
+                console.error('[REST TTS ERROR]', err);
+            }
+        } finally {
+            if (!signal.aborted && this.currentSpeechAbort?.signal === signal) {
+                this.currentSpeechAbort = null;
+            }
         }
     }
 
