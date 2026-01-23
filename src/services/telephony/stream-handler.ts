@@ -122,6 +122,7 @@ export class StreamHandler {
             this.stt.stop();
             if (this.inactivityTimeout) clearTimeout(this.inactivityTimeout);
             if (this.callDurationTimeout) clearTimeout(this.callDurationTimeout);
+            this.cleanupTTS(); // Final session cleanup
             this.finalizeCall('completed');
         });
     }
@@ -275,7 +276,10 @@ export class StreamHandler {
             }
         }
 
-        if (initialRole === 'user' || this.shouldCancelPending) this.cleanupTTS();
+        if (initialRole === 'user' || this.shouldCancelPending) {
+            // No aggressive cleanup here - we want to keep the session alive for follow-up turns
+            // and actually let the user hear the audio.
+        }
     }
 
     private async runLLMTurn(): Promise<{ type: 'final' } | { type: 'tool', toolResult: any, toolId: string }> {
@@ -321,6 +325,7 @@ export class StreamHandler {
                     if (isFirstToken && text.trim()) {
                         console.log(`[DEBUG] 🎙️ First AI Text Token: "${text}"`);
                         isFirstToken = false;
+                        this.isAISpeaking = true; // Mark as speaking as soon as text flows
                     }
                     currentText += text;
                     session.send(text);
@@ -334,6 +339,10 @@ export class StreamHandler {
                 if (fullText) {
                     console.log(`[DEBUG] 🤖 AI Response: "${fullText}"`);
                     this.logTurn('assistant', fullText);
+
+                    // Estimate audio duration so we don't return too early
+                    const estimatedDuration = (fullText.length / 15) * 1000;
+                    await new Promise(r => setTimeout(r, Math.min(3000, estimatedDuration)));
                 }
             }
             return { type: 'final' };
@@ -341,6 +350,7 @@ export class StreamHandler {
             console.error('[TURN ERR]', err);
             return { type: 'final' };
         } finally {
+            this.isAISpeaking = false;
             this.currentAbortController = null;
         }
     }
