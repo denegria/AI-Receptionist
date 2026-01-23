@@ -119,7 +119,7 @@ app.ws('/media-stream', (ws, req) => {
 app.use(errorHandler);
 
 // Start server
-const server = app.listen(config.port, () => {
+const server = app.listen(config.port, '0.0.0.0', () => {
     try {
         initDatabase();
         MigrationManager.runMigrations();

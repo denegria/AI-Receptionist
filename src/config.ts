@@ -98,7 +98,7 @@ function generateEncryptionKey(): string {
 }
 
 export const config: Config = {
-    port: parseInt(getEnvVar('PORT', '3000')),
+    port: parseInt(getEnvVar('PORT', '8080')),
     nodeEnv: getEnvVar('NODE_ENV', 'development'),
     logLevel: (getEnvVar('LOG_LEVEL', 'info') as any),
 
