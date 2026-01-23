@@ -130,7 +130,7 @@ export class DeepgramTTSService {
 
         return {
             send: (text: string) => {
-                if (!text.trim()) return;
+                if (!text) return; // Only skip null/empty, NOT spaces
                 if (isOpen) {
                     live.sendText(text);
                 } else {
