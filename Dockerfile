@@ -32,10 +32,10 @@ COPY --from=builder /app/src/db/migrations ./src/db/migrations
 RUN mkdir -p /app/data
 
 ENV NODE_ENV=production
-ENV PORT=3000
+ENV PORT=8080
 
 # Expose the internal port
-EXPOSE 3000
+EXPOSE 8080
 
 # Start the application
 CMD ["node", "dist/server.js"]
