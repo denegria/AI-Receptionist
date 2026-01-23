@@ -35,6 +35,8 @@ export class StreamHandler {
     private currentSpeechAbort: AbortController | null = null;
     private currentTTSLive: { send: (t: string) => void, finish: () => void } | null = null;
     private turnStartTime: number = 0;
+    private dbReady: Promise<void> = Promise.resolve();
+    private turnBuffer: any[] = [];
 
     private readonly INACTIVITY_LIMIT_MS = 30000;
     private readonly MAX_HISTORY = 20;
@@ -74,29 +76,37 @@ export class StreamHandler {
                 this.streamSid = data.start.streamSid;
                 this.callSid = data.start.callSid || `sim-${Date.now()}`;
                 this.stateManager = new CallStateManager(this.callSid);
-                logger.info('Stream initialized', { callSid: this.callSid, streamSid: this.streamSid });
+                console.log(`[DEBUG] 🚀 Stream started for ${this.callSid}`);
 
-                // GREETING FIRST - ZERO LATENCY
-                this.transitionTo(CallState.GREETING);
-                this.handleInitialGreeting().catch(err => console.error('[GREETING ERROR]', err));
-
-                // Process config in background
+                // 1. Resolve Identity & Config
                 if (data.start.customParameters?.callerPhone) this.callerPhone = data.start.customParameters.callerPhone;
                 if (data.start.customParameters?.clientId) this.clientId = data.start.customParameters.clientId;
                 if (!this.clientId) this.clientId = 'abc';
 
                 try {
                     this.config = loadClientConfig(this.clientId);
-                    callLogRepository.create({
-                        client_id: this.clientId,
-                        call_sid: this.callSid,
-                        caller_phone: this.callerPhone,
-                        call_direction: 'inbound',
-                        call_status: 'initiated'
-                    });
+                    // 2. Init DB in background, but tracked
+                    this.dbReady = (async () => {
+                        await callLogRepository.create({
+                            client_id: this.clientId!,
+                            call_sid: this.callSid,
+                            caller_phone: this.callerPhone,
+                            call_direction: 'inbound',
+                            call_status: 'initiated'
+                        });
+                        // Flush any turns that happened during boot
+                        for (const turn of this.turnBuffer) {
+                            await conversationTurnRepository.create(turn);
+                        }
+                        this.turnBuffer = [];
+                    })();
                 } catch (e) {
-                    console.error('Failed to load config:', e);
+                    console.error('[CRITICAL] Failed to init call record:', e);
                 }
+
+                // 3. TRIGGER GREETING (Now safe to log turn)
+                this.transitionTo(CallState.GREETING);
+                this.handleInitialGreeting().catch(err => console.error('[GREETING ERROR]', err));
             } else if (data.event === 'media') {
                 if (data.media?.payload) {
                     this.mediaPacketCount++;
@@ -245,7 +255,11 @@ export class StreamHandler {
 
             this.history.push({ role: currentRole, content: currentContent, tool_use_id: currentToolId });
             this.pruneHistory();
-            if (currentRole === 'user' && typeof currentContent === 'string') this.logTurn('user', currentContent);
+
+            // NON-BLOCKING logging
+            if (currentRole === 'user' && typeof currentContent === 'string') {
+                this.logTurn('user', currentContent);
+            }
 
             logger.latency(this.callSid, 'LLM_START', Date.now());
             const result = await this.runLLMTurn();
@@ -322,7 +336,24 @@ export class StreamHandler {
 
     private logTurn(role: 'user' | 'assistant', content: string) {
         this.turnCount++;
-        conversationTurnRepository.create({ call_sid: this.callSid, turn_number: this.turnCount, role, content });
+        const turn = {
+            call_sid: this.callSid,
+            turn_number: this.turnCount,
+            role,
+            content: content.substring(0, 4000) // Safety
+        };
+
+        // Fire and forget - do not await in the main loop
+        (async () => {
+            try {
+                await this.dbReady;
+                await conversationTurnRepository.create(turn);
+            } catch (err) {
+                const msg = err instanceof Error ? err.message : String(err);
+                console.warn('[DB] Buffering turn due to delay/error:', msg);
+                this.turnBuffer.push(turn);
+            }
+        })();
     }
 
     private pruneHistory() {
