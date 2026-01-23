@@ -303,7 +303,7 @@ export class StreamHandler {
             timezone: this.config!.timezone
         });
 
-        let fullContent: any[] = [];
+        let assistantContent: any[] = [];
         let currentText = '';
         let isFirstToken = true;
         let currentTool: { id: string, name: string, input: string } | null = null;
@@ -315,6 +315,11 @@ export class StreamHandler {
                 if (chunk.type === 'message_start') {
                     // Init
                 } else if (chunk.type === 'content_block_start' && chunk.content_block.type === 'tool_use') {
+                    // If we had text before the tool, push it to content array
+                    if (currentText) {
+                        assistantContent.push({ type: 'text', text: currentText });
+                        currentText = '';
+                    }
                     currentTool = {
                         id: chunk.content_block.id,
                         name: chunk.content_block.name,
@@ -326,6 +331,18 @@ export class StreamHandler {
                     }
                 } else if (chunk.type === 'content_block_stop') {
                     if (currentTool) {
+                        // Push tool_use to assistant content
+                        assistantContent.push({
+                            type: 'tool_use',
+                            id: currentTool.id,
+                            name: currentTool.name,
+                            input: JSON.parse(currentTool.input)
+                        });
+
+                        // CRITICAL: Push Assistant message to history BEFORE executing tool
+                        // This satisfies Anthropic's requirement that tool_result follows tool_use
+                        this.history.push({ role: 'assistant', content: assistantContent });
+
                         try {
                             this.logTurn('assistant', `[TOOL CALL] ${currentTool.name}`);
                             const input = JSON.parse(currentTool.input);
@@ -338,12 +355,17 @@ export class StreamHandler {
                                 this.transitionTo(CallState.CONFIRMATION);
                             }
 
+                            // Chain the tool result back into LLM
                             await this.handleLLMResponse('tool', result, currentTool.id);
                             currentTool = null;
-                            return;
+                            return; // Stop processing this stream iteration
                         } catch (parseError) {
                             console.error('Failed to parse tool input:', parseError);
                         }
+                    } else if (currentText) {
+                        // Just finished a text block
+                        assistantContent.push({ type: 'text', text: currentText });
+                        currentText = '';
                     }
                 } else if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
                     if (isFirstToken) {
@@ -364,8 +386,6 @@ export class StreamHandler {
                             await this.speak(sentence);
                         }
                     }
-                } else if (chunk.type === 'message_delta' && chunk.delta.stop_reason) {
-                    // Finished
                 }
             }
 
@@ -375,17 +395,17 @@ export class StreamHandler {
                 this.sentenceBuffer = '';
             }
 
-            // Add full message to history (Updating history state is critical for next turn)
-            // Ideally we accumulated `fullContent`. 
-            // Since this implementation is partial, we should update history properly.
-            // For now, let's assume valid text turns. 
-            // Complex tool handling in streaming is risky for V1.
-            // If tool use exists, we should probably fall back or handle it.
-
-            // Re-fetching the full message for history consistency strictly for V1? 
-            // Or just appending what we spoke?
-            this.history.push({ role: 'assistant', content: currentText });
-            this.logTurn('assistant', currentText);
+            // If we finished without tools, finalize history
+            if (currentText) assistantContent.push({ type: 'text', text: currentText });
+            if (assistantContent.length > 0) {
+                this.history.push({ role: 'assistant', content: assistantContent });
+                // Log only the text parts for better readability in logs
+                const fullText = assistantContent
+                    .filter(b => b.type === 'text')
+                    .map(b => b.text)
+                    .join(' ');
+                if (fullText) this.logTurn('assistant', fullText);
+            }
 
         } catch (e: any) {
             if (e.message === 'Stream Aborted') {
