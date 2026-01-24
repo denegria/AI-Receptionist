@@ -28,8 +28,7 @@ export class DeepgramSTTService {
             sample_rate: 8000,
             channels: 1,
             interim_results: true,
-            utterance_end_ms: 800,
-            endpointing: 500
+            utterance_end_ms: 1000
         });
 
         this.connection.on('open', () => {
