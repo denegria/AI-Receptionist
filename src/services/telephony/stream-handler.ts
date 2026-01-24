@@ -300,19 +300,21 @@ export class StreamHandler {
                 } else if (chunk.type === 'content_block_stop') {
                     if (currentTool) {
                         const input = JSON.parse(currentTool.input);
+
+                        // AGGREGATE Assistant message: text + tool_use
                         if (currentText) assistantContent.push({ type: 'text', text: currentText });
                         assistantContent.push({ type: 'tool_use', id: currentTool.id, name: currentTool.name, input });
                         this.history.push({ role: 'assistant', content: assistantContent });
 
                         const toolResult = await this.toolExecutor.execute(currentTool.name, input, this.clientId!);
+                        this.logTurn('assistant', `[TOOL CALL] ${currentTool.name}`);
                         this.logTurn('assistant', `[TOOL RESULT] ${currentTool.name}: ${toolResult}`);
                         if (currentTool.name === 'book_appointment' && !toolResult.includes('Error')) this.transitionTo(CallState.CONFIRMATION);
 
+                        // SYNC: Lead-in speech must finish before thinking next turn
                         if (currentText) {
-                            console.log(`[DEBUG] 🎙️ Finishing turn-leading speech: "${currentText.substring(0, 30)}..."`);
-                            this.logTurn('assistant', currentText);
-                            const delay = (currentText.length / 15) * 1000;
-                            await new Promise(r => setTimeout(r, Math.min(2500, delay)));
+                            await this.waitForAudio(currentText);
+                            currentText = '';
                         }
 
                         return { type: 'tool', toolResult, toolId: currentTool.id };
@@ -338,8 +340,7 @@ export class StreamHandler {
                 if (fullText) {
                     console.log(`[DEBUG] 🤖 AI Response: "${fullText}"`);
                     this.logTurn('assistant', fullText);
-                    const estimatedDuration = (fullText.length / 15) * 1000;
-                    await new Promise(r => setTimeout(r, Math.min(3000, estimatedDuration)));
+                    await this.waitForAudio(fullText);
                 }
             }
             return { type: 'final' };
@@ -350,6 +351,14 @@ export class StreamHandler {
             this.isAISpeaking = false;
             this.currentAbortController = null;
         }
+    }
+
+    private async waitForAudio(text: string) {
+        if (!text.trim()) return;
+        this.isAISpeaking = true;
+        const delay = (text.length / 15) * 1000;
+        console.log(`[DEBUG] 🎙️ Holding for audio delivery (${Math.round(delay)}ms): "${text.substring(0, 30)}..."`);
+        await new Promise(r => setTimeout(r, Math.min(4000, delay)));
     }
 
     private logTurn(role: 'user' | 'assistant', content: string) {
@@ -392,7 +401,7 @@ export class StreamHandler {
             const session = this.ensureTTSSession();
             if (session.isOpen) {
                 session.send(text);
-                await new Promise(r => setTimeout(r, Math.min(2000, (text.length / 15) * 1000)));
+                await this.waitForAudio(text);
             } else {
                 await this.speakREST(text);
             }
