@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { config } from '../config';
 import { metricsRepository } from '../db/repositories/metrics-repository';
+import { db } from '../db/client';
 
 class Logger {
     private logFile: string;
@@ -37,16 +38,29 @@ class Logger {
 
         const logString = JSON.stringify(logEntry);
 
-        // Console output (for Fly.io)
+        // 1. Console output (for Fly.io)
         if (level === 'error') {
             console.error(logString);
         } else {
             console.log(logString);
         }
 
-        // File output (Async via Stream)
+        // 2. File output (Async via Stream)
         if (this.logStream.writable) {
             this.logStream.write(logString + '\n');
+        }
+
+        // 3. Database output (Legacy Shared DB for System Logs)
+        if (['info', 'warn', 'error'].includes(level)) {
+            try {
+                const stmt = db.prepare(`
+                    INSERT INTO system_logs (level, message, meta, timestamp)
+                    VALUES (?, ?, ?, ?)
+                `);
+                stmt.run(level, message, meta ? JSON.stringify(meta) : null, timestamp);
+            } catch (err) {
+                // Silently fail to avoid infinite logging loop
+            }
         }
     }
 

@@ -25,6 +25,8 @@ export class StreamHandler {
     private turnCount: number = 0;
     private processingChain: Promise<void> = Promise.resolve();
     private mediaPacketCount: number = 0;
+    private totalInputTokens: number = 0;
+    private totalOutputTokens: number = 0;
     private isAISpeaking: boolean = false;
     private shouldCancelPending: boolean = false;
     private inactivityTimeout?: NodeJS.Timeout;
@@ -37,6 +39,7 @@ export class StreamHandler {
     private sentenceBuffer: string = '';
     private speechQueue: string[] = [];
     private isProcessingQueue: boolean = false;
+    private callStartTime: number = 0;
 
     private readonly SENTENCE_END_REGEX = /[.!?](\s|$)/;
     private readonly ABBREVIATION_REGEX = /\b(Dr|Mr|Mrs|Ms|St|Ave|Inc|Jr|Sr|Prof|gov|com|net|org|edu)\.$/i;
@@ -76,10 +79,21 @@ export class StreamHandler {
             if (data.event === 'start') {
                 this.streamSid = data.start.streamSid;
                 this.callSid = data.start.callSid || `sim-${Date.now()}`;
+                this.callStartTime = Date.now();
                 this.stateManager = new CallStateManager(this.callSid);
                 console.log(`[DEBUG] 🚀 Stream started for ${this.callSid}`);
 
-                // 1. GREETING FIRST (Zero delay)
+                if (data.start.customParameters?.callerPhone) this.callerPhone = data.start.customParameters.callerPhone;
+                if (data.start.customParameters?.clientId) this.clientId = data.start.customParameters.clientId;
+                if (!this.clientId) this.clientId = 'abc';
+
+                try {
+                    this.config = loadClientConfig(this.clientId);
+                } catch (e) {
+                    console.error('Failed to resolve config:', e);
+                }
+
+                // 1. GREETING FIRST (Zero delay, but AFTER config load)
                 this.transitionTo(CallState.GREETING);
                 this.handleInitialGreeting().catch(err => console.error('[GREETING ERROR]', err));
 
@@ -88,29 +102,20 @@ export class StreamHandler {
                     logger.trackMetric(this.clientId, 'call_count');
                 }
 
-                if (data.start.customParameters?.callerPhone) this.callerPhone = data.start.customParameters.callerPhone;
-                if (data.start.customParameters?.clientId) this.clientId = data.start.customParameters.clientId;
-                if (!this.clientId) this.clientId = 'abc';
-
-                try {
-                    this.config = loadClientConfig(this.clientId);
-                    // 2. Init DB in background
-                    this.dbReady = (async () => {
-                        await callLogRepository.create({
-                            client_id: this.clientId!,
-                            call_sid: this.callSid,
-                            caller_phone: this.callerPhone,
-                            call_direction: 'inbound',
-                            call_status: 'initiated'
-                        });
-                        for (const turn of this.turnBuffer) {
-                            await conversationTurnRepository.create({ ...turn, client_id: this.clientId! });
-                        }
-                        this.turnBuffer = [];
-                    })();
-                } catch (e) {
-                    console.error('Failed to resolve config:', e);
-                }
+                // 2. Init DB in background
+                this.dbReady = (async () => {
+                    await callLogRepository.create({
+                        client_id: this.clientId!,
+                        call_sid: this.callSid,
+                        caller_phone: this.callerPhone,
+                        call_direction: 'inbound',
+                        call_status: 'initiated'
+                    });
+                    for (const turn of this.turnBuffer) {
+                        await conversationTurnRepository.create({ ...turn, client_id: this.clientId! });
+                    }
+                    this.turnBuffer = [];
+                })();
             } else if (data.event === 'media') {
                 if (data.media?.payload) {
                     this.mediaPacketCount++;
@@ -137,7 +142,6 @@ export class StreamHandler {
     private setupSTT() {
         this.stt.start(async (transcript, isFinal, confidence) => {
             if (isFinal && transcript.trim().length > 0) {
-                console.log(`STT [FINAL]: ${transcript} (Confidence: ${confidence})`);
                 this.shouldCancelPending = true;
                 this.resetInactivityTimer();
                 this.transitionTo(CallState.CONVERSATION);
@@ -300,7 +304,10 @@ export class StreamHandler {
                 if (this.shouldCancelPending) throw new Error('Aborted');
 
                 const usage = (chunk as any).usage || (chunk as any).message?.usage;
-                if (usage) logger.economic(this.callSid, { tokens_input: usage.input_tokens, tokens_output: usage.output_tokens, clientId: this.clientId! });
+                if (usage) {
+                    this.totalInputTokens += usage.input_tokens || 0;
+                    this.totalOutputTokens += usage.output_tokens || 0;
+                }
 
                 if (chunk.type === 'content_block_start' && chunk.content_block.type === 'tool_use') {
                     // Start technical turn
@@ -366,7 +373,6 @@ export class StreamHandler {
                 assistantContent.push({ type: 'text', text: currentFullText });
                 this.history.push({ role: 'assistant', content: assistantContent });
                 this.logTurn('assistant', currentFullText);
-                console.log(`[DEBUG] 🤖 AI Final Response: "${currentFullText}"`);
             }
             return { type: 'final' };
         } catch (err) {
@@ -391,14 +397,31 @@ export class StreamHandler {
     private pruneHistory() {
         if (this.history.length > this.MAX_HISTORY) {
             const sys = this.history.filter(m => m.role === 'system');
-            const other = this.history.slice(-10).filter(m => m.role !== 'system');
+            // Keep system prompts + last (MAX - sys) messages
+            // This is a sliding window properly removing only the oldest user/assistant turns
+            const keepCount = this.MAX_HISTORY - sys.length;
+            const other = this.history.filter(m => m.role !== 'system').slice(-keepCount);
             this.history = [...sys, ...other];
         }
     }
 
     private finalizeCall(status: any) {
         if (this.inactivityTimeout) clearTimeout(this.inactivityTimeout);
+        if (this.callDurationTimeout) clearTimeout(this.callDurationTimeout);
         if (!this.callSid) return;
+
+        // Log final cost summary
+        if (this.totalInputTokens > 0 || this.totalOutputTokens > 0) {
+            const durationSeconds = this.callStartTime > 0 ? Math.floor((Date.now() - this.callStartTime) / 1000) : 0;
+            logger.economic(this.callSid, {
+                clientId: this.clientId!,
+                tokens_input: this.totalInputTokens,
+                tokens_output: this.totalOutputTokens,
+                call_duration_seconds: durationSeconds
+            });
+            console.log(`[ECONOMICS] Call ${this.callSid} Summary: ${this.totalInputTokens} in / ${this.totalOutputTokens} out (${durationSeconds}s)`);
+        }
+
         callLogRepository.update(this.callSid, { call_status: status });
     }
 }

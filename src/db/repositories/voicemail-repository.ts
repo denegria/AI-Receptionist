@@ -1,4 +1,4 @@
-import { db } from '../client';
+import { getClientDatabase } from '../client';
 
 export interface VoicemailRecord {
     id?: number;
@@ -12,6 +12,7 @@ export interface VoicemailRecord {
 
 export class VoicemailRepository {
     create(record: VoicemailRecord): void {
+        const db = getClientDatabase(record.client_id);
         const stmt = db.prepare(`
             INSERT INTO voicemails (call_sid, client_id, recording_url, transcription_text, duration)
             VALUES (?, ?, ?, ?, ?)
@@ -19,7 +20,8 @@ export class VoicemailRepository {
         stmt.run(record.call_sid, record.client_id, record.recording_url, record.transcription_text, record.duration);
     }
 
-    updateByCallSid(callSid: string, updates: Partial<VoicemailRecord>): void {
+    updateByCallSid(clientId: string, callSid: string, updates: Partial<VoicemailRecord>): void {
+        const db = getClientDatabase(clientId);
         const validFields = ['recording_url', 'transcription_text', 'duration'];
         const fields = Object.keys(updates)
             .filter(k => validFields.includes(k))
@@ -37,6 +39,7 @@ export class VoicemailRepository {
     }
 
     findByClientId(clientId: string): VoicemailRecord[] {
+        const db = getClientDatabase(clientId);
         const stmt = db.prepare(`SELECT * FROM voicemails WHERE client_id = ? ORDER BY created_at DESC`);
         return stmt.all(clientId) as VoicemailRecord[];
     }

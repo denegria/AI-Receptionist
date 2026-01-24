@@ -87,3 +87,15 @@ CREATE TABLE IF NOT EXISTS client_metrics (
 
 CREATE INDEX IF NOT EXISTS idx_metrics_name ON client_metrics(metric_name);
 CREATE INDEX IF NOT EXISTS idx_metrics_timestamp ON client_metrics(timestamp);
+
+-- System Logs (Stored in legacy shared DB)
+CREATE TABLE IF NOT EXISTS system_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    level TEXT NOT NULL,
+    message TEXT NOT NULL,
+    meta TEXT,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_system_logs_level ON system_logs(level);
+CREATE INDEX IF NOT EXISTS idx_system_logs_timestamp ON system_logs(timestamp);

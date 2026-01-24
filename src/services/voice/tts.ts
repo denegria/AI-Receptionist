@@ -69,11 +69,9 @@ export class DeepgramTTSService {
                 if (done) break;
                 if (value) {
                     chunkCount++;
-                    if (chunkCount === 1) console.log(`[DEBUG] FIRST audio chunk generated for: "${text.substring(0, 20)}..."`);
                     yield Buffer.from(value);
                 }
             }
-            console.log(`[DEBUG] Finished generateStream for: "${text.substring(0, 20)}..." (${chunkCount} chunks)`);
         } catch (error) {
             console.error('Deepgram TTS Stream Error:', error);
             throw error;
@@ -84,7 +82,6 @@ export class DeepgramTTSService {
      * Creates a live TTS session for continuous streaming
      */
     public createLiveSession(onAudio: (chunk: Buffer) => void) {
-        console.log('[DEBUG] 🚀 Requesting Deepgram TTS Live Session...');
         const live = this.deepgram.speak.live({
             model: 'aura-asteria-en',
             encoding: 'mulaw',
@@ -119,7 +116,6 @@ export class DeepgramTTSService {
 
         const handleAudio = (data: any, source: string) => {
             if (data) {
-                if (Math.random() < 0.1) console.log(`[DEBUG] Received TTS ${source}: ${data.length || (data.data ? data.data.length : 'unknown')} bytes`);
                 const buffer = data instanceof Buffer ? data : (data.data ? Buffer.from(data.data) : null);
                 if (buffer) onAudio(buffer);
             }
@@ -138,7 +134,6 @@ export class DeepgramTTSService {
                 }
             },
             finish: () => {
-                console.log('[DEBUG] 🏁 Closing Deepgram TTS Session (Finish Called)');
                 (live as any).requestClose();
             },
             get isOpen() { return isOpen; }
