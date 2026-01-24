@@ -1,5 +1,3 @@
-import fs from 'fs';
-import path from 'path';
 import { config } from '../config';
 
 export interface BusinessHours {
@@ -75,63 +73,55 @@ function validateClientConfig(config: any): ClientConfig {
     return config as ClientConfig;
 }
 
-// Caching & Loading
-let clientCache: Map<string, ClientConfig> | null = null;
+// Caching & Loading System
+import { sharedDb } from '../db/shared-client';
 
-function loadAllClients(): Map<string, ClientConfig> {
-    const cache = new Map<string, ClientConfig>();
+let clientCache: Map<string, ClientConfig> = new Map();
 
-    if (!fs.existsSync(config.paths.clientConfigs)) {
-        console.warn(`Client config directory not found: ${config.paths.clientConfigs}`);
-        return cache;
-    }
-
-    const files = fs.readdirSync(config.paths.clientConfigs);
-
-    for (const file of files) {
-        if (file.endsWith('.json')) {
-            try {
-                const raw = fs.readFileSync(
-                    path.join(config.paths.clientConfigs, file),
-                    'utf-8'
-                );
-                const data = validateClientConfig(JSON.parse(raw));
-                // Cache by ID
-                cache.set(data.clientId, data);
-                // Also cache by Phone Number for fast lookup
-                cache.set(data.phoneNumber, data);
-            } catch (error) {
-                console.error(`Error loading client config ${file}:`, error);
-            }
-        }
-    }
-
-    return cache;
-}
-
+/**
+ * Loads a client configuration from the Shared Database registry.
+ * Supports lookup by clientId or phone_number.
+ */
 export function loadClientConfig(clientIdOrPhone: string): ClientConfig {
-    if (!clientCache) {
-        clientCache = loadAllClients();
+    // 1. Check Cache
+    if (clientCache.has(clientIdOrPhone)) {
+        return clientCache.get(clientIdOrPhone)!;
     }
 
-    const client = clientCache.get(clientIdOrPhone);
+    // 2. Query Database
+    const stmt = sharedDb.prepare(`
+        SELECT config_json FROM clients 
+        WHERE id = ? OR phone_number = ?
+    `);
 
-    if (!client) {
-        // Logic could be improved here to handle dynamic IDs vs Phone Numbers more explicitly
-        // But for now, the cache contains both keys.
-        throw new Error(`Client config not found for: ${clientIdOrPhone}`);
+    const entry = stmt.get(clientIdOrPhone, clientIdOrPhone) as { config_json: string } | undefined;
+
+    if (!entry) {
+        throw new Error(`Client not found in registry: ${clientIdOrPhone}`);
     }
 
-    return client;
+    try {
+        const fullConfig = validateClientConfig(JSON.parse(entry.config_json));
+
+        // 3. Cache results
+        clientCache.set(fullConfig.clientId, fullConfig);
+        clientCache.set(fullConfig.phoneNumber, fullConfig);
+
+        return fullConfig;
+    } catch (error) {
+        console.error(`Failed to parse config for ${clientIdOrPhone}:`, error);
+        throw new Error(`Corrupt configuration for client ${clientIdOrPhone}`);
+    }
 }
 
 export function getClientByPhoneNumber(phoneNumber: string): ClientConfig | null {
-    if (!clientCache) {
-        clientCache = loadAllClients();
+    try {
+        return loadClientConfig(phoneNumber);
+    } catch (e) {
+        return null;
     }
-    return clientCache.get(phoneNumber) || null;
 }
 
 export function clearClientCache(): void {
-    clientCache = null;
+    clientCache.clear();
 }
