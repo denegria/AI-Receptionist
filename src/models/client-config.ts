@@ -32,10 +32,6 @@ export interface ClientConfig {
     calendar: {
         provider: 'google' | 'outlook';
         calendarId: string;
-        credentials: {
-            type: 'oauth2';
-            refreshToken: string;
-        };
         syncEnabled: boolean;
         createMeetLinks: boolean;
     };
