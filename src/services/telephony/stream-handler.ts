@@ -99,7 +99,7 @@ export class StreamHandler {
                             call_status: 'initiated'
                         });
                         for (const turn of this.turnBuffer) {
-                            await conversationTurnRepository.create(turn);
+                            await conversationTurnRepository.create({ ...turn, client_id: this.clientId! });
                         }
                         this.turnBuffer = [];
                     })();
@@ -367,7 +367,7 @@ export class StreamHandler {
 
     private logTurn(role: 'user' | 'assistant', content: string) {
         this.turnCount++;
-        const turn = { call_sid: this.callSid, turn_number: this.turnCount, role, content: content.substring(0, 4000) };
+        const turn = { call_sid: this.callSid, turn_number: this.turnCount, role, content: content.substring(0, 4000), client_id: this.clientId! };
         (async () => {
             try {
                 await this.dbReady;

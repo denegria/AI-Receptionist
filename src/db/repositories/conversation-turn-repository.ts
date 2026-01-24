@@ -1,4 +1,4 @@
-import { db } from '../client';
+import { getClientDatabase } from '../client';
 
 export interface ConversationTurn {
     id?: number;
@@ -10,7 +10,8 @@ export interface ConversationTurn {
 }
 
 export class ConversationTurnRepository {
-    create(turn: ConversationTurn): void {
+    create(turn: ConversationTurn & { client_id: string }): void {
+        const db = getClientDatabase(turn.client_id);
         const stmt = db.prepare(`
             INSERT INTO conversation_turns (call_sid, turn_number, role, content)
             VALUES (?, ?, ?, ?)
@@ -18,7 +19,8 @@ export class ConversationTurnRepository {
         stmt.run(turn.call_sid, turn.turn_number, turn.role, turn.content);
     }
 
-    findByCallSid(callSid: string): ConversationTurn[] {
+    findByCallSid(callSid: string, clientId: string): ConversationTurn[] {
+        const db = getClientDatabase(clientId);
         const stmt = db.prepare(`
             SELECT * FROM conversation_turns 
             WHERE call_sid = ? 
