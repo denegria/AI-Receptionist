@@ -1,4 +1,4 @@
-import { db } from '../client';
+import { getClientDatabase } from '../client';
 
 export interface Appointment {
     id?: number;
@@ -19,6 +19,7 @@ export interface Appointment {
 
 export class AppointmentRepository {
     save(appt: Appointment): void {
+        const db = getClientDatabase(appt.client_id);
         const stmt = db.prepare(`
             INSERT INTO appointment_cache (
                 client_id, calendar_event_id, provider, customer_name,
@@ -48,6 +49,7 @@ export class AppointmentRepository {
     }
 
     findByClient(clientId: string, start?: string, end?: string): Appointment[] {
+        const db = getClientDatabase(clientId);
         let query = 'SELECT * FROM appointment_cache WHERE client_id = ?';
         const params: any[] = [clientId];
 
@@ -65,6 +67,7 @@ export class AppointmentRepository {
     }
 
     updateStatus(clientId: string, eventId: string, status: Appointment['status']): void {
+        const db = getClientDatabase(clientId);
         const stmt = db.prepare(`
             UPDATE appointment_cache 
             SET status = ?, synced_at = CURRENT_TIMESTAMP 

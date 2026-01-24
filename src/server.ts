@@ -1,7 +1,7 @@
 import express from 'express';
 import expressWs from 'express-ws';
 import { config } from './config';
-import { initDatabase, db } from './db/client';
+import { initDatabase, db, closeAllDatabases } from './db/client';
 import { MigrationManager } from './db/migration-manager';
 import { errorHandler } from './api/middleware/error-handler';
 import fs from 'fs';
@@ -139,12 +139,11 @@ function gracefulShutdown(signal: string) {
     server.close(() => {
         console.log('✓ HTTP server closed');
 
-        // Close database
+        // Close all databases (legacy + client-specific)
         try {
-            db.close();
-            console.log('✓ Database closed');
+            closeAllDatabases();
         } catch (err) {
-            console.error('✗ Error closing database:', err);
+            console.error('✗ Error closing databases:', err);
         }
 
         console.log('👋 Shutdown complete');

@@ -1,0 +1,201 @@
+﻿
+  fly_logs_latest_utf8.json:1148:{
+  fly_logs_latest_utf8.json:1149:    "level": "info",
+  fly_logs_latest_utf8.json:1150:    "instance": "1781724df6e118",
+  fly_logs_latest_utf8.json:1151:    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\
+":[0,1],\"duration\":2.9700012,\"start\":131.48,\"is_final\":true,\"speech_final\":true,\"channel\":{\"alternatives\":[
+{\"transcript\":\"No. That'll be it.\",\"confidence\":0.9875488,\"words\":[{\"word\":\"no\",\"start\":133.31999,\"end\"
+:133.56,\"confidence\":0.8544922,\"punctuated_word\":\"No.\"},{\"word\":\"that'll\",\"start\":133.56,\"end\":133.87999,
+\"confidence\":0.9770508,\"punctuated_word\":\"That'll\"},{\"word\":\"be\",\"start\":133.87999,\"end\":134.04,\"confide
+nce\":0.99902344,\"punctuated_word\":\"be\"},{\"word\":\"it\",\"start\":134.04,\"end\":134.45,\"confidence\":0.9875488,
+\"punctuated_word\":\"it.\"}]}]},\"metadata\":{\"request_id\":\"f640696c-29ef-454f-a603-2f3e5c8282fd\",\"model_info\":{
+\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":\"1dbdfb4d-85b2-4659-9
+831-16b3c76229aa\"},\"from_finalize\":false}",
+  fly_logs_latest_utf8.json:1152:    "region": "ewr",
+> fly_logs_latest_utf8.json:1153:    "timestamp": "2026-01-24T00:28:05.51198364Z",
+  fly_logs_latest_utf8.json:1154:    "meta": {
+  fly_logs_latest_utf8.json:1155:        "Instance": "1781724df6e118",
+  fly_logs_latest_utf8.json:1156:        "Region": "ewr",
+  fly_logs_latest_utf8.json:1157:        "Event": {
+  fly_logs_latest_utf8.json:1158:            "Provider": "app"
+  fly_logs_latest_utf8.json:1159:        },
+  fly_logs_latest_utf8.json:1160:        "HTTP": {
+  fly_logs_latest_utf8.json:1161:            "Request": {
+  fly_logs_latest_utf8.json:1162:                "ID": "",
+  fly_logs_latest_utf8.json:1163:                "Method": "",
+  fly_logs_latest_utf8.json:1164:                "Version": ""
+  fly_logs_latest_utf8.json:1165:            },
+  fly_logs_latest_utf8.json:1166:            "Response": {
+  fly_logs_latest_utf8.json:1167:                "status_code": 0
+  fly_logs_latest_utf8.json:1168:            }
+  fly_logs_latest_utf8.json:1169:        },
+  fly_logs_latest_utf8.json:1170:        "Error": {
+  fly_logs_latest_utf8.json:1171:            "Code": 0,
+  fly_logs_latest_utf8.json:1172:            "Message": ""
+  fly_logs_latest_utf8.json:1173:        },
+  fly_logs_latest_utf8.json:1174:        "URL": {
+  fly_logs_latest_utf8.json:1175:            "Full": ""
+  fly_logs_latest_utf8.json:1176:        }
+  fly_logs_latest_utf8.json:1177:    }
+  fly_logs_latest_utf8.json:1178:}
+  fly_logs_latest_utf8.json:1179:{
+  fly_logs_latest_utf8.json:1180:    "level": "info",
+  fly_logs_latest_utf8.json:1181:    "instance": "1781724df6e118",
+  fly_logs_latest_utf8.json:1182:    "message": "STT [FINAL]: No. That'll be it. (Confidence: 0.9875488)",
+  fly_logs_latest_utf8.json:1183:    "region": "ewr",
+> fly_logs_latest_utf8.json:1184:    "timestamp": "2026-01-24T00:28:05.51199143Z",
+  fly_logs_latest_utf8.json:1185:    "meta": {
+  fly_logs_latest_utf8.json:1186:        "Instance": "1781724df6e118",
+  fly_logs_latest_utf8.json:1187:        "Region": "ewr",
+  fly_logs_latest_utf8.json:1188:        "Event": {
+  fly_logs_latest_utf8.json:1189:            "Provider": "app"
+  fly_logs_latest_utf8.json:1190:        },
+  fly_logs_latest_utf8.json:1191:        "HTTP": {
+  fly_logs_latest_utf8.json:1192:            "Request": {
+  fly_logs_latest_utf8.json:1193:                "ID": "",
+  fly_logs_latest_utf8.json:1194:                "Method": "",
+  fly_logs_latest_utf8.json:1195:                "Version": ""
+  fly_logs_latest_utf8.json:1196:            },
+  fly_logs_latest_utf8.json:1197:            "Response": {
+  fly_logs_latest_utf8.json:1198:                "status_code": 0
+  fly_logs_latest_utf8.json:1199:            }
+  fly_logs_latest_utf8.json:1200:        },
+  fly_logs_latest_utf8.json:1201:        "Error": {
+  fly_logs_latest_utf8.json:1202:            "Code": 0,
+  fly_logs_latest_utf8.json:1203:            "Message": ""
+  fly_logs_latest_utf8.json:1204:        },
+  fly_logs_latest_utf8.json:1205:        "URL": {
+  fly_logs_latest_utf8.json:1206:            "Full": ""
+  fly_logs_latest_utf8.json:1207:        }
+  fly_logs_latest_utf8.json:1208:    }
+  fly_logs_latest_utf8.json:1209:}
+  fly_logs_latest_utf8.json:1210:{
+  fly_logs_latest_utf8.json:1211:    "level": "info",
+  fly_logs_latest_utf8.json:1212:    "instance": "1781724df6e118",
+> fly_logs_latest_utf8.json:1213:    "message": "{\"timestamp\":\"2026-01-24T00:28:05.511Z\",\"level\":\"latency\",\"me
+ssage\":\"STT_FINAL\",\"callSid\":\"CAbc658e0b2b132d237d2aa57acacd9b3d\",\"relativeMs\":0,\"latencyEvent\":true,\"trans
+cript\":\"No. That'll be it.\",\"confidence\":0.9875488}",
+  fly_logs_latest_utf8.json:1214:    "region": "ewr",
+> fly_logs_latest_utf8.json:1215:    "timestamp": "2026-01-24T00:28:05.51199298Z",
+  fly_logs_latest_utf8.json:1216:    "meta": {
+  fly_logs_latest_utf8.json:1217:        "Instance": "1781724df6e118",
+  fly_logs_latest_utf8.json:1218:        "Region": "ewr",
+  fly_logs_latest_utf8.json:1219:        "Event": {
+  fly_logs_latest_utf8.json:1220:            "Provider": "app"
+  fly_logs_latest_utf8.json:1221:        },
+  fly_logs_latest_utf8.json:1222:        "HTTP": {
+  fly_logs_latest_utf8.json:1223:            "Request": {
+  fly_logs_latest_utf8.json:1224:                "ID": "",
+  fly_logs_latest_utf8.json:1225:                "Method": "",
+  fly_logs_latest_utf8.json:1226:                "Version": ""
+  fly_logs_latest_utf8.json:1227:            },
+  fly_logs_latest_utf8.json:1228:            "Response": {
+  fly_logs_latest_utf8.json:1229:                "status_code": 0
+  fly_logs_latest_utf8.json:1230:            }
+  fly_logs_latest_utf8.json:1231:        },
+  fly_logs_latest_utf8.json:1232:        "Error": {
+  fly_logs_latest_utf8.json:1233:            "Code": 0,
+  fly_logs_latest_utf8.json:1234:            "Message": ""
+  fly_logs_latest_utf8.json:1235:        },
+  fly_logs_latest_utf8.json:1236:        "URL": {
+  fly_logs_latest_utf8.json:1237:            "Full": ""
+  fly_logs_latest_utf8.json:1238:        }
+  fly_logs_latest_utf8.json:1239:    }
+  fly_logs_latest_utf8.json:1240:}
+  fly_logs_latest_utf8.json:1241:{
+  fly_logs_latest_utf8.json:1242:    "level": "info",
+  fly_logs_latest_utf8.json:1243:    "instance": "1781724df6e118",
+  fly_logs_latest_utf8.json:1244:    "message": "[DEBUG] Starting LLM Stream with 20 messages",
+  fly_logs_latest_utf8.json:1245:    "region": "ewr",
+> fly_logs_latest_utf8.json:1246:    "timestamp": "2026-01-24T00:28:05.512475368Z",
+  fly_logs_latest_utf8.json:1247:    "meta": {
+  fly_logs_latest_utf8.json:1248:        "Instance": "1781724df6e118",
+  fly_logs_latest_utf8.json:1249:        "Region": "ewr",
+  fly_logs_latest_utf8.json:1250:        "Event": {
+  fly_logs_latest_utf8.json:1251:            "Provider": "app"
+  fly_logs_latest_utf8.json:1252:        },
+  fly_logs_latest_utf8.json:1253:        "HTTP": {
+  fly_logs_latest_utf8.json:1254:            "Request": {
+  fly_logs_latest_utf8.json:1255:                "ID": "",
+  fly_logs_latest_utf8.json:1256:                "Method": "",
+  fly_logs_latest_utf8.json:1257:                "Version": ""
+  fly_logs_latest_utf8.json:1258:            },
+  fly_logs_latest_utf8.json:1259:            "Response": {
+  fly_logs_latest_utf8.json:1260:                "status_code": 0
+  fly_logs_latest_utf8.json:1261:            }
+  fly_logs_latest_utf8.json:1262:        },
+  fly_logs_latest_utf8.json:1263:        "Error": {
+  fly_logs_latest_utf8.json:1264:            "Code": 0,
+  fly_logs_latest_utf8.json:1265:            "Message": ""
+  fly_logs_latest_utf8.json:1266:        },
+  fly_logs_latest_utf8.json:1267:        "URL": {
+  fly_logs_latest_utf8.json:1268:            "Full": ""
+  fly_logs_latest_utf8.json:1269:        }
+  fly_logs_latest_utf8.json:1270:    }
+  fly_logs_latest_utf8.json:1271:}
+  fly_logs_latest_utf8.json:1272:{
+  fly_logs_latest_utf8.json:1273:    "level": "info",
+  fly_logs_latest_utf8.json:1274:    "instance": "1781724df6e118",
+  fly_logs_latest_utf8.json:1275:    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\
+":[0,1],\"duration\":0.38000488,\"start\":134.45,\"is_final\":true,\"speech_final\":true,\"channel\":{\"alternatives\":
+[{\"transcript\":\"\",\"confidence\":0,\"words\":[]}]},\"metadata\":{\"request_id\":\"f640696c-29ef-454f-a603-2f3e5c828
+2fd\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":
+\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+  fly_logs_latest_utf8.json:1276:    "region": "ewr",
+> fly_logs_latest_utf8.json:1277:    "timestamp": "2026-01-24T00:28:05.891641317Z",
+  fly_logs_latest_utf8.json:1278:    "meta": {
+  fly_logs_latest_utf8.json:1279:        "Instance": "1781724df6e118",
+  fly_logs_latest_utf8.json:1280:        "Region": "ewr",
+  fly_logs_latest_utf8.json:1281:        "Event": {
+  fly_logs_latest_utf8.json:1282:            "Provider": "app"
+  fly_logs_latest_utf8.json:1283:        },
+  fly_logs_latest_utf8.json:1284:        "HTTP": {
+  fly_logs_latest_utf8.json:1285:            "Request": {
+  fly_logs_latest_utf8.json:1286:                "ID": "",
+  fly_logs_latest_utf8.json:1287:                "Method": "",
+  fly_logs_latest_utf8.json:1288:                "Version": ""
+  fly_logs_latest_utf8.json:1289:            },
+  fly_logs_latest_utf8.json:1290:            "Response": {
+  fly_logs_latest_utf8.json:1291:                "status_code": 0
+  fly_logs_latest_utf8.json:1292:            }
+  fly_logs_latest_utf8.json:1293:        },
+  fly_logs_latest_utf8.json:1294:        "Error": {
+  fly_logs_latest_utf8.json:1295:            "Code": 0,
+  fly_logs_latest_utf8.json:1296:            "Message": ""
+  fly_logs_latest_utf8.json:1297:        },
+  fly_logs_latest_utf8.json:1298:        "URL": {
+  fly_logs_latest_utf8.json:1299:            "Full": ""
+  fly_logs_latest_utf8.json:1300:        }
+  fly_logs_latest_utf8.json:1301:    }
+  fly_logs_latest_utf8.json:1302:}
+  fly_logs_latest_utf8.json:1303:{
+  fly_logs_latest_utf8.json:1304:    "level": "info",
+  fly_logs_latest_utf8.json:1305:    "instance": "1781724df6e118",
+  fly_logs_latest_utf8.json:1306:    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\
+":[0,1],\"duration\":0.41000366,\"start\":134.83,\"is_final\":true,\"speech_final\":true,\"channel\":{\"alternatives\":
+[{\"transcript\":\"\",\"confidence\":0,\"words\":[]}]},\"metadata\":{\"request_id\":\"f640696c-29ef-454f-a603-2f3e5c828
+2fd\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":
+\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+  fly_logs_latest_utf8.json:1307:    "region": "ewr",
+  fly_logs_latest_utf8.json:1308:    "timestamp": "2026-01-24T00:28:06.292787226Z",
+  fly_logs_latest_utf8.json:1309:    "meta": {
+  fly_logs_latest_utf8.json:1310:        "Instance": "1781724df6e118",
+  fly_logs_latest_utf8.json:1311:        "Region": "ewr",
+  fly_logs_latest_utf8.json:1312:        "Event": {
+  fly_logs_latest_utf8.json:1313:            "Provider": "app"
+  fly_logs_latest_utf8.json:1314:        },
+  fly_logs_latest_utf8.json:1315:        "HTTP": {
+  fly_logs_latest_utf8.json:1316:            "Request": {
+  fly_logs_latest_utf8.json:1317:                "ID": "",
+  fly_logs_latest_utf8.json:1318:                "Method": "",
+  fly_logs_latest_utf8.json:1319:                "Version": ""
+  fly_logs_latest_utf8.json:1320:            },
+  fly_logs_latest_utf8.json:1321:            "Response": {
+  fly_logs_latest_utf8.json:1322:                "status_code": 0
+  fly_logs_latest_utf8.json:1323:            }
+  fly_logs_latest_utf8.json:1324:        },
+  fly_logs_latest_utf8.json:1325:        "Error": {
+  fly_logs_latest_utf8.json:1326:            "Code": 0,
+  fly_logs_latest_utf8.json:1327:            "Message": ""
+
+
