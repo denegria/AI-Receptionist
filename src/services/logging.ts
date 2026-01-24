@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { config } from '../config';
+import { metricsRepository } from '../db/repositories/metrics-repository';
 
 class Logger {
     private logFile: string;
@@ -70,12 +71,40 @@ class Logger {
         });
     }
 
-    public economic(callSid: string, meta: { tokens_input?: number, tokens_output?: number, characters_sent?: number, call_duration_seconds?: number }) {
+    public economic(callSid: string, meta: { tokens_input?: number, tokens_output?: number, characters_sent?: number, call_duration_seconds?: number, clientId?: string }) {
         this.log('economic', 'UNIT_ECONOMICS', {
             callSid,
             economicEvent: true,
             ...meta
         });
+
+        // Track metrics in database for billing
+        if (meta.clientId) {
+            try {
+                if (meta.tokens_input) {
+                    metricsRepository.track(meta.clientId, 'tokens_input', meta.tokens_input);
+                }
+                if (meta.tokens_output) {
+                    metricsRepository.track(meta.clientId, 'tokens_output', meta.tokens_output);
+                }
+                if (meta.call_duration_seconds) {
+                    metricsRepository.track(meta.clientId, 'call_duration', meta.call_duration_seconds);
+                }
+            } catch (err) {
+                console.error('Failed to track metrics:', err);
+            }
+        }
+    }
+
+    /**
+     * Track a metric directly (for call count, bookings, etc.)
+     */
+    public trackMetric(clientId: string, metricName: 'call_count' | 'booking_success' | 'booking_failed', value: number = 1) {
+        try {
+            metricsRepository.track(clientId, metricName, value);
+        } catch (err) {
+            console.error('Failed to track metric:', err);
+        }
     }
 }
 
