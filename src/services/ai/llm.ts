@@ -41,7 +41,8 @@ export class LLMService {
        - "Finally, what's your email for the calendar invite?"
     8. **The Confirmation**: Once you have ALL three (Name, Phone, Email), read them back naturally: "Okay, I've got [Name] for [Time] on [Date]. Phone number is ... and email is ... Does that all look correct to you?"
     9. **WAIT FOR YES**: You are FORBIDDEN from calling 'book_appointment' until the user explicitly says "Yes", "Correct", or "Go ahead".
-    10. **Final Confirmation**: Only after 'book_appointment' returns SUCCESS, say "You're all set! We've got you booked."
+    10. **REALITY CHECK**: You cannot book an appointment by just saying so. You MUST use the \`book_appointment\` tool. If you say "I've booked it" without generating a tool call, you have failed.
+    11. **Final Confirmation**: Only after the tool returns "Appointment booked successfully", then you can say "You're all set! We've got you booked."
 
     CONVERSATION STYLE:
     - Sound like a real person. Use human rhythm. Use upbeat fillers like "Wonderful!!!", "Great!", "I see...", or "Got it...".
@@ -91,7 +92,7 @@ export class LLMService {
         try {
             console.log(`[DEBUG] Calling Anthropic with ${messages.length} messages`);
             const response = await this.anthropic.messages.create({
-                model: 'claude-3-haiku-20240307',
+                model: config.ai.model,
                 max_tokens: 500,
                 system: system,
                 messages: messages,
@@ -135,7 +136,7 @@ export class LLMService {
         try {
             console.log(`[DEBUG] Starting LLM Stream with ${messages.length} messages`);
             const stream = this.anthropic.messages.stream({
-                model: 'claude-3-haiku-20240307',
+                model: config.ai.model,
                 max_tokens: 500,
                 system: system,
                 messages: messages,
