@@ -327,13 +327,30 @@ export class StreamHandler {
                     currentFullText += text;
                     this.sentenceBuffer += text;
 
-                    if (this.isSentenceComplete(this.sentenceBuffer)) {
-                        this.enqueueSpeech(this.sentenceBuffer.trim());
-                        this.sentenceBuffer = '';
+                    // Improved buffering: Split at the LAST valid sentence boundary
+                    // This prevents "Okay. I" from being spoken as one chunk (leaving "I" stranded)
+                    let boundaryIndex = -1;
+                    const globalRegex = new RegExp(this.SENTENCE_END_REGEX, 'g');
+                    let match;
+
+                    while ((match = globalRegex.exec(this.sentenceBuffer)) !== null) {
+                        const potentialEnd = match.index + match[0].length;
+                        const candidate = this.sentenceBuffer.substring(0, potentialEnd).trim();
+                        // Only accept boundary if it's NOT an abbreviation
+                        if (!this.ABBREVIATION_REGEX.test(candidate)) {
+                            boundaryIndex = potentialEnd;
+                        }
+                    }
+
+                    if (boundaryIndex !== -1) {
+                        const completePart = this.sentenceBuffer.substring(0, boundaryIndex);
+                        this.enqueueSpeech(completePart.trim());
+                        this.sentenceBuffer = this.sentenceBuffer.substring(boundaryIndex);
                     }
                 }
             }
 
+            // Flush remaining buffer at the end of the turn
             if (this.sentenceBuffer.trim()) this.enqueueSpeech(this.sentenceBuffer.trim());
             if (currentFullText) {
                 assistantContent.push({ type: 'text', text: currentFullText });
@@ -346,13 +363,6 @@ export class StreamHandler {
             console.error('[TURN ERROR]', err);
             return { type: 'final' };
         }
-    }
-
-    private isSentenceComplete(text: string): boolean {
-        const trimmed = text.trim();
-        if (!this.SENTENCE_END_REGEX.test(trimmed)) return false;
-        if (this.ABBREVIATION_REGEX.test(trimmed)) return false;
-        return true;
     }
 
     private logTurn(role: 'user' | 'assistant', content: string) {
