@@ -83,6 +83,11 @@ export class StreamHandler {
                 this.transitionTo(CallState.GREETING);
                 this.handleInitialGreeting().catch(err => console.error('[GREETING ERROR]', err));
 
+                // Track call count metric
+                if (this.clientId) {
+                    logger.trackMetric(this.clientId, 'call_count');
+                }
+
                 if (data.start.customParameters?.callerPhone) this.callerPhone = data.start.customParameters.callerPhone;
                 if (data.start.customParameters?.clientId) this.clientId = data.start.customParameters.clientId;
                 if (!this.clientId) this.clientId = 'abc';
@@ -295,7 +300,7 @@ export class StreamHandler {
                 if (this.shouldCancelPending) throw new Error('Aborted');
 
                 const usage = (chunk as any).usage || (chunk as any).message?.usage;
-                if (usage) logger.economic(this.callSid, { tokens_input: usage.input_tokens, tokens_output: usage.output_tokens });
+                if (usage) logger.economic(this.callSid, { tokens_input: usage.input_tokens, tokens_output: usage.output_tokens, clientId: this.clientId! });
 
                 if (chunk.type === 'content_block_start' && chunk.content_block.type === 'tool_use') {
                     // Start technical turn
@@ -316,8 +321,13 @@ export class StreamHandler {
                         const toolResult = await this.toolExecutor.execute(currentTool.name, input, this.clientId!);
                         this.logTurn('assistant', `[TOOL RESULT] ${currentTool.name}: ${toolResult}`);
 
-                        if (currentTool.name === 'book_appointment' && !toolResult.includes('Error')) {
-                            this.transitionTo(CallState.CONFIRMATION);
+                        if (currentTool.name === 'book_appointment') {
+                            if (!toolResult.includes('Error')) {
+                                this.transitionTo(CallState.CONFIRMATION);
+                                logger.trackMetric(this.clientId!, 'booking_success');
+                            } else {
+                                logger.trackMetric(this.clientId!, 'booking_failed');
+                            }
                         }
 
                         return { type: 'tool', toolResult, toolId: currentTool.id };
