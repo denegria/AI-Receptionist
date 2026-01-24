@@ -27,6 +27,7 @@ COPY --from=builder /app/dist ./dist
 # Copy client configs and database schema/migrations
 COPY --from=builder /app/config ./config
 COPY --from=builder /app/src/db/schema.sql ./src/db/schema.sql
+COPY --from=builder /app/src/db/shared-schema.sql ./src/db/shared-schema.sql
 COPY --from=builder /app/src/db/migrations ./src/db/migrations
 # Create directory for SQLite persistence
 RUN mkdir -p /app/data
