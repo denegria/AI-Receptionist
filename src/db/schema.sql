@@ -74,3 +74,16 @@ CREATE TABLE IF NOT EXISTS voicemails (
 CREATE INDEX IF NOT EXISTS idx_voicemails_call_sid ON voicemails(call_sid);
 CREATE INDEX IF NOT EXISTS idx_voicemails_client_id ON voicemails(client_id);
 CREATE INDEX IF NOT EXISTS idx_turns_call_sid ON conversation_turns(call_sid);
+
+-- Client Metrics (Usage tracking for billing)
+CREATE TABLE IF NOT EXISTS client_metrics (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  client_id TEXT NOT NULL,
+  metric_name TEXT NOT NULL,
+  metric_value REAL NOT NULL,
+  metadata TEXT,
+  timestamp TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_metrics_name ON client_metrics(metric_name);
+CREATE INDEX IF NOT EXISTS idx_metrics_timestamp ON client_metrics(timestamp);

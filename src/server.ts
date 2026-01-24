@@ -2,6 +2,7 @@ import express from 'express';
 import expressWs from 'express-ws';
 import { config } from './config';
 import { initDatabase, db, closeAllDatabases } from './db/client';
+import { initSharedDatabase, closeSharedDatabase } from './db/shared-client';
 import { MigrationManager } from './db/migration-manager';
 import { errorHandler } from './api/middleware/error-handler';
 import fs from 'fs';
@@ -122,6 +123,7 @@ app.use(errorHandler);
 const server = app.listen(config.port, '0.0.0.0', () => {
     try {
         initDatabase();
+        initSharedDatabase();
         MigrationManager.runMigrations();
         logger.info(`Server listening`, { port: config.port });
         console.log(`✓ WebSocket endpoint: ws://localhost:${config.port}/media-stream`);
@@ -139,9 +141,10 @@ function gracefulShutdown(signal: string) {
     server.close(() => {
         console.log('✓ HTTP server closed');
 
-        // Close all databases (legacy + client-specific)
+        // Close all databases (legacy + client-specific + shared)
         try {
             closeAllDatabases();
+            closeSharedDatabase();
         } catch (err) {
             console.error('✗ Error closing databases:', err);
         }
