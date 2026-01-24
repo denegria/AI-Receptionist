@@ -28,6 +28,8 @@ export class DeepgramSTTService {
             sample_rate: 8000,
             channels: 1,
             interim_results: true,
+            utterance_end_ms: 800,
+            endpointing: 500
         });
 
         this.connection.on('open', () => {
@@ -36,7 +38,6 @@ export class DeepgramSTTService {
         });
 
         this.connection.on('Results', (data: any) => {
-            console.log('[DEBUG] Deepgram Results event:', JSON.stringify(data));
             const alt = data.channel?.alternatives?.[0];
             const transcript = alt?.transcript;
             if (transcript) {
@@ -45,7 +46,7 @@ export class DeepgramSTTService {
         });
 
         this.connection.on('Metadata', (data: any) => {
-            console.log('[DEBUG] Deepgram Metadata event:', JSON.stringify(data));
+            // Silenced metadata noise
         });
 
         this.connection.on('error', (err: any) => {
@@ -63,7 +64,7 @@ export class DeepgramSTTService {
         });
 
         this.connection.on('UtteranceEnd', (data: any) => {
-            console.log('[DEBUG] Deepgram UtteranceEnd event:', JSON.stringify(data));
+            // Silenced UtteranceEnd noise
         });
     }
 

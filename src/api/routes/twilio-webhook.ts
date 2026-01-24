@@ -58,7 +58,7 @@ twilioWebhookRouter.post('/voicemail-callback', async (req: Request, res: Respon
     try {
         if (type === 'transcription') {
             // Update transcription text
-            voicemailRepository.updateByCallSid(CallSid, {
+            voicemailRepository.updateByCallSid(clientId as string, CallSid, {
                 transcription_text: TranscriptionText
             });
 
