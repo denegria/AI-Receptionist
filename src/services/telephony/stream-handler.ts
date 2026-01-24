@@ -31,16 +31,17 @@ export class StreamHandler {
     private callDurationTimeout?: NodeJS.Timeout;
     private stateManager: CallStateManager;
     private callerPhone: string = 'unknown';
-    private currentAbortController: AbortController | null = null;
     private currentSpeechAbort: AbortController | null = null;
-    private currentTTSLive: { send: (t: string) => void, finish: () => void, isOpen: boolean } | null = null;
-    private turnStartTime: number = 0;
     private dbReady: Promise<void> = Promise.resolve();
     private turnBuffer: any[] = [];
+    private sentenceBuffer: string = '';
+    private speechQueue: string[] = [];
+    private isProcessingQueue: boolean = false;
 
+    private readonly SENTENCE_END_REGEX = /[.!?](\s|$)/;
+    private readonly ABBREVIATION_REGEX = /\b(Dr|Mr|Mrs|Ms|St|Ave|Inc|Jr|Sr|Prof|gov|com|net|org|edu)\.$/i;
     private readonly INACTIVITY_LIMIT_MS = 30000;
     private readonly MAX_HISTORY = 20;
-    private readonly KEEP_RECENT = 10;
 
     constructor(ws: WebSocket, clientId?: string) {
         this.ws = ws;
@@ -57,7 +58,7 @@ export class StreamHandler {
         // Hard duration limit
         this.callDurationTimeout = setTimeout(async () => {
             console.log('⏰ MAX DURATION REACHED - Force terminating call');
-            await this.speak("I'm sorry, I have to end the call now as we've reached the system time limit. Goodbye.");
+            this.enqueueSpeech("I'm sorry, I have to end the call now as we've reached the system time limit. Goodbye.");
             setTimeout(() => this.ws.close(), 3000);
         }, config.voice.maxDurationMs);
     }
@@ -78,18 +79,17 @@ export class StreamHandler {
                 this.stateManager = new CallStateManager(this.callSid);
                 console.log(`[DEBUG] 🚀 Stream started for ${this.callSid}`);
 
-                // GREETING FIRST - ZERO LATENCY
+                // 1. GREETING FIRST (Zero delay)
                 this.transitionTo(CallState.GREETING);
                 this.handleInitialGreeting().catch(err => console.error('[GREETING ERROR]', err));
 
-                // Process identity in background
                 if (data.start.customParameters?.callerPhone) this.callerPhone = data.start.customParameters.callerPhone;
                 if (data.start.customParameters?.clientId) this.clientId = data.start.customParameters.clientId;
                 if (!this.clientId) this.clientId = 'abc';
 
                 try {
                     this.config = loadClientConfig(this.clientId);
-                    // Init DB in background
+                    // 2. Init DB in background
                     this.dbReady = (async () => {
                         await callLogRepository.create({
                             client_id: this.clientId!,
@@ -121,7 +121,6 @@ export class StreamHandler {
             this.stt.stop();
             if (this.inactivityTimeout) clearTimeout(this.inactivityTimeout);
             if (this.callDurationTimeout) clearTimeout(this.callDurationTimeout);
-            this.cleanupTTS(); // Final session cleanup
             this.finalizeCall('completed');
         });
     }
@@ -139,88 +138,104 @@ export class StreamHandler {
                 this.transitionTo(CallState.CONVERSATION);
 
                 if (confidence && confidence < config.voice.asrConfidenceThreshold) {
-                    await this.speak("I'm sorry, I didn't quite catch that. Could you say it again?");
+                    this.enqueueSpeech("I'm sorry, I didn't quite catch that. Could you say it again?");
                     return;
                 }
 
-                this.turnStartTime = Date.now();
                 logger.latency(this.callSid, 'STT_FINAL', 0, { transcript, confidence });
                 this.enqueueProcessing("user", transcript);
             } else if (transcript.trim().length > 0) {
-                if (this.isAISpeaking || this.currentAbortController) {
-                    if (transcript.trim().split(' ').length > 3 || (confidence && confidence > 0.8)) {
-                        this.shouldCancelPending = true;
-                        this.sendClearSignal();
+                if (this.isAISpeaking) {
+                    if (transcript.trim().split(' ').length > 2 || (confidence && confidence > 0.8)) {
+                        this.interruptAI();
                     }
                 }
             }
         }, () => {
-            if (this.isAISpeaking || this.currentAbortController) {
-                this.shouldCancelPending = true;
-                this.sendClearSignal();
-            }
+            if (this.isAISpeaking) this.interruptAI();
         });
+    }
+
+    private interruptAI() {
+        console.log('[DEBUG] 🛑 Interrupting AI Speech');
+        this.shouldCancelPending = true;
+        this.speechQueue = [];
+        this.sentenceBuffer = '';
+        if (this.ws.readyState === WebSocket.OPEN && this.streamSid) {
+            this.ws.send(JSON.stringify({ event: 'clear', streamSid: this.streamSid }));
+        }
+        if (this.currentSpeechAbort) {
+            this.currentSpeechAbort.abort();
+            this.currentSpeechAbort = null;
+        }
+        this.isAISpeaking = false;
     }
 
     private resetInactivityTimer() {
         if (this.inactivityTimeout) clearTimeout(this.inactivityTimeout);
         this.inactivityTimeout = setTimeout(async () => {
             if (this.stateManager.getState() !== CallState.TERMINATED) {
-                await this.speak("I haven't heard from you in a while, so I'll go ahead and end the call. Goodbye!");
+                this.enqueueSpeech("I haven't heard from you in a while, so I'll go ahead and end the call. Goodbye!");
                 setTimeout(() => this.ws.close(), 5000);
             }
         }, this.INACTIVITY_LIMIT_MS);
     }
 
-    private sendClearSignal() {
-        if (this.ws.readyState === WebSocket.OPEN && this.streamSid) {
-            this.ws.send(JSON.stringify({ event: 'clear', streamSid: this.streamSid }));
-            this.isAISpeaking = false;
-            if (this.currentSpeechAbort) {
-                this.currentSpeechAbort.abort();
-                this.currentSpeechAbort = null;
-            }
-            this.cleanupTTS();
-        }
-    }
-
-    private ensureTTSSession() {
-        if (this.currentTTSLive) return this.currentTTSLive;
-        console.log('[DEBUG] 🚀 Opening Global Interaction TTS Session...');
-        const session = this.tts.createLiveSession((chunk) => {
-            if (this.shouldCancelPending) return;
-            if (this.ws.readyState === WebSocket.OPEN) {
-                this.ws.send(JSON.stringify({ event: 'media', streamSid: this.streamSid, media: { payload: chunk.toString('base64') } }));
-            }
-        });
-        this.currentTTSLive = session;
-        return session;
-    }
-
-    private cleanupTTS() {
-        if (this.currentTTSLive) {
-            this.currentTTSLive.finish();
-            this.currentTTSLive = null;
-        }
-    }
-
-    private async speakREST(text: string) {
+    private async speak(text: string) {
         if (!text.trim()) return;
+
         if (this.currentSpeechAbort) this.currentSpeechAbort.abort();
         this.currentSpeechAbort = new AbortController();
         const signal = this.currentSpeechAbort.signal;
+
+        this.isAISpeaking = true;
         try {
+            console.log(`[DEBUG] 🎙️ Speaking: "${text.substring(0, 30)}..."`);
             for await (const chunk of this.tts.generateStream(text)) {
                 if (signal.aborted || this.shouldCancelPending) break;
                 if (this.ws.readyState === WebSocket.OPEN) {
-                    this.ws.send(JSON.stringify({ event: 'media', streamSid: this.streamSid, media: { payload: chunk.toString('base64') } }));
+                    this.ws.send(JSON.stringify({
+                        event: 'media',
+                        streamSid: this.streamSid,
+                        media: { payload: chunk.toString('base64') }
+                    }));
                 }
             }
+            // Hold floor briefly to allow audio delivery
+            if (!signal.aborted && !this.shouldCancelPending) {
+                const duration = Math.min(2500, (text.length / 15) * 1000);
+                await new Promise(r => setTimeout(r, duration));
+            }
         } catch (err) {
-            if ((err as any).name !== 'AbortError') console.error('[REST TTS ERR]', err);
+            if ((err as any).name !== 'AbortError') console.error('[SPEECH ERR]', err);
         } finally {
-            if (!signal.aborted && this.currentSpeechAbort?.signal === signal) this.currentSpeechAbort = null;
+            if (!signal.aborted && this.currentSpeechAbort?.signal === signal) {
+                this.currentSpeechAbort = null;
+                this.isAISpeaking = false;
+            }
         }
+    }
+
+    private enqueueSpeech(text: string) {
+        if (!text.trim()) return;
+        this.speechQueue.push(text);
+        this.processSpeechQueue().catch(err => console.error('[CRITICAL] Queue Error:', err));
+    }
+
+    private async processSpeechQueue() {
+        if (this.isProcessingQueue) return;
+        this.isProcessingQueue = true;
+
+        while (this.speechQueue.length > 0) {
+            if (this.shouldCancelPending) {
+                this.speechQueue = [];
+                break;
+            }
+            const text = this.speechQueue.shift();
+            if (text) await this.speak(text);
+        }
+
+        this.isProcessingQueue = false;
     }
 
     private enqueueProcessing(role: 'user' | 'system' | 'tool', content: any, tool_use_id?: string) {
@@ -235,31 +250,23 @@ export class StreamHandler {
             (this.config?.aiSettings.greeting || "Hi! How can I help you today?");
         this.history.push({ role: 'assistant', content: greeting });
         this.logTurn('assistant', greeting);
-        this.speakREST(greeting).catch(() => { });
-        this.ensureTTSSession();
+        this.enqueueSpeech(greeting);
     }
 
-    private async processInteraction(initialRole: 'user' | 'system' | 'tool', initialContent: any, initialToolId?: string) {
-        let currentRole = initialRole;
-        let currentContent = initialContent;
-        let currentToolId = initialToolId;
+    private async processInteraction(role: 'user' | 'system' | 'tool', content: any, toolId?: string) {
+        let currentRole = role;
+        let currentContent = content;
+        let currentToolId = toolId;
 
-        if (currentRole === 'user') {
-            this.ensureTTSSession();
-        }
+        if (currentRole === 'user') this.shouldCancelPending = false;
 
         while (true) {
-            this.shouldCancelPending = false; // Reset barge-in for each sub-turn
-            if (this.ws.readyState !== WebSocket.OPEN) break;
+            if (this.shouldCancelPending || this.ws.readyState !== WebSocket.OPEN) break;
 
             this.history.push({ role: currentRole, content: currentContent, tool_use_id: currentToolId });
             this.pruneHistory();
+            if (currentRole === 'user' && typeof currentContent === 'string') this.logTurn('user', currentContent);
 
-            if (currentRole === 'user' && typeof currentContent === 'string') {
-                this.logTurn('user', currentContent);
-            }
-
-            logger.latency(this.callSid, 'LLM_START', Date.now());
             const result = await this.runLLMTurn();
 
             if (result.type === 'final') {
@@ -273,92 +280,79 @@ export class StreamHandler {
     }
 
     private async runLLMTurn(): Promise<{ type: 'final' } | { type: 'tool', toolResult: any, toolId: string }> {
-        this.currentAbortController = new AbortController();
-        const session = this.ensureTTSSession();
         const stream = this.llm.generateStream(this.history, {
             businessName: this.config?.businessName || 'the business',
             timezone: this.config?.timezone || 'UTC'
         });
 
         let assistantContent: any[] = [];
-        let currentText = '';
-        let currentTool: any = null;
-        let isFirstToken = true;
+        let currentFullText = '';
+        this.sentenceBuffer = '';
+        let currentTool: { id: string, name: string, input: string } | null = null;
 
         try {
             for await (const chunk of stream) {
-                if (this.shouldCancelPending || this.currentAbortController.signal.aborted) throw new Error('Aborted');
+                if (this.shouldCancelPending) throw new Error('Aborted');
 
                 const usage = (chunk as any).usage || (chunk as any).message?.usage;
                 if (usage) logger.economic(this.callSid, { tokens_input: usage.input_tokens, tokens_output: usage.output_tokens });
 
                 if (chunk.type === 'content_block_start' && chunk.content_block.type === 'tool_use') {
-                    if (currentText) { assistantContent.push({ type: 'text', text: currentText }); currentText = ''; }
+                    // Start technical turn
                     currentTool = { id: chunk.content_block.id, name: chunk.content_block.name, input: '' };
+                    if (this.sentenceBuffer.trim()) {
+                        this.enqueueSpeech(this.sentenceBuffer.trim());
+                        this.sentenceBuffer = '';
+                    }
                 } else if (chunk.type === 'content_block_delta' && chunk.delta.type === 'input_json_delta') {
                     if (currentTool) currentTool.input += chunk.delta.partial_json;
                 } else if (chunk.type === 'content_block_stop') {
                     if (currentTool) {
                         const input = JSON.parse(currentTool.input);
-
-                        // AGGREGATE Assistant message: text + tool_use
-                        if (currentText) assistantContent.push({ type: 'text', text: currentText });
+                        if (currentFullText) assistantContent.push({ type: 'text', text: currentFullText });
                         assistantContent.push({ type: 'tool_use', id: currentTool.id, name: currentTool.name, input });
                         this.history.push({ role: 'assistant', content: assistantContent });
 
                         const toolResult = await this.toolExecutor.execute(currentTool.name, input, this.clientId!);
-                        this.logTurn('assistant', `[TOOL CALL] ${currentTool.name}`);
                         this.logTurn('assistant', `[TOOL RESULT] ${currentTool.name}: ${toolResult}`);
-                        if (currentTool.name === 'book_appointment' && !toolResult.includes('Error')) this.transitionTo(CallState.CONFIRMATION);
 
-                        // SYNC: Lead-in speech must finish before thinking next turn
-                        if (currentText) {
-                            await this.waitForAudio(currentText);
-                            currentText = '';
+                        if (currentTool.name === 'book_appointment' && !toolResult.includes('Error')) {
+                            this.transitionTo(CallState.CONFIRMATION);
                         }
 
                         return { type: 'tool', toolResult, toolId: currentTool.id };
-                    } else if (currentText) {
-                        assistantContent.push({ type: 'text', text: currentText });
-                        currentText = '';
                     }
                 } else if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
                     const text = chunk.delta.text;
-                    if (isFirstToken && text.trim()) {
-                        isFirstToken = false;
-                        this.isAISpeaking = true;
+                    currentFullText += text;
+                    this.sentenceBuffer += text;
+
+                    if (this.isSentenceComplete(this.sentenceBuffer)) {
+                        this.enqueueSpeech(this.sentenceBuffer.trim());
+                        this.sentenceBuffer = '';
                     }
-                    currentText += text;
-                    session.send(text);
                 }
             }
 
-            if (currentText) assistantContent.push({ type: 'text', text: currentText });
-            if (assistantContent.length > 0) {
+            if (this.sentenceBuffer.trim()) this.enqueueSpeech(this.sentenceBuffer.trim());
+            if (currentFullText) {
+                assistantContent.push({ type: 'text', text: currentFullText });
                 this.history.push({ role: 'assistant', content: assistantContent });
-                const fullText = assistantContent.filter(b => b.type === 'text').map(b => b.text).join(' ');
-                if (fullText) {
-                    console.log(`[DEBUG] 🤖 AI Response: "${fullText}"`);
-                    this.logTurn('assistant', fullText);
-                    await this.waitForAudio(fullText);
-                }
+                this.logTurn('assistant', currentFullText);
+                console.log(`[DEBUG] 🤖 AI Final Response: "${currentFullText}"`);
             }
             return { type: 'final' };
         } catch (err) {
-            console.error('[TURN ERR]', err);
+            console.error('[TURN ERROR]', err);
             return { type: 'final' };
-        } finally {
-            this.isAISpeaking = false;
-            this.currentAbortController = null;
         }
     }
 
-    private async waitForAudio(text: string) {
-        if (!text.trim()) return;
-        this.isAISpeaking = true;
-        const delay = (text.length / 15) * 1000;
-        console.log(`[DEBUG] 🎙️ Holding for audio delivery (${Math.round(delay)}ms): "${text.substring(0, 30)}..."`);
-        await new Promise(r => setTimeout(r, Math.min(4000, delay)));
+    private isSentenceComplete(text: string): boolean {
+        const trimmed = text.trim();
+        if (!this.SENTENCE_END_REGEX.test(trimmed)) return false;
+        if (this.ABBREVIATION_REGEX.test(trimmed)) return false;
+        return true;
     }
 
     private logTurn(role: 'user' | 'assistant', content: string) {
@@ -369,8 +363,6 @@ export class StreamHandler {
                 await this.dbReady;
                 await conversationTurnRepository.create(turn);
             } catch (err) {
-                const msg = err instanceof Error ? err.message : String(err);
-                console.warn('[DB] Buffering turn:', msg);
                 this.turnBuffer.push(turn);
             }
         })();
@@ -379,12 +371,8 @@ export class StreamHandler {
     private pruneHistory() {
         if (this.history.length > this.MAX_HISTORY) {
             const sys = this.history.filter(m => m.role === 'system');
-            const data = this.history.filter(m => {
-                const t = typeof m.content === 'string' ? m.content.toLowerCase() : JSON.stringify(m.content).toLowerCase();
-                return m.role !== 'system' && (t.includes('name') || t.includes('phone') || t.includes('email') || t.includes('@') || t.includes('captured'));
-            });
-            const other = this.history.filter(m => m.role !== 'system' && !data.includes(m)).slice(-this.KEEP_RECENT);
-            this.history = [...sys, ...data, ...other];
+            const other = this.history.slice(-10).filter(m => m.role !== 'system');
+            this.history = [...sys, ...other];
         }
     }
 
@@ -392,23 +380,5 @@ export class StreamHandler {
         if (this.inactivityTimeout) clearTimeout(this.inactivityTimeout);
         if (!this.callSid) return;
         callLogRepository.update(this.callSid, { call_status: status });
-    }
-
-    private async speak(text: string) {
-        if (!text.trim()) return;
-        this.isAISpeaking = true;
-        try {
-            const session = this.ensureTTSSession();
-            if (session.isOpen) {
-                session.send(text);
-                await this.waitForAudio(text);
-            } else {
-                await this.speakREST(text);
-            }
-        } catch (error) {
-            await this.speakREST(text);
-        } finally {
-            this.isAISpeaking = false;
-        }
     }
 }
