@@ -4,15 +4,15 @@
 
 ## 🚀 Features
 
--   **📞 Smart Voice Interface**: Conversational AI powered by **Deepgram** (STT/TTS) and **LLM** (Claude/GPT).
+-   **📞 Smart Voice Interface**: Conversational AI powered by **Deepgram** (STT/TTS) and **Claude 3.5 Sonnet**.
+-   **⚡ Low-Latency Architecture**: Streaming pipeline with VAD tuning and immediate greetings (**~0.4s response overhead**).
+-   **💰 Cost Efficiency**: **Anthropic Prompt Caching** reduces input token costs by up to **90%**.
 -   **📅 Calendar Integration**: Seamless booking with **Google Calendar** and **Outlook**.
--   **⚙️ Centralized Configuration**: Robust handling of environment variables and secrets.
--   **🏢 Multi-Client Support**: JSON-based configuration for different business hours and settings.
--   **💾 Local Caching**: SQLite database for high-performance availability checks.
--   **🛡️ Resilience**: STT confidence thresholding and sliding conversation memory pruning.
--   **🗄️ Database Evolution**: Built-in migration runner for seamless schema updates.
+-   **🏢 Multi-Client Support**: Multi-tenant architecture with **Partitioned Database Shards** for total data isolation.
+-   **⚙️ Centralized Configuration**: Robust handling of environment variables, secrets, and client-specific business rules.
+-   **🛡️ Resilience**: STT confidence thresholding, sliding memory window, and tiered fallback systems.
+-   **🗄️ Database Evolution**: Built-in migration runner for schema updates across all client shards.
 -   **🩺 Health Monitoring**: Dedicated `/health` endpoint for DB and API vitality.
--   **⚡ Low-Latency Architecture**: Streaming LLM & TTS pipeline with smart buffering and interruption handling (~0.8s response).
 -   **🔌 Extensible Architecture**: Modular **Node.js** and **TypeScript** foundation.
 
 ## 🛠️ Tech Stack
@@ -21,8 +21,9 @@
 -   **Language**: TypeScript
 -   **Server**: Express + `express-ws`
 -   **Telephony**: Twilio Media Streams
--   **AI/Voice**: Deepgram Aura & Nova-2
--   **Database**: SQLite (`better-sqlite3`)
+-   **AI/Voice**: Deepgram (Nova-2 STT / Aura TTS)
+-   **LLM**: Claude 3.5 Sonnet (with Prompt Caching)
+-   **Database**: SQLite (`better-sqlite3`) with per-client sharding
 
 ## 📦 Installation
 
@@ -52,9 +53,9 @@
 
 ```text
 src/
-├── api/                  # Routing & Middleware
+├── api/                  # Routing & Middleware (Twilio, Webhooks, Auth)
 ├── services/             # Core Logic (Telephony, Voice, AI, Scheduling)
-├── db/                   # Database Client & Repositories
+├── db/                   # Partitioned Client & Shared Repositories
 ├── utils/                # Foundational Utilities (Crypto, Date, Phone)
 ├── models/               # Domain Models & Interfaces
 └── server.ts             # Application Entry Point
@@ -65,7 +66,7 @@ src/
 ### 1. Environment Variables (`.env`)
 ```env
 # Core
-PORT=3000
+PORT=8080
 ENCRYPTION_KEY=your-32-byte-hex-key
 
 # AI
@@ -104,10 +105,10 @@ ENABLE_STREAMING_TTS=true
 
 1.  **Incoming Call**: Twilio sends a webhook to `/voice`.
 2.  **Media Stream**: Server establishes a WebSocket connection for bidirectional audio.
-3.  **Processing**: Deepgram converts audio to text, Claude determines intent.
+3.  **Processing**: Deepgram converts audio to text, **Claude 3.5 Sonnet** determines intent using cached system prompts.
 4.  **Tool Use**: AI checks calendar availability or books an appointment via the unified `SchedulerService`.
-5.  **Fallback**: If AI is confused, the `take_voicemail` tool is triggered for a recording fallback.
-6.  **Response**: Text is converted back to audio and streamed to the caller.
+5.  **Data Persistence**: Call logs, turns, and voicemails are saved to **client-specific database shards**.
+6.  **Response**: Text is converted back to audio and streamed to the caller with sub-500ms latency.
 
 ---
 
