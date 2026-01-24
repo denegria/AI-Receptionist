@@ -84,12 +84,25 @@ ENABLE_STREAMING_LLM=true
 ENABLE_STREAMING_TTS=true
 ```
 
-### 2. Client Registry (`shared.db`)
+## 🏢 Client Management
+
+### 1. Client Registry (`shared.db`)
 
 Client configurations are stored in the **Global Registry** (`shared.db`). This allows for dynamic updates without restarting the server.
 
-*   **Registry Entry**: Each client has an entry in the `clients` table containing their `id`, `business_name`, `phone_number`, and a `config_json` blob.
-*   **Isolation**: Only basic routing and business rules are stored in the registry. Appointment data and call logs are strictly isolated in per-client database shards (e.g., `client-abc.db`).
+### 2. How to Onboard (No-Deploy Flow)
+
+To add a new client without redeploying the code:
+
+1.  **Prepare Config**: Use the [client-template.json](file:///c:/Users/Alvaro/OneDrive/Documents/Coding Projects/AI Receptionist/templates/client-template.json) as a starting point.
+2.  **Upload**: Use `fly sftp shell` (or any SFTP tool) to drop the JSON file into the `/app/data/onboarding` folder on the server.
+3.  **Automatic Ingestion**:
+    *   The `OnboardingWatcher` service polls this folder every 10 seconds.
+    *   It validates the JSON, registers it in `shared.db`, and clears the runtime cache.
+    *   The file is renamed to `.processed` upon success.
+4.  **Live**: The new client is now active! The AI will immediately recognize calls to their specific Twilio number.
+
+...
 
 ## 📖 How it Works
 
