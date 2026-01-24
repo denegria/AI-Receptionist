@@ -94,7 +94,7 @@ Client configurations are stored in the **Global Registry** (`shared.db`). This 
 
 To add a new client without redeploying the code:
 
-1.  **Prepare Config**: Use the [client-template.json](file:///c:/Users/Alvaro/OneDrive/Documents/Coding Projects/AI Receptionist/templates/client-template.json) as a starting point.
+1.  **Prepare Config**: Use the [client-template.json] as a starting point.
 2.  **Upload**: Use `fly sftp shell` (or any SFTP tool) to drop the JSON file into the `/app/data/onboarding` folder on the server.
 3.  **Automatic Ingestion**:
     *   The `OnboardingWatcher` service polls this folder every 10 seconds.
