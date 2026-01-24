@@ -7,11 +7,11 @@ export const TOOLS = [
             properties: {
                 startTime: {
                     type: "string",
-                    description: "Start time in ISO 8601 format (e.g., 2024-05-20T10:00:00Z)"
+                    description: "Start time in ISO 8601 format with offset (e.g., 2024-05-20T10:00:00-05:00)"
                 },
                 endTime: {
                     type: "string",
-                    description: "End time in ISO 8601 format"
+                    description: "End time in ISO 8601 format with offset"
                 }
             },
             required: ["startTime", "endTime"]
@@ -37,11 +37,11 @@ export const TOOLS = [
                 },
                 startTime: {
                     type: "string",
-                    description: "Start time in ISO 8601 format"
+                    description: "Start time in ISO 8601 format with offset (e.g. 2024-05-20T10:00:00-05:00). Do NOT use 'Z'."
                 },
                 endTime: {
                     type: "string",
-                    description: "End time in ISO 8601 format"
+                    description: "End time in ISO 8601 format with offset (e.g. 2024-05-20T11:00:00-05:00)"
                 },
                 description: {
                     type: "string",
