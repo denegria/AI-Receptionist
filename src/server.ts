@@ -100,6 +100,8 @@ app.get('/', (req, res) => {
 
 // WebSocket endpoint for Media Streams
 import { StreamHandler } from "./services/telephony/stream-handler";
+import { onboardingWatcher } from './services/telephony/onboarding-watcher';
+
 app.ws('/media-stream', (ws, req) => {
     const callSid = (req.query.callSid as string) || (req.headers['x-twilio-callsid'] as string);
     const clientId = (req.query.clientId as string) || (req.headers['x-twilio-clientid'] as string) || 'abc';
@@ -125,6 +127,7 @@ const server = app.listen(config.port, '0.0.0.0', () => {
         initDatabase();
         initSharedDatabase();
         MigrationManager.runMigrations();
+        onboardingWatcher.start(); // Start the auto-onboarding service
         logger.info(`Server listening`, { port: config.port });
         console.log(`✓ WebSocket endpoint: ws://localhost:${config.port}/media-stream`);
         console.log(`✓ Health check: http://localhost:${config.port}/health\n`);
@@ -143,6 +146,7 @@ function gracefulShutdown(signal: string) {
 
         // Close all databases (legacy + client-specific + shared)
         try {
+            onboardingWatcher.stop();
             closeAllDatabases();
             closeSharedDatabase();
         } catch (err) {

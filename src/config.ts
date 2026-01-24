@@ -59,6 +59,7 @@ interface Config {
 
     paths: {
         clientConfigs: string;
+        onboarding: string;
         logs: string;
         recordings?: string;
     };
@@ -150,6 +151,7 @@ export const config: Config = {
 
     paths: {
         clientConfigs: getEnvVar('CLIENT_CONFIGS_PATH', process.env.NODE_ENV === 'production' ? '/app/config/clients' : './config/clients'),
+        onboarding: getEnvVar('ONBOARDING_PATH', process.env.NODE_ENV === 'production' ? '/app/data/onboarding' : './onboarding'),
         logs: getEnvVar('LOGS_PATH', process.env.NODE_ENV === 'production' ? '/app/data/logs' : './logs'),
         recordings: process.env.RECORDINGS_PATH,
     },
