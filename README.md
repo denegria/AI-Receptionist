@@ -8,7 +8,7 @@
 -   **⚡ Low-Latency Architecture**: Streaming pipeline with VAD tuning and immediate greetings (**~0.4s response overhead**).
 -   **💰 Cost Efficiency**: **Anthropic Prompt Caching** reduces input token costs by up to **90%**.
 -   **📅 Calendar Integration**: Seamless booking with **Google Calendar** and **Outlook**.
--   **🏢 Multi-Client Support**: Multi-tenant architecture with **Partitioned Database Shards** for total data isolation.
+-   **🏢 Multi-Client Support**: Multi-tenant architecture with **Database-backed Registry** and partitioned shards.
 -   **⚙️ Centralized Configuration**: Robust handling of environment variables, secrets, and client-specific business rules.
 -   **🛡️ Resilience**: STT confidence thresholding, sliding memory window, and tiered fallback systems.
 -   **🗄️ Database Evolution**: Built-in migration runner for schema updates across all client shards.
@@ -55,7 +55,7 @@
 src/
 ├── api/                  # Routing & Middleware (Twilio, Webhooks, Auth)
 ├── services/             # Core Logic (Telephony, Voice, AI, Scheduling)
-├── db/                   # Partitioned Client & Shared Repositories
+├── db/                   # Global Registry & Per-Client Shards
 ├── utils/                # Foundational Utilities (Crypto, Date, Phone)
 ├── models/               # Domain Models & Interfaces
 └── server.ts             # Application Entry Point
@@ -84,31 +84,21 @@ ENABLE_STREAMING_LLM=true
 ENABLE_STREAMING_TTS=true
 ```
 
-### 2. Client Config (`config/clients/client-abc.json`)
-```json
-{
-  "clientId": "client-abc",
-  "businessName": "Comfort HVAC",
-  "phoneNumber": "+15551234567",
-  "timezone": "America/New_York",
-  "calendar": {
-    "provider": "google",
-    "calendarId": "primary"
-  },
-  "notifications": {
-    "sms": "+15559876543"
-  }
-}
-```
+### 2. Client Registry (`shared.db`)
+
+Client configurations are stored in the **Global Registry** (`shared.db`). This allows for dynamic updates without restarting the server.
+
+*   **Registry Entry**: Each client has an entry in the `clients` table containing their `id`, `business_name`, `phone_number`, and a `config_json` blob.
+*   **Isolation**: Only basic routing and business rules are stored in the registry. Appointment data and call logs are strictly isolated in per-client database shards (e.g., `client-abc.db`).
 
 ## 📖 How it Works
 
 1.  **Incoming Call**: Twilio sends a webhook to `/voice`.
-2.  **Media Stream**: Server establishes a WebSocket connection for bidirectional audio.
-3.  **Processing**: Deepgram converts audio to text, **Claude 3.5 Sonnet** determines intent using cached system prompts.
-4.  **Tool Use**: AI checks calendar availability or books an appointment via the unified `SchedulerService`.
-5.  **Data Persistence**: Call logs, turns, and voicemails are saved to **client-specific database shards**.
-6.  **Response**: Text is converted back to audio and streamed to the caller with sub-500ms latency.
+2.  **Media Stream**: Server establishes a WebSocket connection.
+3.  **Registry Lookup**: The server fetches the client's business rules from the `shared.db` using the `clientId` provided in the stream parameters.
+4.  **Processing**: Deepgram converts audio to text, **Claude 3.5 Sonnet** determines intent using cached prompts.
+5.  **Data Persistence**: Call logs and turns are saved to the **client-specific database shard**.
+6.  **Response**: Text is converted to audio and streamed to the caller with sub-500ms latency.
 
 ---
 
