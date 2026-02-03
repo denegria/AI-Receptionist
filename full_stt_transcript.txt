@@ -1,0 +1,7 @@
+﻿
+Line                                                                              
+----                                                                              
+    "message": "STT [FINAL]: Yes. (Confidence: 0.86816406)",                      
+    "message": "STT [FINAL]: Thank you. Have a good day. (Confidence: 0.9995117)",
+
+

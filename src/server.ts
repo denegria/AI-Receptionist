@@ -1,11 +1,13 @@
 import express from 'express';
 import expressWs from 'express-ws';
 import { config } from './config';
-import { initDatabase, db } from './db/client';
+import { initDatabase, db, closeAllDatabases } from './db/client';
+import { initSharedDatabase, closeSharedDatabase } from './db/shared-client';
 import { MigrationManager } from './db/migration-manager';
 import { errorHandler } from './api/middleware/error-handler';
 import fs from 'fs';
 import path from 'path';
+import { logger } from './services/logging';
 
 // Ensure required directories exist
 function ensureDirectories() {
@@ -31,22 +33,31 @@ function ensureDirectories() {
     });
 }
 
-console.log(`🚀 Starting AI Receptionist Server in ${config.nodeEnv} mode...`);
+logger.info(`🚀 Starting AI Receptionist Server in ${config.nodeEnv} mode...`);
 
 ensureDirectories();
 
 const { app } = expressWs(express());
 
 // Middleware
+app.set('trust proxy', 1); // Required for Fly.io/Cloud load balancers
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+
+// Rate Limiting
+import rateLimit from 'express-rate-limit';
+const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+app.use('/api/', apiLimiter);
 
 // Request logging in development
 if (config.nodeEnv === 'development') {
     app.use((req, res, next) => {
-        console.log(`[DEBUG] ${req.method} ${req.path}`);
-        console.log(`[DEBUG] Host: ${req.headers.host}`);
-        console.log(`[DEBUG] Query: ${JSON.stringify(req.query)}`);
+        logger.info('HTTP Request', { method: req.method, path: req.path, ip: req.ip });
         next();
     });
 }
@@ -89,19 +100,21 @@ app.get('/', (req, res) => {
 
 // WebSocket endpoint for Media Streams
 import { StreamHandler } from "./services/telephony/stream-handler";
+import { onboardingWatcher } from './services/telephony/onboarding-watcher';
+
 app.ws('/media-stream', (ws, req) => {
     const callSid = (req.query.callSid as string) || (req.headers['x-twilio-callsid'] as string);
     const clientId = (req.query.clientId as string) || (req.headers['x-twilio-clientid'] as string) || 'abc';
-    console.log(`📞 WebSocket requested (Call SID: ${callSid}, Client ID: ${clientId})`);
+    logger.info(`📞 WebSocket requested`, { callSid, clientId });
 
     new StreamHandler(ws, clientId);
 
     ws.on('close', () => {
-        console.log(`📞 Client disconnected (Call SID: ${callSid})`);
+        logger.info(`📞 Client disconnected`, { callSid });
     });
 
     ws.on('error', (error) => {
-        console.error(`WebSocket error (Call SID: ${callSid}):`, error);
+        logger.error(`WebSocket error`, { callSid, error });
     });
 });
 
@@ -109,15 +122,17 @@ app.ws('/media-stream', (ws, req) => {
 app.use(errorHandler);
 
 // Start server
-const server = app.listen(config.port, () => {
+const server = app.listen(config.port, '0.0.0.0', () => {
     try {
         initDatabase();
+        initSharedDatabase();
         MigrationManager.runMigrations();
-        console.log(`\n✓ Server listening on port ${config.port}`);
+        onboardingWatcher.start(); // Start the auto-onboarding service
+        logger.info(`Server listening`, { port: config.port });
         console.log(`✓ WebSocket endpoint: ws://localhost:${config.port}/media-stream`);
         console.log(`✓ Health check: http://localhost:${config.port}/health\n`);
     } catch (error) {
-        console.error('✗ Failed to start server:', error);
+        logger.error('Failed to start server', { error });
         process.exit(1);
     }
 });
@@ -129,12 +144,13 @@ function gracefulShutdown(signal: string) {
     server.close(() => {
         console.log('✓ HTTP server closed');
 
-        // Close database
+        // Close all databases (legacy + client-specific + shared)
         try {
-            db.close();
-            console.log('✓ Database closed');
+            onboardingWatcher.stop();
+            closeAllDatabases();
+            closeSharedDatabase();
         } catch (err) {
-            console.error('✗ Error closing database:', err);
+            console.error('✗ Error closing databases:', err);
         }
 
         console.log('👋 Shutdown complete');

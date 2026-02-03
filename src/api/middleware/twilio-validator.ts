@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import { Request, Response, NextFunction } from 'express';
 import { config } from '../../config';
+import twilio from 'twilio';
 
 export function validateTwilioRequest(req: Request, res: Response, next: NextFunction) {
     const signature = req.headers['x-twilio-signature'] as string;
@@ -10,29 +11,28 @@ export function validateTwilioRequest(req: Request, res: Response, next: NextFun
         return res.status(403).json({ error: 'Missing Twilio signature' });
     }
 
-    // Twilio signatures are usually calculated using the full URL and POST parameters
+    // Reconstruction of the URL that Twilio used to request this server
+    // Proxies (like Ngrok or Fly.io) set X-Forwarded headers that we must use
     const protocol = req.headers['x-forwarded-proto'] || 'https';
-    const host = req.headers.host;
+    const host = req.headers['x-forwarded-host'] || req.headers.host;
     const url = `${protocol}://${host}${req.originalUrl}`;
 
-    const params = req.body;
+    const params = req.body || {};
 
-    // Create signature following Twilio's logic
-    // 1. Start with the URL
-    // 2. Append all POST variables sorted alphabetically by key
-    const data = Object.keys(params)
-        .sort()
-        .reduce((acc, key) => acc + key + params[key], url);
+    // Use Twilio's official validation utility
+    const isValid = twilio.validateRequest(
+        config.twilio.authToken,
+        signature,
+        url,
+        params
+    );
 
-    const expectedSignature = crypto
-        .createHmac('sha1', config.twilio.authToken)
-        .update(Buffer.from(data, 'utf-8'))
-        .digest('base64');
+    if (!isValid) {
+        console.warn('⚠️ Invalid Twilio signature', { url });
 
-    if (signature !== expectedSignature) {
-        console.warn('⚠️ Invalid Twilio signature');
-        // In local development or testing, we might want to skip this if needed
+        // Development bypass
         if (config.nodeEnv === 'development' && process.env.SKIP_TWILIO_VALIDATION === 'true') {
+            console.log('🛡️ Skipping validation (DEV mode)');
             return next();
         }
         return res.status(403).json({ error: 'Invalid signature' });

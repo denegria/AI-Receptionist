@@ -12,14 +12,16 @@ export const twilioWebhookRouter = Router();
 twilioWebhookRouter.post('/voice', validateTwilioRequest, (req: Request, res: Response) => {
     const twiml = new VoiceResponse();
     const callSid = req.body.CallSid;
-    const clientId = req.query.clientId as string || 'default';
+    const clientId = req.query.clientId as string || 'abc';
 
     console.log(`📞 Incoming call (SID: ${callSid}) for Client: ${clientId}`);
 
-    // Connect to Media Stream
+    const streamUrl = `wss://${req.headers.host}/media-stream?callSid=${callSid}&clientId=${clientId}`;
+    console.log(`📡 Connecting to Stream: ${streamUrl}`);
+
     const connect = twiml.connect();
     connect.stream({
-        url: `wss://${req.headers.host}/media-stream?callSid=${callSid}&clientId=${clientId}`,
+        url: streamUrl,
     }).parameter({
         name: 'clientId',
         value: clientId
@@ -47,7 +49,7 @@ twilioWebhookRouter.post('/status-callback', validateTwilioRequest, (req: Reques
     res.status(200).send(); // Acknowledge Twilio's request
 });
 
-twilioWebhookRouter.post('/voicemail-callback', async (req: Request, res: Response) => {
+twilioWebhookRouter.post('/voicemail-callback', validateTwilioRequest, async (req: Request, res: Response) => {
     const { clientId, type } = req.query;
     const { CallSid, RecordingUrl, RecordingDuration, TranscriptionText } = req.body;
 
@@ -56,7 +58,7 @@ twilioWebhookRouter.post('/voicemail-callback', async (req: Request, res: Respon
     try {
         if (type === 'transcription') {
             // Update transcription text
-            voicemailRepository.updateByCallSid(CallSid, {
+            voicemailRepository.updateByCallSid(clientId as string, CallSid, {
                 transcription_text: TranscriptionText
             });
 

@@ -2,7 +2,9 @@ import dotenv from 'dotenv';
 import path from 'path';
 import crypto from 'crypto';
 
-dotenv.config();
+if (process.env.NODE_ENV !== 'production') {
+    dotenv.config();
+}
 
 interface Config {
     port: number;
@@ -20,6 +22,12 @@ interface Config {
         apiKey: string;
         model: string;
         language: string;
+    };
+
+    voice: {
+        asrConfidenceThreshold: number;
+        silenceTimeoutMs: number;
+        maxDurationMs: number;
     };
 
     ai: {
@@ -51,6 +59,7 @@ interface Config {
 
     paths: {
         clientConfigs: string;
+        onboarding: string;
         logs: string;
         recordings?: string;
     };
@@ -67,6 +76,8 @@ interface Config {
         callRecording: boolean;
         webSearch: boolean;
         smsNotifications: boolean;
+        enableStreamingLLM: boolean;
+        enableStreamingTTS: boolean;
     };
 }
 
@@ -88,7 +99,7 @@ function generateEncryptionKey(): string {
 }
 
 export const config: Config = {
-    port: parseInt(getEnvVar('PORT', '3000')),
+    port: parseInt(getEnvVar('PORT', '8080')),
     nodeEnv: getEnvVar('NODE_ENV', 'development'),
     logLevel: (getEnvVar('LOG_LEVEL', 'info') as any),
 
@@ -105,6 +116,12 @@ export const config: Config = {
         language: getEnvVar('DEEPGRAM_LANGUAGE', 'en-US'),
     },
 
+    voice: {
+        asrConfidenceThreshold: parseFloat(getEnvVar('ASR_CONFIDENCE_THRESHOLD', '0.4')),
+        silenceTimeoutMs: parseInt(getEnvVar('SILENCE_TIMEOUT_MS', '1000')),
+        maxDurationMs: parseInt(getEnvVar('MAX_CALL_DURATION_MS', '600000')), // 10 minutes
+    },
+
     ai: {
         provider: (getEnvVar('AI_PROVIDER', 'claude') as 'claude' | 'openai'),
         anthropicApiKey: process.env.ANTHROPIC_API_KEY,
@@ -117,7 +134,7 @@ export const config: Config = {
     google: {
         clientId: process.env.GOOGLE_CLIENT_ID || '',
         clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
-        redirectUri: process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3000/auth/google/callback',
+        redirectUri: process.env.GOOGLE_REDIRECT_URI || (process.env.PUBLIC_URL ? `${process.env.PUBLIC_URL}/auth/google/callback` : 'http://localhost:8080/auth/google/callback'),
     },
 
     microsoft: {
@@ -127,14 +144,15 @@ export const config: Config = {
     },
 
     database: {
-        path: getEnvVar('DB_PATH', './receptionist.db'),
+        path: process.env.DB_PATH || (process.env.NODE_ENV === 'production' ? '/app/data/receptionist.db' : './receptionist.db'),
         backupEnabled: getEnvVar('DB_BACKUP_ENABLED', 'false') === 'true',
-        backupPath: process.env.DB_BACKUP_PATH || './backups',
+        backupPath: process.env.DB_BACKUP_PATH || (process.env.NODE_ENV === 'production' ? '/app/data/backups' : './backups'),
     },
 
     paths: {
-        clientConfigs: getEnvVar('CLIENT_CONFIGS_PATH', './config/clients'),
-        logs: getEnvVar('LOGS_PATH', './logs'),
+        clientConfigs: getEnvVar('CLIENT_CONFIGS_PATH', process.env.NODE_ENV === 'production' ? '/app/config/clients' : './config/clients'),
+        onboarding: getEnvVar('ONBOARDING_PATH', process.env.NODE_ENV === 'production' ? '/app/data/onboarding' : './onboarding'),
+        logs: getEnvVar('LOGS_PATH', process.env.NODE_ENV === 'production' ? '/app/data/logs' : './logs'),
         recordings: process.env.RECORDINGS_PATH,
     },
 
@@ -150,6 +168,8 @@ export const config: Config = {
         callRecording: getEnvVar('FEATURE_CALL_RECORDING', 'false') === 'true',
         webSearch: getEnvVar('FEATURE_WEB_SEARCH', 'false') === 'true',
         smsNotifications: getEnvVar('FEATURE_SMS_NOTIFICATIONS', 'false') === 'true',
+        enableStreamingLLM: getEnvVar('ENABLE_STREAMING_LLM', 'false') === 'true',
+        enableStreamingTTS: getEnvVar('ENABLE_STREAMING_TTS', 'false') === 'true',
     },
 };
 

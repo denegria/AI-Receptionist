@@ -1,0 +1,29 @@
+﻿
+  fly_logs_booking_check_utf8.json:774:    }
+  fly_logs_booking_check_utf8.json:775:}
+  fly_logs_booking_check_utf8.json:776:{
+  fly_logs_booking_check_utf8.json:777:    "level": "info",
+  fly_logs_booking_check_utf8.json:778:    "instance": "1781724df6e118",
+> fly_logs_booking_check_utf8.json:779:    "message": "Executing tool: book_appointment {",
+  fly_logs_booking_check_utf8.json:780:    "region": "ewr",
+  fly_logs_booking_check_utf8.json:781:    "timestamp": "2026-01-24T00:52:27.785179199Z",
+  fly_logs_booking_check_utf8.json:782:    "meta": {
+  fly_logs_booking_check_utf8.json:783:        "Instance": "1781724df6e118",
+  fly_logs_booking_check_utf8.json:784:        "Region": "ewr",
+  fly_logs_booking_check_utf8.json:785:        "Event": {
+  fly_logs_booking_check_utf8.json:786:            "Provider": "app"
+  fly_logs_booking_check_utf8.json:787:        },
+  fly_logs_booking_check_utf8.json:788:        "HTTP": {
+  fly_logs_booking_check_utf8.json:789:            "Request": {
+  fly_logs_booking_check_utf8.json:790:                "ID": "",
+  fly_logs_booking_check_utf8.json:791:                "Method": "",
+  fly_logs_booking_check_utf8.json:792:                "Version": ""
+  fly_logs_booking_check_utf8.json:793:            },
+  fly_logs_booking_check_utf8.json:794:            "Response": {
+  fly_logs_booking_check_utf8.json:795:                "status_code": 0
+  fly_logs_booking_check_utf8.json:796:            }
+  fly_logs_booking_check_utf8.json:797:        },
+  fly_logs_booking_check_utf8.json:798:        "Error": {
+  fly_logs_booking_check_utf8.json:799:            "Code": 0,
+
+

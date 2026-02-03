@@ -1,0 +1,3100 @@
+﻿{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\":[0,1],\"duration\":2.0199432,\"start\":70.24,\"is_final\":false,\"speech_final\":false,\"channel\":{\"alternatives\":[{\"transcript\":\"\",\"confidence\":0,\"words\":[]}]},\"metadata\":{\"request_id\":\"245f75fc-805f-4fc4-bcc9-e652911a416a\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:18.876496Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\":[0,1],\"duration\":3.0199432,\"start\":70.24,\"is_final\":false,\"speech_final\":false,\"channel\":{\"alternatives\":[{\"transcript\":\"\",\"confidence\":0,\"words\":[]}]},\"metadata\":{\"request_id\":\"245f75fc-805f-4fc4-bcc9-e652911a416a\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:19.875701577Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\":[0,1],\"duration\":4.019943,\"start\":70.24,\"is_final\":false,\"speech_final\":false,\"channel\":{\"alternatives\":[{\"transcript\":\"\",\"confidence\":0,\"words\":[]}]},\"metadata\":{\"request_id\":\"245f75fc-805f-4fc4-bcc9-e652911a416a\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:20.876363149Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\":[0,1],\"duration\":3.0200043,\"start\":70.24,\"is_final\":true,\"speech_final\":false,\"channel\":{\"alternatives\":[{\"transcript\":\"\",\"confidence\":0,\"words\":[]}]},\"metadata\":{\"request_id\":\"245f75fc-805f-4fc4-bcc9-e652911a416a\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:21.879425898Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\":[0,1],\"duration\":1.999939,\"start\":73.26,\"is_final\":false,\"speech_final\":false,\"channel\":{\"alternatives\":[{\"transcript\":\"\",\"confidence\":0,\"words\":[]}]},\"metadata\":{\"request_id\":\"245f75fc-805f-4fc4-bcc9-e652911a416a\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:21.885874643Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\":[0,1],\"duration\":2.999939,\"start\":73.26,\"is_final\":false,\"speech_final\":false,\"channel\":{\"alternatives\":[{\"transcript\":\"\",\"confidence\":0,\"words\":[]}]},\"metadata\":{\"request_id\":\"245f75fc-805f-4fc4-bcc9-e652911a416a\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:22.876787726Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\":[0,1],\"duration\":3.999939,\"start\":73.26,\"is_final\":false,\"speech_final\":false,\"channel\":{\"alternatives\":[{\"transcript\":\"\",\"confidence\":0,\"words\":[]}]},\"metadata\":{\"request_id\":\"245f75fc-805f-4fc4-bcc9-e652911a416a\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:23.875937932Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\":[0,1],\"duration\":4.999939,\"start\":73.26,\"is_final\":false,\"speech_final\":false,\"channel\":{\"alternatives\":[{\"transcript\":\"\",\"confidence\":0,\"words\":[]}]},\"metadata\":{\"request_id\":\"245f75fc-805f-4fc4-bcc9-e652911a416a\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:24.876460341Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\":[0,1],\"duration\":3.0199966,\"start\":73.26,\"is_final\":true,\"speech_final\":false,\"channel\":{\"alternatives\":[{\"transcript\":\"\",\"confidence\":0,\"words\":[]}]},\"metadata\":{\"request_id\":\"245f75fc-805f-4fc4-bcc9-e652911a416a\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:24.898475238Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\":[0,1],\"duration\":1.999939,\"start\":76.28,\"is_final\":false,\"speech_final\":false,\"channel\":{\"alternatives\":[{\"transcript\":\"\",\"confidence\":0,\"words\":[]}]},\"metadata\":{\"request_id\":\"245f75fc-805f-4fc4-bcc9-e652911a416a\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:24.906873275Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\":[0,1],\"duration\":2.999939,\"start\":76.28,\"is_final\":false,\"speech_final\":false,\"channel\":{\"alternatives\":[{\"transcript\":\"Yes.\",\"confidence\":0.8679199,\"words\":[{\"word\":\"yes\",\"start\":78.68,\"end\":79.18,\"confidence\":0.8679199,\"punctuated_word\":\"Yes.\"}]}]},\"metadata\":{\"request_id\":\"245f75fc-805f-4fc4-bcc9-e652911a416a\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:25.900028204Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\":[0,1],\"duration\":3.2200012,\"start\":76.28,\"is_final\":true,\"speech_final\":true,\"channel\":{\"alternatives\":[{\"transcript\":\"Yes.\",\"confidence\":0.86816406,\"words\":[{\"word\":\"yes\",\"start\":78.68,\"end\":79.18,\"confidence\":0.86816406,\"punctuated_word\":\"Yes.\"}]}]},\"metadata\":{\"request_id\":\"245f75fc-805f-4fc4-bcc9-e652911a416a\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:26.140501329Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "STT [FINAL]: Yes. (Confidence: 0.86816406)",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:26.140509349Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "{\"timestamp\":\"2026-01-24T00:52:26.139Z\",\"level\":\"latency\",\"message\":\"STT_FINAL\",\"callSid\":\"CA2a81e4a512743afaa55999826bdd8193\",\"relativeMs\":0,\"latencyEvent\":true,\"transcript\":\"Yes.\",\"confidence\":0.86816406}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:26.140516049Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Starting LLM Stream with 16 messages",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:26.140517239Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] LLM Usage Started: {\"input_tokens\":1867,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":2,\"service_tier\":\"standard\"}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:26.488809636Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "{\"timestamp\":\"2026-01-24T00:52:26.488Z\",\"level\":\"economic\",\"message\":\"UNIT_ECONOMICS\",\"callSid\":\"CA2a81e4a512743afaa55999826bdd8193\",\"economicEvent\":true,\"tokens_input\":1867,\"tokens_output\":2}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:26.488819936Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] 🎙️ Speaking: \"Wonderful!...\"",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:26.499111673Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] FIRST audio chunk generated for: \"Wonderful!...\"",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:26.901824303Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Finished generateStream for: \"Wonderful!...\" (14 chunks)",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:26.905408851Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\":[0,1],\"duration\":1.0199356,\"start\":79.5,\"is_final\":false,\"speech_final\":false,\"channel\":{\"alternatives\":[{\"transcript\":\"\",\"confidence\":0,\"words\":[]}]},\"metadata\":{\"request_id\":\"245f75fc-805f-4fc4-bcc9-e652911a416a\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:27.145941008Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] 🎙️ Speaking: \"!!...\"",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:27.573666004Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] FIRST audio chunk generated for: \"!!...\"",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:27.689403754Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Finished generateStream for: \"!!...\" (1 chunks)",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:27.68979918Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\":[0,1],\"duration\":1.5599976,\"start\":79.5,\"is_final\":true,\"speech_final\":true,\"channel\":{\"alternatives\":[{\"transcript\":\"\",\"confidence\":0,\"words\":[]}]},\"metadata\":{\"request_id\":\"245f75fc-805f-4fc4-bcc9-e652911a416a\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:27.698118315Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "Executing tool: book_appointment {",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:27.785179199Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "  customerName: 'Alvaro Denegri',",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:27.785188199Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "  customerPhone: '(732) 354-7648',",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:27.785189009Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "  customerEmail: 'Alvarodenegri@hotmail.com',",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:27.785189359Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "  startTime: '2026-01-27T10:00:00Z',",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:27.785189589Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "  endTime: '2026-01-27T11:00:00Z',",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:27.785189849Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "  description: 'Heating service'",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:27.785190559Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:27.785191039Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] 🎙️ Speaking: \"I've gone ahead and booked you...\"",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:27.822740619Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] FIRST audio chunk generated for: \"I've gone ahead and ...\"",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:28.002776753Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Finished generateStream for: \"I've gone ahead and ...\" (43 chunks)",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:28.027891991Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "{\"timestamp\":\"2026-01-24T00:52:28.317Z\",\"level\":\"info\",\"message\":\"State Transition: CONVERSATION -\u003e CONFIRMATION\",\"callSid\":\"CA2a81e4a512743afaa55999826bdd8193\",\"from\":\"CONVERSATION\",\"to\":\"CONFIRMATION\"}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:28.318749595Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Starting LLM Stream with 18 messages",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:28.319001259Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\":[0,1],\"duration\":1.0199432,\"start\":81.06,\"is_final\":false,\"speech_final\":false,\"channel\":{\"alternatives\":[{\"transcript\":\"\",\"confidence\":0,\"words\":[]}]},\"metadata\":{\"request_id\":\"245f75fc-805f-4fc4-bcc9-e652911a416a\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:28.696848525Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] LLM Usage Started: {\"input_tokens\":2111,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":2,\"service_tier\":\"standard\"}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:28.827314384Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "{\"timestamp\":\"2026-01-24T00:52:28.827Z\",\"level\":\"economic\",\"message\":\"UNIT_ECONOMICS\",\"callSid\":\"CA2a81e4a512743afaa55999826bdd8193\",\"economicEvent\":true,\"tokens_input\":2111,\"tokens_output\":2}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:28.827433056Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "{\"timestamp\":\"2026-01-24T00:52:29.136Z\",\"level\":\"economic\",\"message\":\"UNIT_ECONOMICS\",\"callSid\":\"CA2a81e4a512743afaa55999826bdd8193\",\"economicEvent\":true,\"tokens_input\":2111,\"tokens_output\":48}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:29.136417924Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] 🤖 AI Final Response: \"You're all set! We've got you booked for 10:00 AM on Monday, February 27th. I look forward to seeing you then. Please let me know if you need anything else!\"",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:29.137055384Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\":[0,1],\"duration\":2.0199432,\"start\":81.06,\"is_final\":false,\"speech_final\":false,\"channel\":{\"alternatives\":[{\"transcript\":\"\",\"confidence\":0,\"words\":[]}]},\"metadata\":{\"request_id\":\"245f75fc-805f-4fc4-bcc9-e652911a416a\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:29.697892852Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\":[0,1],\"duration\":2.350006,\"start\":81.06,\"is_final\":true,\"speech_final\":true,\"channel\":{\"alternatives\":[{\"transcript\":\"\",\"confidence\":0,\"words\":[]}]},\"metadata\":{\"request_id\":\"245f75fc-805f-4fc4-bcc9-e652911a416a\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:30.059742519Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\":[0,1],\"duration\":0.17999268,\"start\":83.41,\"is_final\":true,\"speech_final\":true,\"channel\":{\"alternatives\":[{\"transcript\":\"\",\"confidence\":0,\"words\":[]}]},\"metadata\":{\"request_id\":\"245f75fc-805f-4fc4-bcc9-e652911a416a\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:30.236573811Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] 🎙️ Speaking: \"You're all set!...\"",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:30.528490961Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] FIRST audio chunk generated for: \"You're all set!...\"",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:30.634457232Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Finished generateStream for: \"You're all set!...\" (14 chunks)",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:30.68540726Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\":[0,1],\"duration\":1.0099411,\"start\":83.59,\"is_final\":false,\"speech_final\":false,\"channel\":{\"alternatives\":[{\"transcript\":\"\",\"confidence\":0,\"words\":[]}]},\"metadata\":{\"request_id\":\"245f75fc-805f-4fc4-bcc9-e652911a416a\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:31.21623235Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] 🎙️ Speaking: \"We've got you booked for 10:00...\"",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:31.687449983Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\":[0,1],\"duration\":1.4800034,\"start\":83.59,\"is_final\":true,\"speech_final\":true,\"channel\":{\"alternatives\":[{\"transcript\":\"\",\"confidence\":0,\"words\":[]}]},\"metadata\":{\"request_id\":\"245f75fc-805f-4fc4-bcc9-e652911a416a\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:31.716750029Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] FIRST audio chunk generated for: \"We've got you booked...\"",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:31.830508707Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Finished generateStream for: \"We've got you booked...\" (89 chunks)",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:31.88799858Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\":[0,1],\"duration\":1.0099411,\"start\":85.07,\"is_final\":false,\"speech_final\":false,\"channel\":{\"alternatives\":[{\"transcript\":\"\",\"confidence\":0,\"words\":[]}]},\"metadata\":{\"request_id\":\"245f75fc-805f-4fc4-bcc9-e652911a416a\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:32.697258343Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\":[0,1],\"duration\":2.009941,\"start\":85.07,\"is_final\":false,\"speech_final\":false,\"channel\":{\"alternatives\":[{\"transcript\":\"\",\"confidence\":0,\"words\":[]}]},\"metadata\":{\"request_id\":\"245f75fc-805f-4fc4-bcc9-e652911a416a\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:33.70382086Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] 🎙️ Speaking: \"I look forward to seeing you t...\"",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:34.388603281Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] FIRST audio chunk generated for: \"I look forward to se...\"",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:34.537606991Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Finished generateStream for: \"I look forward to se...\" (41 chunks)",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:34.55360074Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\":[0,1],\"duration\":2.949997,\"start\":85.07,\"is_final\":true,\"speech_final\":true,\"channel\":{\"alternatives\":[{\"transcript\":\"\",\"confidence\":0,\"words\":[]}]},\"metadata\":{\"request_id\":\"245f75fc-805f-4fc4-bcc9-e652911a416a\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:34.656561753Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\":[0,1],\"duration\":1.0199432,\"start\":88.02,\"is_final\":false,\"speech_final\":false,\"channel\":{\"alternatives\":[{\"transcript\":\"\",\"confidence\":0,\"words\":[]}]},\"metadata\":{\"request_id\":\"245f75fc-805f-4fc4-bcc9-e652911a416a\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:35.657703352Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\":[0,1],\"duration\":1.3199997,\"start\":88.02,\"is_final\":true,\"speech_final\":true,\"channel\":{\"alternatives\":[{\"transcript\":\"\",\"confidence\":0,\"words\":[]}]},\"metadata\":{\"request_id\":\"245f75fc-805f-4fc4-bcc9-e652911a416a\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:35.976684262Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] 🎙️ Speaking: \"Please let me know if you need...\"",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:36.820642628Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] FIRST audio chunk generated for: \"Please let me know i...\"",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:36.95436396Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Finished generateStream for: \"Please let me know i...\" (45 chunks)",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:36.974476646Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\":[0,1],\"duration\":1.0199432,\"start\":89.34,\"is_final\":false,\"speech_final\":false,\"channel\":{\"alternatives\":[{\"transcript\":\"\",\"confidence\":0,\"words\":[]}]},\"metadata\":{\"request_id\":\"245f75fc-805f-4fc4-bcc9-e652911a416a\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:36.976966487Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\":[0,1],\"duration\":2.0199432,\"start\":89.34,\"is_final\":false,\"speech_final\":false,\"channel\":{\"alternatives\":[{\"transcript\":\"\",\"confidence\":0,\"words\":[]}]},\"metadata\":{\"request_id\":\"245f75fc-805f-4fc4-bcc9-e652911a416a\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:37.976429018Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\":[0,1],\"duration\":3.0199432,\"start\":89.34,\"is_final\":false,\"speech_final\":false,\"channel\":{\"alternatives\":[{\"transcript\":\"\",\"confidence\":0,\"words\":[]}]},\"metadata\":{\"request_id\":\"245f75fc-805f-4fc4-bcc9-e652911a416a\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:38.978741236Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\":[0,1],\"duration\":4.019943,\"start\":89.34,\"is_final\":false,\"speech_final\":false,\"channel\":{\"alternatives\":[{\"transcript\":\"\",\"confidence\":0,\"words\":[]}]},\"metadata\":{\"request_id\":\"245f75fc-805f-4fc4-bcc9-e652911a416a\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:39.988730019Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\":[0,1],\"duration\":3.2300034,\"start\":89.34,\"is_final\":true,\"speech_final\":false,\"channel\":{\"alternatives\":[{\"transcript\":\"\",\"confidence\":0,\"words\":[]}]},\"metadata\":{\"request_id\":\"245f75fc-805f-4fc4-bcc9-e652911a416a\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:40.978400022Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\":[0,1],\"duration\":1.7899399,\"start\":92.57,\"is_final\":false,\"speech_final\":false,\"channel\":{\"alternatives\":[{\"transcript\":\"\",\"confidence\":0,\"words\":[]}]},\"metadata\":{\"request_id\":\"245f75fc-805f-4fc4-bcc9-e652911a416a\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:40.985946684Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\":[0,1],\"duration\":2.7899399,\"start\":92.57,\"is_final\":false,\"speech_final\":false,\"channel\":{\"alternatives\":[{\"transcript\":\"Thank you\",\"confidence\":0.6621094,\"words\":[{\"word\":\"thank\",\"start\":94.89,\"end\":95.13,\"confidence\":0.6621094,\"punctuated_word\":\"Thank\"},{\"word\":\"you\",\"start\":95.13,\"end\":95.35994,\"confidence\":0.5307617,\"punctuated_word\":\"you\"}]}]},\"metadata\":{\"request_id\":\"245f75fc-805f-4fc4-bcc9-e652911a416a\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:41.977583579Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\":[0,1],\"duration\":3.7899399,\"start\":92.57,\"is_final\":false,\"speech_final\":false,\"channel\":{\"alternatives\":[{\"transcript\":\"Thank you. Have a good day.\",\"confidence\":0.9995117,\"words\":[{\"word\":\"thank\",\"start\":95.05,\"end\":95.29,\"confidence\":0.5498047,\"punctuated_word\":\"Thank\"},{\"word\":\"you\",\"start\":95.29,\"end\":95.61,\"confidence\":0.9995117,\"punctuated_word\":\"you.\"},{\"word\":\"have\",\"start\":95.61,\"end\":95.77,\"confidence\":0.99316406,\"punctuated_word\":\"Have\"},{\"word\":\"a\",\"start\":95.77,\"end\":95.93,\"confidence\":1,\"punctuated_word\":\"a\"},{\"word\":\"good\",\"start\":95.93,\"end\":96.09,\"confidence\":0.87060547,\"punctuated_word\":\"good\"},{\"word\":\"day\",\"start\":96.09,\"end\":96.35994,\"confidence\":1,\"punctuated_word\":\"day.\"}]}]},\"metadata\":{\"request_id\":\"245f75fc-805f-4fc4-bcc9-e652911a416a\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:42.98315254Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\":[0,1],\"duration\":3.9400024,\"start\":92.57,\"is_final\":true,\"speech_final\":true,\"channel\":{\"alternatives\":[{\"transcript\":\"Thank you. Have a good day.\",\"confidence\":0.9995117,\"words\":[{\"word\":\"thank\",\"start\":95.05,\"end\":95.29,\"confidence\":0.58447266,\"punctuated_word\":\"Thank\"},{\"word\":\"you\",\"start\":95.29,\"end\":95.61,\"confidence\":0.9995117,\"punctuated_word\":\"you.\"},{\"word\":\"have\",\"start\":95.61,\"end\":95.77,\"confidence\":0.9951172,\"punctuated_word\":\"Have\"},{\"word\":\"a\",\"start\":95.77,\"end\":95.93,\"confidence\":1,\"punctuated_word\":\"a\"},{\"word\":\"good\",\"start\":95.93,\"end\":96.09,\"confidence\":0.90625,\"punctuated_word\":\"good\"},{\"word\":\"day\",\"start\":96.09,\"end\":96.51,\"confidence\":1,\"punctuated_word\":\"day.\"}]}]},\"metadata\":{\"request_id\":\"245f75fc-805f-4fc4-bcc9-e652911a416a\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:43.162218498Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "STT [FINAL]: Thank you. Have a good day. (Confidence: 0.9995117)",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:43.162228278Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "{\"timestamp\":\"2026-01-24T00:52:43.161Z\",\"level\":\"info\",\"message\":\"State Transition: CONFIRMATION -\u003e CONVERSATION\",\"callSid\":\"CA2a81e4a512743afaa55999826bdd8193\",\"from\":\"CONFIRMATION\",\"to\":\"CONVERSATION\"}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:43.162231548Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "{\"timestamp\":\"2026-01-24T00:52:43.162Z\",\"level\":\"latency\",\"message\":\"STT_FINAL\",\"callSid\":\"CA2a81e4a512743afaa55999826bdd8193\",\"relativeMs\":0,\"latencyEvent\":true,\"transcript\":\"Thank you. Have a good day.\",\"confidence\":0.9995117}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:43.16236005Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Starting LLM Stream with 20 messages",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:43.162912929Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] LLM Usage Started: {\"input_tokens\":2170,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\"}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:44.099484849Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "{\"timestamp\":\"2026-01-24T00:52:44.099Z\",\"level\":\"economic\",\"message\":\"UNIT_ECONOMICS\",\"callSid\":\"CA2a81e4a512743afaa55999826bdd8193\",\"economicEvent\":true,\"tokens_input\":2170,\"tokens_output\":1}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:44.099647512Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] 🎙️ Speaking: \"You're very welcome!...\"",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:44.132641398Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\":[0,1],\"duration\":1.0099335,\"start\":96.51,\"is_final\":false,\"speech_final\":false,\"channel\":{\"alternatives\":[{\"transcript\":\"\",\"confidence\":0,\"words\":[]}]},\"metadata\":{\"request_id\":\"245f75fc-805f-4fc4-bcc9-e652911a416a\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:44.142768742Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "{\"timestamp\":\"2026-01-24T00:52:44.264Z\",\"level\":\"economic\",\"message\":\"UNIT_ECONOMICS\",\"callSid\":\"CA2a81e4a512743afaa55999826bdd8193\",\"economicEvent\":true,\"tokens_input\":2170,\"tokens_output\":23}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:44.264767633Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] 🤖 AI Final Response: \"You're very welcome! Thank you, you have a wonderful day as well. Bye bye!!!\"",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:44.273322312Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] FIRST audio chunk generated for: \"You're very welcome!...\"",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:44.478924361Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Finished generateStream for: \"You're very welcome!...\" (21 chunks)",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:44.484922069Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\":[0,1],\"duration\":2.0099335,\"start\":96.51,\"is_final\":false,\"speech_final\":false,\"channel\":{\"alternatives\":[{\"transcript\":\"\",\"confidence\":0,\"words\":[]}]},\"metadata\":{\"request_id\":\"245f75fc-805f-4fc4-bcc9-e652911a416a\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:45.143514325Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] 🎙️ Speaking: \"Thank you, you have a wonderfu...\"",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:45.819631965Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] FIRST audio chunk generated for: \"Thank you, you have ...\"",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:45.959458636Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Finished generateStream for: \"Thank you, you have ...\" (66 chunks)",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:46.032768466Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\":[0,1],\"duration\":3.0099335,\"start\":96.51,\"is_final\":false,\"speech_final\":false,\"channel\":{\"alternatives\":[{\"transcript\":\"\",\"confidence\":0,\"words\":[]}]},\"metadata\":{\"request_id\":\"245f75fc-805f-4fc4-bcc9-e652911a416a\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:46.143015757Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "{\"timestamp\":\"2026-01-24T00:52:46.650Z\",\"level\":\"info\",\"message\":\"State Transition: CONVERSATION -\u003e TERMINATED\",\"callSid\":\"CA2a81e4a512743afaa55999826bdd8193\",\"from\":\"CONVERSATION\",\"to\":\"TERMINATED\"}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:46.650759463Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "{\"timestamp\":\"2026-01-24T00:52:47.652Z\",\"level\":\"info\",\"message\":\"📞 Client disconnected\"}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:47.653286664Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\":[0,1],\"duration\":3.5499344,\"start\":96.51,\"is_final\":true,\"speech_final\":true,\"channel\":{\"alternatives\":[{\"transcript\":\"\",\"confidence\":0,\"words\":[]}]},\"metadata\":{\"request_id\":\"245f75fc-805f-4fc4-bcc9-e652911a416a\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:47.734484373Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\":[0,1],\"duration\":0,\"start\":100.05994,\"is_final\":true,\"speech_final\":true,\"channel\":{\"alternatives\":[{\"transcript\":\"\",\"confidence\":0,\"words\":[]}]},\"metadata\":{\"request_id\":\"245f75fc-805f-4fc4-bcc9-e652911a416a\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:47.775592421Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Metadata event: {\"type\":\"Metadata\",\"transaction_key\":\"deprecated\",\"request_id\":\"245f75fc-805f-4fc4-bcc9-e652911a416a\",\"sha256\":\"7ae1cc0371ddfdf7c82e885803aa95e44457dc7ffeb776056cd99397e06bb17f\",\"created\":\"2026-01-24T00:51:06.521Z\",\"duration\":100.05994,\"channels\":1,\"models\":[\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"],\"model_info\":{\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"}}}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:47.77679574Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram STT Connection Closed",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:47.781171922Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] 🎙️ Speaking: \"Bye bye!!!...\"",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:48.535735296Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] FIRST audio chunk generated for: \"Bye bye!!!...\"",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:48.63759375Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Finished generateStream for: \"Bye bye!!!...\" (12 chunks)",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:52:48.681418362Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
