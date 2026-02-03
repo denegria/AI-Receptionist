@@ -1,0 +1,19 @@
+﻿
+Line                                                                                                                   
+----                                                                                                                   
+    "message": "[DEBUG] 🎙️ Speaking: \"!!...\"",                                                                      
+    "message": "[DEBUG] 🎙️ Speaking: \"Okay, I've got you all set the...\"",                                          
+    "message": "[DEBUG] 🎙️ Speaking: \"'ve booked your appointment fo...\"",                                          
+    "message": "[DEBUG] 🎙️ Speaking: \"'ll send over a calendar invit...\"",                                          
+    "message": "[DEBUG] 🎙️ Speaking: \"there anything else I can help...\"",                                          
+    "message": "{\"timestamp\":\"2026-01-24T00:28:05.511Z\",\"level\":\"latency\",\"message\":\"STT_FINAL\",\"callSi...
+    "message": "[DEBUG] 🎙️ Speaking: \"Great, you're all set!...\"",                                                  
+    "message": "[DEBUG] 🎙️ Speaking: \"I look forward to seeing you o...\"",                                          
+    "message": "[DEBUG] 🎙️ Speaking: \"wonderful rest of your day!...\"",                                             
+    "message": "{\"timestamp\":\"2026-01-24T00:28:16.555Z\",\"level\":\"latency\",\"message\":\"STT_FINAL\",\"callSi...
+    "message": "[DEBUG] 🎙️ Speaking: \"Thank you, you as well!...\"",                                                 
+    "message": "{\"timestamp\":\"2026-01-24T00:28:17.731Z\",\"level\":\"latency\",\"message\":\"STT_FINAL\",\"callSi...
+    "message": "[DEBUG] 🎙️ Speaking: \"Bye for now....\"",                                                            
+    "message": "[DEBUG] 🎙️ Speaking: \"Goodbye!...\"",                                                                
+
+

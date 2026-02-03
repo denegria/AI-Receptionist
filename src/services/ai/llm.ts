@@ -17,37 +17,41 @@ export class LLMService {
             year: 'numeric',
             month: 'long',
             day: 'numeric',
+            weekday: 'long',
             hour: 'numeric',
             minute: 'numeric',
             hour12: true
         });
         const localTime = formatter.format(now);
-        const offset = -now.getTimezoneOffset() / 60; // Simple offset check
-        const offsetString = (offset >= 0 ? '+' : '-') + Math.floor(Math.abs(offset / 10)).toString() + (Math.abs(offset % 10)).toString() + ':00';
 
-        return `You are a professional receptionist for ${businessName}.
-    Current Local Time in ${timezone}: ${localTime}
-    Current ISO (UTC): ${now.toISOString()}
-    Current Timezone: America/New_York
+        return `You are a professional yet friendly receptionist for ${businessName}.
+    TODAY'S DATE AND TIME: ${localTime}
+    Current Timezone: ${timezone}
 
-    MANDATORY BOOKING PROTOCOL:
-    1. **Time First**: Ask when they want to come in. Wait for their answer.
-    2. **Check**: Call 'check_availability' ONLY after they specify a time.
-    3. **Identity (ONE BY ONE)**: Once the time is confirmed available, you MUST ask for these items exactly one at a time:
+    CRITICAL BOOKING RULES:
+    1. **NO PAST BOOKINGS**: Under no circumstances should you offer or book a time that is in the past. Always compare requested times against the current time provided above: ${localTime}.
+    2. **Look-Ahead Logic**: If a user asks for a day of the week (e.g., "Monday") and today is Friday or later, ALWAYS assume they mean the following week (e.g., next Monday, Feb 2nd). 
+    3. **Date Verbosity**: When confirming a day or listing availability, ALWAYS include the full date (e.g., "Monday, Feb 2nd") so the user knows exactly which week you mean.
+    4. **List Openings**: After calling 'check_availability', you MUST respond by listing at least 3 specific openings found. NEVER just say "I have openings," tell them the times.
+    5. **Time First**: Ask when they want to come in. Wait for their answer.
+    6. **Check**: Call 'check_availability' ONLY after they specify a time.
+    7. **Identity (Protect data)**: Once the time is confirmed available, you MUST ask for these items exactly one at a time:
        - "May I have your full name?"
        - "And a good phone number to reach you?"
        - "Finally, what's your email for the calendar invite?"
-    4. **The Confirmation**: Once you have ALL three (Name, Phone, Email), read them back naturally: "Okay, I have Dick Cheney at 9 AM on Monday. Phone is ... and email is ... Does that look correct?"
-    5. **WAIT FOR YES**: You are FORBIDDEN from calling 'book_appointment' until the user explicitly says "Yes", "Correct", or "Go ahead" after you read the details back.
-    6. **NO EMPTY FIELDS**: You are strictly PROHIBITED from calling 'book_appointment' if the Name, Phone, or Email fields are missing or empty strings.
-    7. **Final Confirmation**: Only after 'book_appointment' returns SUCCESS, say "It's booked."
+    8. **The Confirmation**: Once you have ALL three (Name, Phone, Email), read them back naturally: "Okay, I've got [Name] for [Time] on [Date]. Phone number is ... and email is ... Does that all look correct to you?"
+    9. **WAIT FOR YES**: You are FORBIDDEN from calling 'book_appointment' until the user explicitly says "Yes", "Correct", or "Go ahead".
+    10. **REALITY CHECK**: You cannot book an appointment by just saying so. You MUST use the \`book_appointment\` tool. If you say "I've booked it" without generating a tool call, you have failed.
+    11. **Final Confirmation**: Only after the tool returns "Appointment booked successfully", then you can say "You're all set! We've got you booked."
 
-    CRITICAL RULES:
-    - Sound like a human. No "Wonderful", "Perfect", "Great". Use "Sure", "Okay", or just answer.
-    - Be brief. Under 12 words per turn.
-    - TIMEZONE: Eastern Time (-05:00).
+    CONVERSATION STYLE:
+    - Sound like a real person. Use human rhythm. Use upbeat fillers like "Wonderful!!!", "Great!", "I see...", or "Got it...".
+    - EXPRESSIVENESS: When saying positive things like "Wonderful" or "Great", ALWAYS use multiple exclamation points (!!!) to trigger a more upbeat tone. You MUST never be monotone. 
+    - Use ellipses (...) or brief verbal acknowledgments to create natural pauses during thinking or between points.
+    - DO NOT introduce yourself as an AI. 
+    - Be brief. Under 20 words per turn.
     - If caller is frustrated, call 'take_voicemail'.
-`;
+ `;
     }
 
     constructor() {
@@ -88,7 +92,7 @@ export class LLMService {
         try {
             console.log(`[DEBUG] Calling Anthropic with ${messages.length} messages`);
             const response = await this.anthropic.messages.create({
-                model: 'claude-3-haiku-20240307',
+                model: config.ai.model,
                 max_tokens: 500,
                 system: system,
                 messages: messages,
@@ -100,6 +104,71 @@ export class LLMService {
             return response;
         } catch (error) {
             console.error("LLM Generation Error:", error);
+            throw error;
+        }
+    }
+
+    async *generateStream(history: ChatMessage[], context?: { businessName: string, timezone: string }): AsyncGenerator<Anthropic.MessageStreamEvent> {
+        const system = this.getSystemPrompt(
+            context?.businessName || 'a service business',
+            context?.timezone || 'UTC'
+        );
+
+        // Add Caching to the system prompt (first block)
+        const systemWithCache = [
+            {
+                type: 'text',
+                text: system,
+                cache_control: { type: 'ephemeral' }
+            }
+        ];
+
+        // Format messages and add cache breakpoint to history
+        // Rule: Latest messages are most likely to change, so we cache a few turns back.
+        const messages = history.filter(m => m.role !== 'system').map((m, index, arr) => {
+            const isCacheBreakpoint = index === arr.length - 4; // Cache the 4th to last message
+
+            if (m.role === 'tool') {
+                return {
+                    role: 'user',
+                    content: [
+                        {
+                            type: 'tool_result',
+                            tool_use_id: m.tool_use_id,
+                            content: m.content,
+                            ...(isCacheBreakpoint ? { cache_control: { type: 'ephemeral' } } : {})
+                        }
+                    ]
+                };
+            }
+
+            return {
+                role: m.role,
+                content: typeof m.content === 'string' ? [
+                    {
+                        type: 'text',
+                        text: m.content,
+                        ...(isCacheBreakpoint ? { cache_control: { type: 'ephemeral' } } : {})
+                    }
+                ] : m.content // Complex content (like tool use generated by AI) is passed through
+            };
+        }) as any;
+
+        try {
+            const stream = this.anthropic.messages.stream({
+                model: config.ai.model,
+                max_tokens: 500,
+                system: systemWithCache as any,
+                messages: messages,
+                tools: TOOLS as any,
+                temperature: 0.1,
+            });
+
+            for await (const event of stream) {
+                yield event;
+            }
+        } catch (error) {
+            console.error("LLM Stream Error:", error);
             throw error;
         }
     }

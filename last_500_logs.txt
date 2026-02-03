@@ -1,0 +1,500 @@
+﻿            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "{\"timestamp\":\"2026-01-24T00:28:17.829Z\",\"level\":\"info\",\"message\":\"State Transition: CONVERSATION -\u003e TERMINATED\",\"callSid\":\"CAbc658e0b2b132d237d2aa57acacd9b3d\",\"from\":\"CONVERSATION\",\"to\":\"TERMINATED\"}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:28:17.829902628Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] LLM Usage Started: {\"input_tokens\":1775,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":2,\"service_tier\":\"standard\"}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:28:18.047396759Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "{\"timestamp\":\"2026-01-24T00:28:18.047Z\",\"level\":\"economic\",\"message\":\"UNIT_ECONOMICS\",\"callSid\":\"CAbc658e0b2b132d237d2aa57acacd9b3d\",\"economicEvent\":true,\"tokens_input\":1775,\"tokens_output\":2}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:28:18.047511801Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "{\"timestamp\":\"2026-01-24T00:28:18.102Z\",\"level\":\"economic\",\"message\":\"UNIT_ECONOMICS\",\"callSid\":\"CAbc658e0b2b132d237d2aa57acacd9b3d\",\"economicEvent\":true,\"tokens_input\":1775,\"tokens_output\":6}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:28:18.102600533Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] 🤖 AI Final Response: \"Goodbye!\"",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:28:18.106040659Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] 🎙️ Speaking: \"Bye for now....\"",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:28:18.666548848Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] FIRST audio chunk generated for: \"Bye for now....\"",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:28:18.711175709Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Finished generateStream for: \"Bye for now....\" (14 chunks)",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:28:18.714178028Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "{\"timestamp\":\"2026-01-24T00:28:18.831Z\",\"level\":\"info\",\"message\":\"📞 Client disconnected\"}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:28:18.831862545Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\":[0,1],\"duration\":0.15994263,\"start\":146.68,\"is_final\":true,\"speech_final\":true,\"channel\":{\"alternatives\":[{\"transcript\":\"\",\"confidence\":0,\"words\":[]}]},\"metadata\":{\"request_id\":\"f640696c-29ef-454f-a603-2f3e5c8282fd\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:28:18.908787965Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Results event: {\"type\":\"Results\",\"channel_index\":[0,1],\"duration\":0,\"start\":146.83994,\"is_final\":true,\"speech_final\":true,\"channel\":{\"alternatives\":[{\"transcript\":\"\",\"confidence\":0,\"words\":[]}]},\"metadata\":{\"request_id\":\"f640696c-29ef-454f-a603-2f3e5c8282fd\",\"model_info\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"},\"model_uuid\":\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"},\"from_finalize\":false}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:28:18.950418627Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram Metadata event: {\"type\":\"Metadata\",\"transaction_key\":\"deprecated\",\"request_id\":\"f640696c-29ef-454f-a603-2f3e5c8282fd\",\"sha256\":\"e89353eceeb68c48716d700225e8f44487ba0b671e0090f8c0cbaeee8597bb3c\",\"created\":\"2026-01-24T00:25:50.927Z\",\"duration\":146.83994,\"channels\":1,\"models\":[\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\"],\"model_info\":{\"1dbdfb4d-85b2-4659-9831-16b3c76229aa\":{\"name\":\"2-general-nova\",\"version\":\"2024-01-11.36317\",\"arch\":\"nova-2\"}}}",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:28:18.950673891Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Deepgram STT Connection Closed",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:28:18.956939204Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] 🎙️ Speaking: \"Goodbye!...\"",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:28:19.5167076Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] FIRST audio chunk generated for: \"Goodbye!...\"",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:28:19.599272092Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
+{
+    "level": "info",
+    "instance": "1781724df6e118",
+    "message": "[DEBUG] Finished generateStream for: \"Goodbye!...\" (10 chunks)",
+    "region": "ewr",
+    "timestamp": "2026-01-24T00:28:19.600011205Z",
+    "meta": {
+        "Instance": "1781724df6e118",
+        "Region": "ewr",
+        "Event": {
+            "Provider": "app"
+        },
+        "HTTP": {
+            "Request": {
+                "ID": "",
+                "Method": "",
+                "Version": ""
+            },
+            "Response": {
+                "status_code": 0
+            }
+        },
+        "Error": {
+            "Code": 0,
+            "Message": ""
+        },
+        "URL": {
+            "Full": ""
+        }
+    }
+}
