@@ -173,3 +173,20 @@ Following the implementation of **Prompt Caching** and **VAD Tuning**, we observ
 
 ---
 *Built with ❤️ by Alvaro*
+
+## 🛡️ Security Hardening & Automated Onboarding (Feb 2026)
+
+This update introduces critical security patches and a streamlined, "no-deploy" client onboarding process.
+
+### 1. Security Patches
+*   **Disk Bomb Prevention**: The system no longer automatically creates client-specific database shards upon request. Database connections are now strictly limited to existing client IDs in the registry, preventing malicious actors from exhausting disk space via random ID spoofing.
+*   **Wallet Drain Protection**: WebSocket stream connections now require a valid `clientId` registered in the Global Registry. This prevents unauthorized usage of billable AI services (STT, LLM, TTS) by unauthenticated connections.
+*   **Voicemail Lock**: All Twilio callbacks, including voicemail processing and status updates, are now protected by **Twilio Signature Validation**. This ensures that only legitimate requests from Twilio can trigger backend logic or modify state.
+
+### 2. Automated Onboarding (No-Deploy Flow)
+We have implemented a background watcher service that enables dynamic client registration without code changes or restarts.
+
+*   **Watcher Service**: The `OnboardingWatcher` monitors the `/app/data/onboarding` directory.
+*   **Ingestion Logic**: Dropping a valid JSON configuration into the folder triggers automatic validation, database registration, and cache invalidation.
+*   **State Management**: Successfully processed files are renamed to `.processed`, while invalid ones are marked `.error` to prevent retry loops.
+*   **Live Updates**: New clients become active immediately, and existing configurations can be updated by simply dropping a new JSON file with the same `clientId`.
