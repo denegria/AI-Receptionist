@@ -1,5 +1,6 @@
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import expressWs from 'express-ws';
+import WebSocket from 'ws';
 import { config } from './config';
 import { initDatabase, db, closeAllDatabases } from './db/client';
 import { initSharedDatabase, closeSharedDatabase } from './db/shared-client';
@@ -56,7 +57,7 @@ app.use('/api/', apiLimiter);
 
 // Request logging in development
 if (config.nodeEnv === 'development') {
-    app.use((req, res, next) => {
+    app.use((req: Request, res: Response, next: NextFunction) => {
         logger.info('HTTP Request', { method: req.method, path: req.path, ip: req.ip });
         next();
     });
@@ -73,7 +74,7 @@ app.use(twilioWebhookRouter);
 app.use('/api/onboarding', requireAuth, onboardingRouter);
 
 // Health Check
-app.get('/health', (req, res) => {
+app.get('/health', (req: Request, res: Response) => {
     try {
         db.prepare('SELECT 1').get();
         res.json({
@@ -91,7 +92,7 @@ app.get('/health', (req, res) => {
     }
 });
 
-app.get('/', (req, res) => {
+app.get('/', (req: Request, res: Response) => {
     res.json({
         status: 'ok',
         service: 'AI Receptionist',
@@ -106,7 +107,7 @@ app.get('/', (req, res) => {
 import { StreamHandler } from "./services/telephony/stream-handler";
 import { onboardingWatcher } from './services/telephony/onboarding-watcher';
 
-app.ws('/media-stream', (ws, req) => {
+app.ws('/media-stream', (ws: WebSocket, req: Request) => {
     const callSid = (req.query.callSid as string) || (req.headers['x-twilio-callsid'] as string);
     const clientId = (req.query.clientId as string) || (req.headers['x-twilio-clientid'] as string) || 'abc';
     logger.info(`📞 WebSocket requested`, { callSid, clientId });

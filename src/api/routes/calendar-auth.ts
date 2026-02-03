@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { GoogleCalendarService } from '../../services/scheduling/google-calendar';
 import { OutlookCalendarService } from '../../services/scheduling/outlook-calendar';
 
@@ -8,7 +8,7 @@ const googleService = new GoogleCalendarService();
 const outlookService = new OutlookCalendarService();
 
 // Google OAuth
-calendarAuthRouter.get('/auth/google/login', (req, res) => {
+calendarAuthRouter.get('/auth/google/login', (req: Request, res: Response) => {
     const clientId = req.query.clientId as string;
     if (!clientId) return res.status(400).send('Missing clientId');
 
@@ -16,7 +16,7 @@ calendarAuthRouter.get('/auth/google/login', (req, res) => {
     res.redirect(url);
 });
 
-calendarAuthRouter.get('/auth/google/callback', async (req, res) => {
+calendarAuthRouter.get('/auth/google/callback', async (req: Request, res: Response) => {
     const { code, state } = req.query;
     if (!code || !state) return res.status(400).send('Missing code or state');
 
@@ -30,7 +30,7 @@ calendarAuthRouter.get('/auth/google/callback', async (req, res) => {
 });
 
 // Outlook OAuth
-calendarAuthRouter.get('/auth/microsoft/login', (req, res) => {
+calendarAuthRouter.get('/auth/microsoft/login', (req: Request, res: Response) => {
     const clientId = req.query.clientId as string;
     if (!clientId) return res.status(400).send('Missing clientId');
 
@@ -38,7 +38,7 @@ calendarAuthRouter.get('/auth/microsoft/login', (req, res) => {
     res.redirect(url);
 });
 
-calendarAuthRouter.get('/auth/microsoft/callback', async (req, res) => {
+calendarAuthRouter.get('/auth/microsoft/callback', async (req: Request, res: Response) => {
     const { code, state } = req.query; // state passed as clientId
     if (!code) return res.status(400).send('Missing code');
 
