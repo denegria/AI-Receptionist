@@ -49,7 +49,7 @@ twilioWebhookRouter.post('/status-callback', validateTwilioRequest, (req: Reques
     res.status(200).send(); // Acknowledge Twilio's request
 });
 
-twilioWebhookRouter.post('/voicemail-callback', async (req: Request, res: Response) => {
+twilioWebhookRouter.post('/voicemail-callback', validateTwilioRequest, async (req: Request, res: Response) => {
     const { clientId, type } = req.query;
     const { CallSid, RecordingUrl, RecordingDuration, TranscriptionText } = req.body;
 
