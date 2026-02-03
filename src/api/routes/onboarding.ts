@@ -8,8 +8,22 @@ import { ClientConfig } from '../../models/client-config';
 export const onboardingRouter = Router();
 
 /**
- * Step 1: Create a SetupIntent to collect payment method
- * This happens after plan selection.
+ * GET /api/onboarding/search-numbers
+ */
+onboardingRouter.get('/search-numbers', async (req: Request, res: Response) => {
+  const { areaCode } = req.query;
+
+  try {
+    const numbers = await ProvisioningService.searchNumbers(areaCode as string);
+    res.json({ numbers });
+  } catch (error: any) {
+    logger.error('Onboarding Search Numbers error', { error: error.message });
+    res.status(500).json({ error: 'Failed to search for numbers' });
+  }
+});
+
+/**
+ * POST /api/onboarding/setup-intent
  */
 onboardingRouter.post('/setup-intent', async (req: Request, res: Response) => {
   const { email, businessName, clientId } = req.body;
@@ -29,23 +43,7 @@ onboardingRouter.post('/setup-intent', async (req: Request, res: Response) => {
 });
 
 /**
- * Step 2: Search for available phone numbers
- */
-onboardingRouter.get('/search-numbers', async (req: Request, res: Response) => {
-  const { areaCode } = req.query;
-
-  try {
-    const numbers = await ProvisioningService.searchNumbers(areaCode as string);
-    res.json({ numbers });
-  } catch (error: any) {
-    logger.error('Onboarding Search Numbers error', { error: error.message });
-    res.status(500).json({ error: 'Failed to search for numbers' });
-  }
-});
-
-/**
- * Step 3: Provision the number and initialize the client
- * This happens after number selection.
+ * POST /api/onboarding/provision
  */
 onboardingRouter.post('/provision', async (req: Request, res: Response) => {
   const { clientId, businessName, timezone, phoneNumber, plan } = req.body;
@@ -54,7 +52,7 @@ onboardingRouter.post('/provision', async (req: Request, res: Response) => {
     // 1. Buy the Twilio number
     await ProvisioningService.buyNumber(phoneNumber, clientId);
 
-    // 2. Initialize the client's database (Authorized Disk Bomb bypass)
+    // 2. Initialize the client's database
     await ProvisioningService.initializeClientDatabase(clientId);
 
     // 3. Register the client in the shared registry
@@ -63,29 +61,44 @@ onboardingRouter.post('/provision', async (req: Request, res: Response) => {
       businessName,
       phoneNumber,
       timezone: timezone || 'America/New_York',
-      // Default configurations
-      ai: {
-        provider: 'claude',
-        model: 'claude-3-5-sonnet-20240620',
-        voice: 'en-US-Standard-C',
+      businessHours: {
+        monday: { start: '09:00', end: '17:00', enabled: true },
+        tuesday: { start: '09:00', end: '17:00', enabled: true },
+        wednesday: { start: '09:00', end: '17:00', enabled: true },
+        thursday: { start: '09:00', end: '17:00', enabled: true },
+        friday: { start: '09:00', end: '17:00', enabled: true },
+        saturday: { start: '09:00', end: '12:00', enabled: false },
+        sunday: { start: '09:00', end: '12:00', enabled: false },
       },
-      scheduling: {
-        enabled: false,
+      holidays: [],
+      appointmentTypes: [
+        { name: 'General Inquiry', duration: 30, bufferBefore: 0, bufferAfter: 0 }
+      ],
+      calendar: {
         provider: 'google',
+        calendarId: 'primary',
+        syncEnabled: false,
+        createMeetLinks: false,
+      },
+      routing: {
+        afterHoursAction: 'voicemail',
+        fallbackNumber: '',
+        voicemailEnabled: true,
       },
       notifications: {
         sms: '',
         email: '',
       },
-      features: {
-        voicemail: true,
-        transcription: true,
+      aiSettings: {
+        greeting: `Hi, thank you for calling ${businessName}. How can I help you today?`,
+        maxRetries: 3,
+        requireServiceType: false,
       }
     };
 
     clientRegistryRepository.register(config);
     
-    // Update status to trial as per directive
+    // Ensure status is set to trial
     clientRegistryRepository.updateStatus(clientId, 'trial');
 
     res.json({ success: true, clientId });
