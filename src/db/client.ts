@@ -19,24 +19,20 @@ db.pragma('journal_mode = WAL');
 const clientDatabases = new Map<string, Database.Database>();
 
 /**
- * Get or create a client-specific database connection
+ * Get an existing client-specific database connection
  */
 export function getClientDatabase(clientId: string): Database.Database {
     if (!clientDatabases.has(clientId)) {
         const clientDbPath = path.join(dbDir, `client-${clientId}.db`);
+
+        // Disk Bomb Fix: Do NOT create database if it doesn't exist
+        if (!fs.existsSync(clientDbPath)) {
+            console.error(`SECURITY ALERT: Attempted to access non-existent database for client: ${clientId}`);
+            throw new Error(`Unauthorized access: Database for client ${clientId} does not exist.`);
+        }
+
         const clientDb = new Database(clientDbPath);
         clientDb.pragma('journal_mode = WAL');
-
-        // Initialize schema if this is a new database
-        const tables = clientDb.prepare(
-            "SELECT name FROM sqlite_master WHERE type='table'"
-        ).all();
-
-        if (tables.length === 0) {
-            const schema = getSchemaContent();
-            clientDb.exec(schema);
-            console.log(`✓ Initialized database for client: ${clientId}`);
-        }
 
         clientDatabases.set(clientId, clientDb);
     }

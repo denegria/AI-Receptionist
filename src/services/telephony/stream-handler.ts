@@ -6,6 +6,7 @@ import { LLMService, ChatMessage } from '../ai/llm';
 import { ToolExecutor } from '../ai/tool-executor';
 import { callLogRepository } from '../../db/repositories/call-log-repository';
 import { conversationTurnRepository } from '../../db/repositories/conversation-turn-repository';
+import { clientRegistryRepository } from '../../db/repositories/client-registry-repository';
 import { loadClientConfig, ClientConfig } from '../../models/client-config';
 import { fallbackService, FallbackLevel } from './fallback-service';
 import { logger } from '../logging';
@@ -85,7 +86,13 @@ export class StreamHandler {
 
                 if (data.start.customParameters?.callerPhone) this.callerPhone = data.start.customParameters.callerPhone;
                 if (data.start.customParameters?.clientId) this.clientId = data.start.customParameters.clientId;
-                if (!this.clientId) this.clientId = 'abc';
+
+                // Wallet Drain Fix: Validate clientId exists in registry
+                if (!this.clientId || !clientRegistryRepository.findById(this.clientId)) {
+                    console.error(`SECURITY ALERT: Unauthorized stream connection attempt for clientId: ${this.clientId}`);
+                    this.ws.close();
+                    return;
+                }
 
                 try {
                     this.config = loadClientConfig(this.clientId);
