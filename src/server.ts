@@ -66,10 +66,11 @@ if (config.nodeEnv === 'development') {
 import { calendarAuthRouter } from './api/routes/calendar-auth';
 import { twilioWebhookRouter } from './api/routes/twilio-webhook';
 import { onboardingRouter } from './api/routes/onboarding';
+import { requireAuth } from './api/middleware/auth';
 
 app.use(calendarAuthRouter);
 app.use(twilioWebhookRouter);
-app.use('/api/onboarding', onboardingRouter);
+app.use('/api/onboarding', requireAuth, onboardingRouter);
 
 // Health Check
 app.get('/health', (req, res) => {
