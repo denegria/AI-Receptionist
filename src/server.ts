@@ -73,7 +73,18 @@ app.use(calendarAuthRouter);
 app.use(twilioWebhookRouter);
 app.use('/api/onboarding', requireAuth, onboardingRouter);
 
-// Health Check
+// Public Health Check (no auth, no secrets)
+app.get('/healthz', (_req: Request, res: Response) => {
+    res.setHeader('Cache-Control', 'no-store');
+    res.json({
+        ok: true,
+        service: 'ai-receptionist-backend',
+        version: '1.0.0',
+        timestamp: new Date().toISOString(),
+    });
+});
+
+// Health Check (legacy)
 app.get('/health', (req: Request, res: Response) => {
     try {
         db.prepare('SELECT 1').get();
