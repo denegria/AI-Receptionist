@@ -41,6 +41,7 @@
     "express-ws": "^5.0.2",
     "googleapis": "^170.1.0",
     "isomorphic-fetch": "^3.0.0",
+    "stripe": "^20.3.0",
     "twilio": "^5.11.2"
   }
 }
