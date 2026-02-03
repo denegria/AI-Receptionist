@@ -13,11 +13,12 @@ export class ProvisioningService {
    */
   static async searchNumbers(areaCode?: string, limit: number = 5) {
     try {
-      const availableNumbers = await twilioClient.availablePhoneNumbers('US').local.list({
-        areaCode,
-        limit,
-      });
-      return availableNumbers.map(n => ({
+      const params: any = { limit };
+      if (areaCode) {
+        params.areaCode = parseInt(areaCode);
+      }
+      const availableNumbers = await (twilioClient.availablePhoneNumbers('US').local as any).list(params);
+      return (availableNumbers as any[]).map((n: any) => ({
         phoneNumber: n.phoneNumber,
         friendlyName: n.friendlyName,
         locality: n.locality,
