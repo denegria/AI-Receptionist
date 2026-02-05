@@ -43,7 +43,14 @@ export class ProvisioningService {
 
       logger.info('Successfully purchased phone number', { phoneNumber, clientId, sid: purchasedNumber.sid });
       return purchasedNumber;
-    } catch (error) {
+    } catch (error: any) {
+      // 21404: Trial account limit
+      // 21421: Phone number is already in your account
+      // 21452: Phone number already purchased
+      if (error.code === 21404 || error.code === 21421 || error.code === 21452) {
+         logger.warn('Phone number provisioning skipped (already owned or trial limit). Proceeding.', { code: error.code });
+         return { phoneNumber, status: 'existing' };
+      }
       logger.error('Error purchasing phone number', { error, phoneNumber, clientId });
       throw error;
     }

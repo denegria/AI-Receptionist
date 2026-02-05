@@ -58,4 +58,45 @@ export class BillingService {
       throw error;
     }
   }
+
+  /**
+   * Creates a Stripe Checkout Session for subscription
+   */
+  static async createCheckoutSession(customerId: string, priceId: string, successUrl: string, cancelUrl: string, clientId: string) {
+    try {
+      const session = await stripe.checkout.sessions.create({
+        customer: customerId,
+        payment_method_types: ['card'],
+        line_items: [
+          {
+            price: priceId,
+            quantity: 1,
+          },
+        ],
+        mode: 'subscription',
+        success_url: successUrl,
+        cancel_url: cancelUrl,
+        subscription_data: {
+          trial_period_days: 14,
+          metadata: {
+            clientId,
+          },
+        },
+        metadata: {
+          clientId,
+        },
+      });
+      return session;
+    } catch (error) {
+      logger.error('Error creating Stripe Checkout Session', { error, customerId, clientId });
+      throw error;
+    }
+  }
+
+  /**
+   * Verify a Stripe Webhook signature
+   */
+  static constructEvent(payload: string, signature: string, secret: string) {
+    return stripe.webhooks.constructEvent(payload, signature, secret);
+  }
 }
