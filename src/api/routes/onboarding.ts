@@ -43,6 +43,32 @@ onboardingRouter.post('/setup-intent', async (req: Request, res: Response) => {
 });
 
 /**
+ * POST /api/onboarding/checkout-session
+ */
+onboardingRouter.post('/checkout-session', async (req: Request, res: Response) => {
+  const { email, businessName, clientId, priceId, successUrl, cancelUrl } = req.body;
+
+  try {
+    const customer = await BillingService.getOrCreateCustomer(email, businessName, clientId);
+    const session = await BillingService.createCheckoutSession(
+      customer.id, 
+      priceId, 
+      successUrl, 
+      cancelUrl, 
+      clientId
+    );
+
+    res.json({
+      sessionId: session.id,
+      url: session.url,
+    });
+  } catch (error: any) {
+    logger.error('Onboarding Checkout Session error', { error: error.message, email });
+    res.status(500).json({ error: 'Failed to create checkout session' });
+  }
+});
+
+/**
  * POST /api/onboarding/provision
  */
 onboardingRouter.post('/provision', async (req: Request, res: Response) => {

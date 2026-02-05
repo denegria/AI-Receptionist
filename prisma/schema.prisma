@@ -1,0 +1,41 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:../db/shared.db"
+}
+
+model Client {
+  id            String   @id
+  businessName  String
+  phoneNumber   String   @unique
+  timezone      String
+  status        String   @default("trial") // active, suspended, trial
+  configJson    String   // Stores the full ClientConfig JSON
+  
+  // Subscription fields
+  stripeCustomerId String?
+  stripeSubscriptionId String?
+  subscriptionStatus   String? // active, trialing, past_due, canceled
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([phoneNumber])
+  @@index([status])
+}
+
+model SystemLog {
+  id        Int      @id @default(autoincrement())
+  level     String
+  message   String
+  meta      String?
+  timestamp DateTime @default(now())
+
+  @@index([level])
+  @@index([timestamp])
+}
