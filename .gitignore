@@ -39,3 +39,19 @@ check_db.js
 delete_appointments.js
 inspect_db.js
 temp_scripts/
+
+# Generated artifacts / debug dumps (keep local, do not commit)
+Instructions.txt
+last_500_logs.txt
+call_details.txt
+recent_call_raw.txt
+speech_analysis.txt
+events_timeline.txt
+booking_search.txt
+booking_turn.txt
+booking_latency.txt
+booking_confirmation.txt
+booking_details.txt
+full_stt_transcript.txt
+tool_execution_logs.txt
+all_stt.txt
