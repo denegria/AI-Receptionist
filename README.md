@@ -35,6 +35,7 @@
 
 2.  **Install dependencies**:
     ```bash
+    # Only run this if package-lock.json changed OR you hit a missing-module error.
     npm install
     ```
 
@@ -45,9 +46,18 @@
     ```
 
 4.  **Run the Server**:
+
+    **Canonical (recommended, from workspace root):**
+    ```bash
+    ./scripts/dev.sh backend:dev
+    ```
+
+    **Direct (fallback, from inside `ai-receptionist-backend/`):**
     ```bash
     npm run dev
     ```
+
+    **Note:** Docker builds use `npm ci` for reproducibility. Local dev prefers reusing existing `node_modules/` for speed.
 
 ## 🏗️ Project Structure
 
