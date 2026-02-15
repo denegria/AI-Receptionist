@@ -1,3 +1,5 @@
+-- NOTE: Draft schema for a potential Supabase/Postgres migration. Current production uses SQLite schemas in src/db/ (schema.sql, shared-schema.sql).
+
 -- SUPABASE SCHEMA DESIGN FOR AI-RECEPTIONIST
 
 -- 1. Clients Table
