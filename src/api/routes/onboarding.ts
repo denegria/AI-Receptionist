@@ -1,9 +1,12 @@
 import { Router, Request, Response } from 'express';
+import fs from 'fs';
+import path from 'path';
 import { BillingService } from '../../services/billing';
 import { ProvisioningService } from '../../services/provisioning';
 import { clientRegistryRepository } from '../../db/repositories/client-registry-repository';
 import { logger } from '../../utils/logger';
 import { ClientConfig } from '../../models/client-config';
+import { config as appConfig } from '../../config';
 
 export const onboardingRouter = Router();
 
@@ -72,7 +75,7 @@ onboardingRouter.post('/checkout-session', async (req: Request, res: Response) =
  * POST /api/onboarding/provision
  */
 onboardingRouter.post('/provision', async (req: Request, res: Response) => {
-  const { clientId, businessName, timezone, phoneNumber, plan } = req.body;
+  const { clientId, businessName, timezone, phoneNumber, plan, onboardingConfig } = req.body;
 
   try {
     // 1. Buy the Twilio number
@@ -81,53 +84,77 @@ onboardingRouter.post('/provision', async (req: Request, res: Response) => {
     // 2. Initialize the client's database
     await ProvisioningService.initializeClientDatabase(clientId);
 
-    // 3. Register the client in the shared registry
+    const fallbackBusinessHours = {
+      monday: { start: '09:00', end: '17:00', enabled: true },
+      tuesday: { start: '09:00', end: '17:00', enabled: true },
+      wednesday: { start: '09:00', end: '17:00', enabled: true },
+      thursday: { start: '09:00', end: '17:00', enabled: true },
+      friday: { start: '09:00', end: '17:00', enabled: true },
+      saturday: { start: '09:00', end: '12:00', enabled: false },
+      sunday: { start: '09:00', end: '12:00', enabled: false },
+    };
+
     const config: ClientConfig = {
       clientId,
       businessName,
       phoneNumber,
-      timezone: timezone || 'America/New_York',
-      businessHours: {
-        monday: { start: '09:00', end: '17:00', enabled: true },
-        tuesday: { start: '09:00', end: '17:00', enabled: true },
-        wednesday: { start: '09:00', end: '17:00', enabled: true },
-        thursday: { start: '09:00', end: '17:00', enabled: true },
-        friday: { start: '09:00', end: '17:00', enabled: true },
-        saturday: { start: '09:00', end: '12:00', enabled: false },
-        sunday: { start: '09:00', end: '12:00', enabled: false },
-      },
-      holidays: [],
-      appointmentTypes: [
-        { name: 'General Inquiry', duration: 30, bufferBefore: 0, bufferAfter: 0 }
-      ],
+      timezone: timezone || onboardingConfig?.timezone || 'America/New_York',
+      businessHours: onboardingConfig?.businessHours || fallbackBusinessHours,
+      holidays: onboardingConfig?.holidays || [],
+      appointmentTypes: onboardingConfig?.appointmentTypes?.length
+        ? onboardingConfig.appointmentTypes
+        : [{ name: 'General Inquiry', duration: 30, bufferBefore: 0, bufferAfter: 0 }],
       calendar: {
-        provider: 'google',
-        calendarId: 'primary',
-        syncEnabled: false,
-        createMeetLinks: false,
+        provider: onboardingConfig?.calendar?.provider === 'outlook' ? 'outlook' : 'google',
+        calendarId: onboardingConfig?.calendar?.calendarId || 'primary',
+        syncEnabled: Boolean(onboardingConfig?.calendar?.syncEnabled),
+        createMeetLinks: Boolean(onboardingConfig?.calendar?.createMeetLinks),
       },
       routing: {
-        afterHoursAction: 'voicemail',
-        fallbackNumber: '',
-        voicemailEnabled: true,
+        afterHoursAction:
+          onboardingConfig?.routing?.afterHoursAction === 'forward'
+            ? 'forward'
+            : onboardingConfig?.routing?.afterHoursAction === 'ai_receptionist'
+            ? 'ai_receptionist'
+            : 'voicemail',
+        fallbackNumber: onboardingConfig?.routing?.fallbackNumber || '',
+        voicemailEnabled: onboardingConfig?.routing?.voicemailEnabled ?? true,
       },
       notifications: {
-        sms: '',
-        email: '',
+        sms: onboardingConfig?.notifications?.sms || '',
+        email: onboardingConfig?.notifications?.email || '',
       },
       aiSettings: {
-        greeting: `Hi, thank you for calling ${businessName}. How can I help you today?`,
-        maxRetries: 3,
-        requireServiceType: false,
+        greeting:
+          onboardingConfig?.aiSettings?.greeting ||
+          `Hi, thank you for calling ${businessName}. How can I help you today?`,
+        maxRetries: Number.isFinite(onboardingConfig?.aiSettings?.maxRetries)
+          ? Number(onboardingConfig.aiSettings.maxRetries)
+          : 3,
+        requireServiceType: Boolean(onboardingConfig?.aiSettings?.requireServiceType),
       }
     };
 
-    clientRegistryRepository.register(config);
-    
+    // 3. Generate client config file for watcher/ops visibility
+    const onboardingDir = appConfig.paths.onboarding;
+    if (!fs.existsSync(onboardingDir)) {
+      fs.mkdirSync(onboardingDir, { recursive: true });
+    }
+    const configFilePath = path.join(onboardingDir, `${clientId}.json`);
+    fs.writeFileSync(configFilePath, JSON.stringify(config, null, 2), 'utf-8');
+
+    // 4. Register immediately in shared registry (no watcher lag)
+    const existing = clientRegistryRepository.findById(clientId);
+    if (existing) {
+      clientRegistryRepository.updateConfig(clientId, config);
+    } else {
+      clientRegistryRepository.register(config);
+    }
+
     // Ensure status is set to trial
     clientRegistryRepository.updateStatus(clientId, 'trial');
 
-    res.json({ success: true, clientId });
+    res.json({ success: true, clientId, configFilePath, plan: plan || null });
   } catch (error: any) {
     logger.error('Onboarding Provisioning error', { error: error.message, clientId });
     res.status(500).json({ error: 'Failed to provision account' });
