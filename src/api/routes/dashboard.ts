@@ -33,6 +33,18 @@ function dbExistsForTenant(tenantId: string): boolean {
   return fs.existsSync(clientDbPath);
 }
 
+const CONVERSION_DEFINITIONS = {
+  lead: "Inbound call_logs rows in selected range",
+  qualified: "Inbound call_logs rows with non-empty intent_detected in selected range",
+  booked: "appointment_cache rows with status in (confirmed, completed) in selected range",
+};
+
+function pctChange(current: number, previous: number): number {
+  if (previous === 0 && current === 0) return 0;
+  if (previous === 0) return 100;
+  return Number((((current - previous) / previous) * 100).toFixed(1));
+}
+
 dashboardRouter.get('/summary', (req: Request, res: Response) => {
   const tenantId = requireTenantId(req, res);
   if (!tenantId) return;
@@ -44,12 +56,25 @@ dashboardRouter.get('/summary', (req: Request, res: Response) => {
   const { from, to, timezone } = rangeFromQuery(req);
   const db = getClientDatabase(tenantId);
 
+  const fromMs = new Date(from).getTime();
+  const toMs = new Date(to).getTime();
+  const periodMs = Math.max(1, toMs - fromMs);
+  const prevFrom = new Date(fromMs - periodMs).toISOString();
+  const prevTo = new Date(toMs - periodMs).toISOString();
+
   const totalCallsRow = db
     .prepare(
       `SELECT COUNT(*) as total FROM call_logs
        WHERE client_id = ? AND datetime(created_at) >= datetime(?) AND datetime(created_at) <= datetime(?)`
     )
     .get(tenantId, from, to) as { total: number };
+
+  const prevTotalCallsRow = db
+    .prepare(
+      `SELECT COUNT(*) as total FROM call_logs
+       WHERE client_id = ? AND datetime(created_at) >= datetime(?) AND datetime(created_at) <= datetime(?)`
+    )
+    .get(tenantId, prevFrom, prevTo) as { total: number };
 
   const appointmentsRow = db
     .prepare(
@@ -61,6 +86,16 @@ dashboardRouter.get('/summary', (req: Request, res: Response) => {
     )
     .get(tenantId, from, to) as { total: number };
 
+  const prevAppointmentsRow = db
+    .prepare(
+      `SELECT COUNT(*) as total FROM appointment_cache
+       WHERE client_id = ?
+       AND datetime(appointment_datetime) >= datetime(?)
+       AND datetime(appointment_datetime) <= datetime(?)
+       AND status IN ('confirmed', 'completed')`
+    )
+    .get(tenantId, prevFrom, prevTo) as { total: number };
+
   const avgDurationRow = db
     .prepare(
       `SELECT AVG(call_duration) as avgDuration FROM call_logs
@@ -69,10 +104,22 @@ dashboardRouter.get('/summary', (req: Request, res: Response) => {
     )
     .get(tenantId, from, to) as { avgDuration: number | null };
 
+  const prevAvgDurationRow = db
+    .prepare(
+      `SELECT AVG(call_duration) as avgDuration FROM call_logs
+       WHERE client_id = ? AND datetime(created_at) >= datetime(?) AND datetime(created_at) <= datetime(?)
+       AND call_duration IS NOT NULL`
+    )
+    .get(tenantId, prevFrom, prevTo) as { avgDuration: number | null };
+
   const totalCalls = totalCallsRow?.total || 0;
+  const prevTotalCalls = prevTotalCallsRow?.total || 0;
   const appointments = appointmentsRow?.total || 0;
+  const prevAppointments = prevAppointmentsRow?.total || 0;
   const avgDurationSeconds = Math.round(avgDurationRow?.avgDuration || 0);
+  const prevAvgDurationSeconds = Math.round(prevAvgDurationRow?.avgDuration || 0);
   const estimatedSavings = appointments * 85;
+  const prevEstimatedSavings = prevAppointments * 85;
 
   res.json({
     tenantId,
@@ -86,28 +133,28 @@ dashboardRouter.get('/summary', (req: Request, res: Response) => {
         label: 'Total Calls',
         value: totalCalls,
         formatted: totalCalls.toLocaleString(),
-        changePct: 0,
+        changePct: pctChange(totalCalls, prevTotalCalls),
       },
       {
         id: 'appointments',
         label: 'Appointments',
         value: appointments,
         formatted: appointments.toLocaleString(),
-        changePct: 0,
+        changePct: pctChange(appointments, prevAppointments),
       },
       {
         id: 'avgDurationSeconds',
         label: 'Avg. Duration',
         value: avgDurationSeconds,
         formatted: `${Math.floor(avgDurationSeconds / 60)}m ${String(avgDurationSeconds % 60).padStart(2, '0')}s`,
-        changePct: 0,
+        changePct: pctChange(avgDurationSeconds, prevAvgDurationSeconds),
       },
       {
         id: 'estimatedSavings',
         label: 'AI Savings',
         value: estimatedSavings,
         formatted: `$${estimatedSavings.toLocaleString()}`,
-        changePct: 0,
+        changePct: pctChange(estimatedSavings, prevEstimatedSavings),
       },
     ],
   });
@@ -232,6 +279,7 @@ dashboardRouter.get('/conversions', (req: Request, res: Response) => {
     leadCount: leadCountRow?.total || 0,
     qualifiedCount: qualifiedCountRow?.total || 0,
     bookedCount: bookedCountRow?.total || 0,
+    definitions: CONVERSION_DEFINITIONS,
   });
 });
 
