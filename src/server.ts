@@ -67,11 +67,15 @@ if (config.nodeEnv === 'development') {
 import { calendarAuthRouter } from './api/routes/calendar-auth';
 import { twilioWebhookRouter } from './api/routes/twilio-webhook';
 import { onboardingRouter } from './api/routes/onboarding';
+import { dashboardRouter } from './api/routes/dashboard';
+import { adminDashboardRouter } from './api/routes/admin-dashboard';
 import { requireAuth } from './api/middleware/auth';
 
 app.use(calendarAuthRouter);
 app.use(twilioWebhookRouter);
 app.use('/api/onboarding', requireAuth, onboardingRouter);
+app.use('/api/dashboard', requireAuth, dashboardRouter);
+app.use('/api/admin', requireAuth, adminDashboardRouter);
 
 // Public Health Check (no auth, no secrets)
 app.get('/healthz', (_req: Request, res: Response) => {
