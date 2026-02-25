@@ -3,9 +3,32 @@ import fs from 'fs';
 import path from 'path';
 import { config } from '../../config';
 import { getClientDatabase } from '../../db/client';
+import { sharedDb } from '../../db/shared-client';
 import { clientRegistryRepository } from '../../db/repositories/client-registry-repository';
 
 export const adminDashboardRouter = Router();
+
+function ensureAuditTable() {
+  sharedDb.exec(`
+    CREATE TABLE IF NOT EXISTS admin_audit_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      action TEXT NOT NULL,
+      tenant_id TEXT,
+      actor TEXT,
+      reason TEXT,
+      details_json TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+}
+
+function writeAudit(action: string, tenantId: string | null, reason: string | null, details?: Record<string, unknown>) {
+  ensureAuditTable();
+  const stmt = sharedDb.prepare(
+    `INSERT INTO admin_audit_logs (action, tenant_id, actor, reason, details_json) VALUES (?, ?, ?, ?, ?)`
+  );
+  stmt.run(action, tenantId, 'admin_api_key', reason || null, details ? JSON.stringify(details) : null);
+}
 
 adminDashboardRouter.get('/overview', (req: Request, res: Response) => {
   const now = new Date();
@@ -79,4 +102,73 @@ adminDashboardRouter.get('/overview', (req: Request, res: Response) => {
   };
 
   res.json({ from, to, timezone, tenants, totals });
+});
+
+adminDashboardRouter.post('/actions', (req: Request, res: Response) => {
+  const { action, tenantId, reason } = req.body || {};
+  if (!action || typeof action !== 'string') {
+    return res.status(400).json({ error: 'Missing action' });
+  }
+
+  const allowedActions = new Set(['resync_config', 'reprocess_metrics']);
+  if (!allowedActions.has(action)) {
+    return res.status(400).json({ error: 'Unsupported action' });
+  }
+
+  if (!tenantId || typeof tenantId !== 'string') {
+    return res.status(400).json({ error: 'Missing tenantId' });
+  }
+
+  const tenant = clientRegistryRepository.findById(tenantId);
+  if (!tenant) {
+    return res.status(404).json({ error: 'Tenant not found' });
+  }
+
+  const dbDir = path.dirname(path.resolve(config.database.path));
+  const dbPath = path.join(dbDir, `client-${tenantId}.db`);
+  if (!fs.existsSync(dbPath)) {
+    writeAudit(action, tenantId, reason || null, { ok: false, reason: 'missing_client_db' });
+    return res.status(404).json({ error: `Client DB missing for tenant ${tenantId}` });
+  }
+
+  // v1 guarded action behavior: validated + audited no-op hooks.
+  writeAudit(action, tenantId, reason || null, { ok: true, mode: 'scaffold_noop' });
+
+  return res.json({
+    success: true,
+    action,
+    tenantId,
+    status: 'queued',
+    message: 'Action accepted and audited (scaffold).',
+  });
+});
+
+adminDashboardRouter.get('/audit-logs', (req: Request, res: Response) => {
+  ensureAuditTable();
+  const limitRaw = Number(req.query.limit || 20);
+  const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(100, limitRaw)) : 20;
+
+  const rows = sharedDb
+    .prepare(`SELECT id, action, tenant_id as tenantId, actor, reason, details_json as detailsJson, created_at as createdAt FROM admin_audit_logs ORDER BY id DESC LIMIT ?`)
+    .all(limit) as Array<{
+      id: number;
+      action: string;
+      tenantId: string | null;
+      actor: string | null;
+      reason: string | null;
+      detailsJson: string | null;
+      createdAt: string;
+    }>;
+
+  res.json({
+    items: rows.map((r) => ({
+      id: r.id,
+      action: r.action,
+      tenantId: r.tenantId,
+      actor: r.actor,
+      reason: r.reason,
+      details: r.detailsJson ? JSON.parse(r.detailsJson) : null,
+      createdAt: r.createdAt,
+    })),
+  });
 });
