@@ -20,8 +20,27 @@ interface Config {
 
     deepgram: {
         apiKey: string;
-        model: string;
+        sttModel: string;
+        ttsModel: string;
         language: string;
+    };
+
+    transport: {
+        mode: 'legacy-ws' | 'dual' | 'socketio';
+        socketPath: string;
+    };
+
+    redis: {
+        url?: string;
+        activeSessionTtlSeconds: number;
+        webhookIdempotencyTtlSeconds: number;
+    };
+
+    admission: {
+        maxGlobalActiveCalls: number;
+        maxTenantActiveCalls: number;
+        queueEnabled: boolean;
+        queueMaxSize: number;
     };
 
     voice: {
@@ -112,8 +131,27 @@ export const config: Config = {
 
     deepgram: {
         apiKey: getEnvVar('DEEPGRAM_API_KEY'),
-        model: getEnvVar('DEEPGRAM_MODEL', 'nova-2'),
+        sttModel: getEnvVar('DEEPGRAM_STT_MODEL', 'flux-general-en'),
+        ttsModel: getEnvVar('DEEPGRAM_TTS_MODEL', 'aura-2-asteria-en'),
         language: getEnvVar('DEEPGRAM_LANGUAGE', 'en-US'),
+    },
+
+    transport: {
+        mode: (getEnvVar('MEDIA_TRANSPORT_MODE', 'dual') as 'legacy-ws' | 'dual' | 'socketio'),
+        socketPath: getEnvVar('SOCKET_IO_PATH', '/socket.io-media-stream'),
+    },
+
+    redis: {
+        url: process.env.REDIS_URL,
+        activeSessionTtlSeconds: parseInt(getEnvVar('REDIS_ACTIVE_SESSION_TTL_SECONDS', '120')),
+        webhookIdempotencyTtlSeconds: parseInt(getEnvVar('REDIS_WEBHOOK_IDEMPOTENCY_TTL_SECONDS', '300')),
+    },
+
+    admission: {
+        maxGlobalActiveCalls: parseInt(getEnvVar('MAX_GLOBAL_ACTIVE_CALLS', '100')),
+        maxTenantActiveCalls: parseInt(getEnvVar('MAX_TENANT_ACTIVE_CALLS', '20')),
+        queueEnabled: getEnvVar('ADMISSION_QUEUE_ENABLED', 'true') === 'true',
+        queueMaxSize: parseInt(getEnvVar('ADMISSION_QUEUE_MAX_SIZE', '50')),
     },
 
     voice: {

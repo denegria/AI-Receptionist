@@ -1,6 +1,7 @@
 import express, { Request, Response, NextFunction } from 'express';
 import expressWs from 'express-ws';
 import WebSocket from 'ws';
+import { Server as SocketIOServer } from 'socket.io';
 import { config } from './config';
 import { initDatabase, db, closeAllDatabases } from './db/client';
 import { initSharedDatabase, closeSharedDatabase } from './db/shared-client';
@@ -9,6 +10,7 @@ import { errorHandler } from './api/middleware/error-handler';
 import fs from 'fs';
 import path from 'path';
 import { logger } from './services/logging';
+import { redisCoordinator } from './services/coordination/redis-coordinator';
 
 // Ensure required directories exist
 function ensureDirectories() {
@@ -118,44 +120,78 @@ app.get('/', (req: Request, res: Response) => {
 
 
 
-// WebSocket endpoint for Media Streams
+// Media stream transports
 import { StreamHandler } from "./services/telephony/stream-handler";
 import { onboardingWatcher } from './services/telephony/onboarding-watcher';
 
-app.ws('/media-stream', (ws: WebSocket, req: Request) => {
-    const callSid = (req.query.callSid as string) || (req.headers['x-twilio-callsid'] as string);
-    const clientId = (req.query.clientId as string) || (req.headers['x-twilio-clientid'] as string) || 'abc';
-    logger.info(`📞 WebSocket requested`, { callSid, clientId });
+if (config.transport.mode === 'legacy-ws' || config.transport.mode === 'dual') {
+    app.ws('/media-stream', (ws: WebSocket, req: Request) => {
+        const callSid = (req.query.callSid as string) || (req.headers['x-twilio-callsid'] as string);
+        const clientId = (req.query.clientId as string) || (req.headers['x-twilio-clientid'] as string) || 'abc';
+        logger.info(`📞 WebSocket requested`, { callSid, clientId });
 
-    new StreamHandler(ws, clientId);
+        new StreamHandler(ws as any, clientId);
 
-    ws.on('close', () => {
-        logger.info(`📞 Client disconnected`, { callSid });
+        ws.on('close', () => logger.info(`📞 Client disconnected`, { callSid }));
+        ws.on('error', (error) => logger.error(`WebSocket error`, { callSid, error }));
     });
-
-    ws.on('error', (error) => {
-        logger.error(`WebSocket error`, { callSid, error });
-    });
-});
+}
 
 // Error handling middleware (must be last)
 app.use(errorHandler);
 
 // Start server
-const server = app.listen(config.port, '0.0.0.0', () => {
+const server = app.listen(config.port, '0.0.0.0', async () => {
     try {
         initDatabase();
         initSharedDatabase();
         MigrationManager.runMigrations();
+        await redisCoordinator.init();
         onboardingWatcher.start(); // Start the auto-onboarding service
-        logger.info(`Server listening`, { port: config.port });
-        console.log(`✓ WebSocket endpoint: ws://localhost:${config.port}/media-stream`);
+        logger.info(`Server listening`, { port: config.port, transportMode: config.transport.mode });
+        if (config.transport.mode === 'legacy-ws' || config.transport.mode === 'dual') {
+            console.log(`✓ WebSocket endpoint: ws://localhost:${config.port}/media-stream`);
+        }
+        console.log(`✓ Socket.IO endpoint: ws://localhost:${config.port}${config.transport.socketPath}`);
         console.log(`✓ Health check: http://localhost:${config.port}/health\n`);
     } catch (error) {
         logger.error('Failed to start server', { error });
         process.exit(1);
     }
 });
+
+const io = new SocketIOServer(server, {
+    path: config.transport.socketPath,
+    cors: { origin: '*' },
+});
+
+if (config.transport.mode === 'socketio' || config.transport.mode === 'dual') {
+    io.on('connection', (socket) => {
+        const clientId = (socket.handshake.query.clientId as string) || 'abc';
+        logger.info('📞 Socket.IO stream connected', { socketId: socket.id, clientId });
+
+        const socketAdapter = {
+            readyState: 1,
+            on(event: 'message' | 'close' | 'error', cb: (...args: any[]) => void) {
+                if (event === 'message') {
+                    socket.on('twilio-message', (payload: any) => cb(typeof payload === 'string' ? payload : JSON.stringify(payload)));
+                } else if (event === 'close') {
+                    socket.on('disconnect', cb);
+                } else {
+                    socket.on('error', cb);
+                }
+            },
+            send(data: string) {
+                socket.emit('twilio-message', data);
+            },
+            close() {
+                socket.disconnect(true);
+            }
+        };
+
+        new StreamHandler(socketAdapter as any, clientId);
+    });
+}
 
 // Graceful shutdown
 function gracefulShutdown(signal: string) {
@@ -169,10 +205,12 @@ function gracefulShutdown(signal: string) {
             onboardingWatcher.stop();
             closeAllDatabases();
             closeSharedDatabase();
+            redisCoordinator.close().catch(() => undefined);
         } catch (err) {
             console.error('✗ Error closing databases:', err);
         }
 
+        io.close();
         console.log('👋 Shutdown complete');
         process.exit(0);
     });

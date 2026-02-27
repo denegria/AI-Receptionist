@@ -21,7 +21,7 @@ export class DeepgramSTTService {
         if (this.isConnected) return;
 
         this.connection = this.deepgram.listen.live({
-            model: 'nova-2',
+            model: config.deepgram.sttModel,
             language: 'en-US',
             smart_format: true,
             encoding: 'mulaw',
