@@ -17,7 +17,7 @@ export class DeepgramTTSService {
         const response = await this.deepgram.speak.request(
             { text },
             {
-                model: 'aura-asteria-en', // Use the most stable Aura voice
+                model: config.deepgram.ttsModel, // Use the most stable Aura voice
                 encoding: 'mulaw',        // Streaming direct to Twilio requires mulaw/8000 usually
                 sample_rate: 8000,
                 container: 'none',        // Raw audio for media streams
@@ -50,7 +50,7 @@ export class DeepgramTTSService {
             const response = await this.deepgram.speak.request(
                 { text },
                 {
-                    model: 'aura-asteria-en',
+                    model: config.deepgram.ttsModel,
                     encoding: 'mulaw',
                     sample_rate: 8000,
                     container: 'none',
@@ -83,7 +83,7 @@ export class DeepgramTTSService {
      */
     public createLiveSession(onAudio: (chunk: Buffer) => void) {
         const live = this.deepgram.speak.live({
-            model: 'aura-asteria-en',
+            model: config.deepgram.ttsModel,
             encoding: 'mulaw',
             sample_rate: 8000,
             container: 'none',

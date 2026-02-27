@@ -5,11 +5,30 @@ import { voicemailRepository } from '../../db/repositories/voicemail-repository'
 import { smsService } from '../../services/telephony/sms-service';
 import { loadClientConfig } from '../../models/client-config';
 import { validateTwilioRequest } from '../middleware/twilio-validator';
+import { redisCoordinator } from '../../services/coordination/redis-coordinator';
+import crypto from 'crypto';
 
 const VoiceResponse = twilio.twiml.VoiceResponse;
 export const twilioWebhookRouter = Router();
 
-twilioWebhookRouter.post('/voice', validateTwilioRequest, (req: Request, res: Response) => {
+
+function webhookKey(req: Request, suffix: string): string {
+    const parts = [
+        req.path,
+        suffix,
+        req.body.CallSid,
+        req.body.RecordingUrl,
+        req.body.CallStatus,
+        req.query.clientId,
+        req.query.type,
+    ];
+    return crypto.createHash('sha1').update(parts.filter(Boolean).join('|')).digest('hex');
+}
+
+
+twilioWebhookRouter.post('/voice', validateTwilioRequest, async (req: Request, res: Response) => {
+    const fresh = await redisCoordinator.markWebhookProcessed(webhookKey(req, 'voice'));
+    if (!fresh) return res.status(200).send('<Response/>');
     const twiml = new VoiceResponse();
     const callSid = req.body.CallSid;
     const clientId = req.query.clientId as string || 'abc';
@@ -41,7 +60,9 @@ twilioWebhookRouter.post('/voice', validateTwilioRequest, (req: Request, res: Re
     res.send(twiml.toString());
 });
 
-twilioWebhookRouter.post('/status-callback', validateTwilioRequest, (req: Request, res: Response) => {
+twilioWebhookRouter.post('/status-callback', validateTwilioRequest, async (req: Request, res: Response) => {
+    const fresh = await redisCoordinator.markWebhookProcessed(webhookKey(req, 'status'));
+    if (!fresh) return res.status(200).send();
     // This route is for Twilio status updates, e.g., call completed.
     // The actual implementation for this route would go here.
     // For now, we'll just log the event.
@@ -50,6 +71,8 @@ twilioWebhookRouter.post('/status-callback', validateTwilioRequest, (req: Reques
 });
 
 twilioWebhookRouter.post('/voicemail-callback', validateTwilioRequest, async (req: Request, res: Response) => {
+    const fresh = await redisCoordinator.markWebhookProcessed(webhookKey(req, 'voicemail'));
+    if (!fresh) return res.status(200).send('<Response/>');
     const { clientId, type } = req.query;
     const { CallSid, RecordingUrl, RecordingDuration, TranscriptionText } = req.body;
 

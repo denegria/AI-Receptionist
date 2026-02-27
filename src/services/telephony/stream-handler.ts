@@ -1,4 +1,3 @@
-import WebSocket from 'ws';
 import { DeepgramSTTService } from '../voice/stt';
 import { DeepgramTTSService } from '../voice/tts';
 import { config } from '../../config';
@@ -10,10 +9,19 @@ import { clientRegistryRepository } from '../../db/repositories/client-registry-
 import { loadClientConfig, ClientConfig } from '../../models/client-config';
 import { fallbackService, FallbackLevel } from './fallback-service';
 import { logger } from '../logging';
+import { redisCoordinator } from '../coordination/redis-coordinator';
 import { CallState, CallStateManager } from './call-state';
 
+
+interface StreamSocket {
+    on(event: 'message' | 'close' | 'error', cb: (...args: any[]) => void): any;
+    send(data: string): any;
+    close(): any;
+    readyState: number;
+}
+
 export class StreamHandler {
-    private ws: WebSocket;
+    private ws: StreamSocket;
     private stt: DeepgramSTTService;
     private tts: DeepgramTTSService;
     private llm: LLMService;
@@ -41,13 +49,14 @@ export class StreamHandler {
     private speechQueue: string[] = [];
     private isProcessingQueue: boolean = false;
     private callStartTime: number = 0;
+    private released: boolean = false;
 
     private readonly SENTENCE_END_REGEX = /[.!?](\s|$)/;
     private readonly ABBREVIATION_REGEX = /\b(Dr|Mr|Mrs|Ms|St|Ave|Inc|Jr|Sr|Prof|gov|com|net|org|edu)\.$/i;
     private readonly INACTIVITY_LIMIT_MS = 30000;
     private readonly MAX_HISTORY = 20;
 
-    constructor(ws: WebSocket, clientId?: string) {
+    constructor(ws: StreamSocket, clientId?: string) {
         this.ws = ws;
         this.clientId = clientId || null;
         this.stateManager = new CallStateManager('pending');
@@ -100,6 +109,16 @@ export class StreamHandler {
                     console.error('Failed to resolve config:', e);
                 }
 
+                const admission = await redisCoordinator.admitCall(this.callSid, this.clientId);
+                if (!admission.admitted) {
+                    const fallback = admission.queued
+                        ? "All specialists are busy right now. You're in a short queue, please call back in a moment."
+                        : "We're experiencing high call volume. Please try again shortly.";
+                    this.enqueueSpeech(fallback);
+                    setTimeout(() => this.ws.close(), 1500);
+                    return;
+                }
+
                 // 1. GREETING FIRST (Zero delay, but AFTER config load)
                 this.transitionTo(CallState.GREETING);
                 this.handleInitialGreeting().catch(err => console.error('[GREETING ERROR]', err));
@@ -127,6 +146,7 @@ export class StreamHandler {
                 if (data.media?.payload) {
                     this.mediaPacketCount++;
                     this.stt.send(Buffer.from(data.media.payload, 'base64'));
+                    if (this.clientId && this.callSid) await redisCoordinator.refreshCall(this.callSid, this.clientId);
                 }
             } else if (data.event === 'stop') {
                 this.finalizeCall('completed');
@@ -177,7 +197,7 @@ export class StreamHandler {
         this.shouldCancelPending = true;
         this.speechQueue = [];
         this.sentenceBuffer = '';
-        if (this.ws.readyState === WebSocket.OPEN && this.streamSid) {
+        if (this.ws.readyState === 1 && this.streamSid) {
             this.ws.send(JSON.stringify({ event: 'clear', streamSid: this.streamSid }));
         }
         if (this.currentSpeechAbort) {
@@ -209,7 +229,7 @@ export class StreamHandler {
             console.log(`[DEBUG] 🎙️ Speaking: "${text.substring(0, 30)}..."`);
             for await (const chunk of this.tts.generateStream(text)) {
                 if (signal.aborted || this.shouldCancelPending) break;
-                if (this.ws.readyState === WebSocket.OPEN) {
+                if (this.ws.readyState === 1) {
                     this.ws.send(JSON.stringify({
                         event: 'media',
                         streamSid: this.streamSid,
@@ -277,7 +297,7 @@ export class StreamHandler {
         if (currentRole === 'user') this.shouldCancelPending = false;
 
         while (true) {
-            if (this.shouldCancelPending || this.ws.readyState !== WebSocket.OPEN) break;
+            if (this.shouldCancelPending || this.ws.readyState !== 1) break;
 
             this.history.push({ role: currentRole, content: currentContent, tool_use_id: currentToolId });
             this.pruneHistory();
@@ -427,6 +447,11 @@ export class StreamHandler {
                 call_duration_seconds: durationSeconds
             });
             console.log(`[ECONOMICS] Call ${this.callSid} Summary: ${this.totalInputTokens} in / ${this.totalOutputTokens} out (${durationSeconds}s)`);
+        }
+
+        if (!this.released && this.clientId) {
+            this.released = true;
+            redisCoordinator.releaseCall(this.callSid, this.clientId).catch(err => logger.error('Failed to release call in Redis', { err }));
         }
 
         callLogRepository.update(this.callSid, { call_status: status });
