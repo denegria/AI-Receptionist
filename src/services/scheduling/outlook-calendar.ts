@@ -12,6 +12,13 @@ interface MicrosoftTokens {
     expires_in: number;
 }
 
+interface OutlookCalendarSummary {
+    id: string;
+    name: string;
+    timezone?: string;
+    primary?: boolean;
+}
+
 export class OutlookCalendarService implements ICalendarService {
 
     getAuthUrl(clientId: string): string {
@@ -154,6 +161,20 @@ export class OutlookCalendarService implements ICalendarService {
         }));
 
         return busy;
+    }
+
+    async listCalendars(clientId: string): Promise<OutlookCalendarSummary[]> {
+        const { graphClient } = await this.getAuthenticatedClient(clientId);
+        const response = await graphClient.api('/me/calendars').select('id,name,isDefaultCalendar').get();
+        const calendars = response.value || [];
+
+        return calendars
+            .filter((c: any) => Boolean(c.id))
+            .map((c: any) => ({
+                id: c.id,
+                name: c.name || c.id,
+                primary: Boolean(c.isDefaultCalendar),
+            }));
     }
 
     async createEvent(clientId: string, event: Partial<CalendarEvent>): Promise<CalendarEvent> {

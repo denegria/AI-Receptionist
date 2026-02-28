@@ -74,6 +74,7 @@ import { adminDashboardRouter } from './api/routes/admin-dashboard';
 import { requireAuth } from './api/middleware/auth';
 
 app.use(calendarAuthRouter);
+app.use('/api', requireAuth, calendarAuthRouter);
 app.use(twilioWebhookRouter);
 app.use('/api/onboarding', requireAuth, onboardingRouter);
 app.use('/api/dashboard', requireAuth, dashboardRouter);

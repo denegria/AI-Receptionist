@@ -6,6 +6,13 @@ import { calendarCredentialsRepository } from '../../db/repositories/calendar-cr
 import { CryptoUtils } from '../../utils/crypto';
 import { ICalendarService, TimeSlot, CalendarEvent } from './interfaces';
 
+interface GoogleCalendarSummary {
+    id: string;
+    name: string;
+    timezone?: string;
+    primary?: boolean;
+}
+
 export class GoogleCalendarService implements ICalendarService {
     private createOAuthClient(): OAuth2Client {
         return new google.auth.OAuth2(
@@ -112,6 +119,22 @@ export class GoogleCalendarService implements ICalendarService {
 
             throw new Error(`Calendar API error: ${error.message}`);
         }
+    }
+
+    async listCalendars(clientId: string): Promise<GoogleCalendarSummary[]> {
+        const { oauth2Client } = await this.getAuthenticatedClient(clientId);
+        const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+        const response = await calendar.calendarList.list();
+        const items = response.data.items || [];
+
+        return items
+            .filter((c) => Boolean(c.id))
+            .map((c) => ({
+                id: c.id!,
+                name: c.summary || c.id!,
+                timezone: c.timeZone || undefined,
+                primary: Boolean(c.primary),
+            }));
     }
 
     async createEvent(clientId: string, event: Partial<CalendarEvent>): Promise<CalendarEvent> {
