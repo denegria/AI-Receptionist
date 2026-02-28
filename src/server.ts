@@ -11,6 +11,7 @@ import fs from 'fs';
 import path from 'path';
 import { logger } from './services/logging';
 import { redisCoordinator } from './services/coordination/redis-coordinator';
+import { startCalendarSyncLoop, stopCalendarSyncLoop } from './services/scheduling/calendar-sync-service';
 
 // Ensure required directories exist
 function ensureDirectories() {
@@ -149,6 +150,7 @@ const server = app.listen(config.port, '0.0.0.0', async () => {
         MigrationManager.runMigrations();
         await redisCoordinator.init();
         onboardingWatcher.start(); // Start the auto-onboarding service
+        startCalendarSyncLoop();
         logger.info(`Server listening`, { port: config.port, transportMode: config.transport.mode });
         if (config.transport.mode === 'legacy-ws' || config.transport.mode === 'dual') {
             console.log(`✓ WebSocket endpoint: ws://localhost:${config.port}/media-stream`);
@@ -204,6 +206,7 @@ function gracefulShutdown(signal: string) {
         // Close all databases (legacy + client-specific + shared)
         try {
             onboardingWatcher.stop();
+            stopCalendarSyncLoop();
             closeAllDatabases();
             closeSharedDatabase();
             redisCoordinator.close().catch(() => undefined);

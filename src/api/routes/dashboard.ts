@@ -4,6 +4,7 @@ import path from 'path';
 import { config } from '../../config';
 import { getClientDatabase } from '../../db/client';
 import { clientRegistryRepository } from '../../db/repositories/client-registry-repository';
+import { calendarSyncService, getLastCalendarSync } from '../../services/scheduling/calendar-sync-service';
 
 export const dashboardRouter = Router();
 
@@ -281,6 +282,110 @@ dashboardRouter.get('/conversions', (req: Request, res: Response) => {
     bookedCount: bookedCountRow?.total || 0,
     definitions: CONVERSION_DEFINITIONS,
   });
+});
+
+dashboardRouter.get('/calendar/summary', (req: Request, res: Response) => {
+  const tenantId = requireTenantId(req, res);
+  if (!tenantId) return;
+
+  if (!dbExistsForTenant(tenantId)) {
+    return res.status(404).json({ error: `No client database found for tenant ${tenantId}` });
+  }
+
+  const { from, to, timezone } = rangeFromQuery(req);
+  const db = getClientDatabase(tenantId);
+
+  const total = (db.prepare(
+    `SELECT COUNT(*) as total FROM appointment_cache
+     WHERE client_id = ? AND datetime(appointment_datetime) >= datetime(?) AND datetime(appointment_datetime) <= datetime(?)`
+  ).get(tenantId, from, to) as any)?.total || 0;
+
+  const cancelled = (db.prepare(
+    `SELECT COUNT(*) as total FROM appointment_cache
+     WHERE client_id = ? AND datetime(appointment_datetime) >= datetime(?) AND datetime(appointment_datetime) <= datetime(?)
+     AND status = 'cancelled'`
+  ).get(tenantId, from, to) as any)?.total || 0;
+
+  const confirmed = (db.prepare(
+    `SELECT COUNT(*) as total FROM appointment_cache
+     WHERE client_id = ? AND datetime(appointment_datetime) >= datetime(?) AND datetime(appointment_datetime) <= datetime(?)
+     AND status IN ('confirmed', 'completed')`
+  ).get(tenantId, from, to) as any)?.total || 0;
+
+  const leads = (db.prepare(
+    `SELECT COUNT(*) as total FROM call_logs
+     WHERE client_id = ? AND call_direction = 'inbound' AND datetime(created_at) >= datetime(?) AND datetime(created_at) <= datetime(?)`
+  ).get(tenantId, from, to) as any)?.total || 0;
+
+  const conversionRate = leads > 0 ? Number(((confirmed / leads) * 100).toFixed(1)) : 0;
+  const cancellationRate = total > 0 ? Number(((cancelled / total) * 100).toFixed(1)) : 0;
+
+  const timeToBookRow = db.prepare(
+    `SELECT AVG((julianday(a.appointment_datetime) - julianday(c.created_at)) * 24.0) as avgHours
+     FROM appointment_cache a
+     JOIN call_logs c ON c.client_id = a.client_id
+     WHERE a.client_id = ?
+       AND c.client_id = ?
+       AND datetime(a.appointment_datetime) >= datetime(?)
+       AND datetime(a.appointment_datetime) <= datetime(?)`
+  ).get(tenantId, tenantId, from, to) as any;
+
+  const lastSync = getLastCalendarSync(tenantId);
+
+  res.json({
+    tenantId,
+    from,
+    to,
+    timezone,
+    connected: Boolean(lastSync),
+    metrics: {
+      bookings: confirmed,
+      cancellations: cancelled,
+      cancellationRate,
+      leadToBookedConversionRate: conversionRate,
+      avgTimeToBookHours: Number((timeToBookRow?.avgHours || 0).toFixed(1)),
+    },
+    lastSync,
+  });
+});
+
+dashboardRouter.get('/calendar/upcoming', (req: Request, res: Response) => {
+  const tenantId = requireTenantId(req, res);
+  if (!tenantId) return;
+
+  if (!dbExistsForTenant(tenantId)) {
+    return res.status(404).json({ error: `No client database found for tenant ${tenantId}` });
+  }
+
+  const limitRaw = Number(req.query.limit || 5);
+  const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(20, limitRaw)) : 5;
+
+  const db = getClientDatabase(tenantId);
+  const items = db.prepare(
+    `SELECT calendar_event_id, customer_name, customer_email, service_type, appointment_datetime, end_datetime, status
+     FROM appointment_cache
+     WHERE client_id = ? AND datetime(appointment_datetime) >= datetime('now')
+     ORDER BY datetime(appointment_datetime) ASC
+     LIMIT ?`
+  ).all(tenantId, limit) as any[];
+
+  res.json({ tenantId, items });
+});
+
+dashboardRouter.post('/calendar/sync', async (req: Request, res: Response) => {
+  const tenantId = typeof req.body?.tenantId === 'string' ? req.body.tenantId : '';
+  if (!tenantId) return res.status(400).json({ error: 'Missing tenantId' });
+
+  try {
+    const result = await calendarSyncService.syncClient(tenantId, {
+      mode: 'manual',
+      from: typeof req.body?.from === 'string' ? req.body.from : undefined,
+      to: typeof req.body?.to === 'string' ? req.body.to : undefined,
+    });
+    return res.json({ success: true, result });
+  } catch (error: any) {
+    return res.status(400).json({ success: false, error: error.message || 'Sync failed' });
+  }
 });
 
 dashboardRouter.get('/storage-check', (_req: Request, res: Response) => {

@@ -13,6 +13,17 @@ interface GoogleCalendarSummary {
     primary?: boolean;
 }
 
+interface GoogleSyncedEvent {
+    id: string;
+    start: string;
+    end: string;
+    status: 'confirmed' | 'cancelled' | 'completed' | 'no-show';
+    customerName?: string;
+    customerEmail?: string;
+    customerPhone?: string;
+    serviceType?: string;
+}
+
 export class GoogleCalendarService implements ICalendarService {
     private createOAuthClient(): OAuth2Client {
         return new google.auth.OAuth2(
@@ -134,6 +145,29 @@ export class GoogleCalendarService implements ICalendarService {
                 name: c.summary || c.id!,
                 timezone: c.timeZone || undefined,
                 primary: Boolean(c.primary),
+            }));
+    }
+
+    async listEvents(clientId: string, from: string, to: string): Promise<GoogleSyncedEvent[]> {
+        const { oauth2Client, calendarId } = await this.getAuthenticatedClient(clientId);
+        const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+        const response = await calendar.events.list({
+            calendarId,
+            timeMin: from,
+            timeMax: to,
+            singleEvents: true,
+            orderBy: 'startTime',
+        });
+
+        return (response.data.items || [])
+            .filter((e) => Boolean(e.id && e.start?.dateTime && e.end?.dateTime))
+            .map((e) => ({
+                id: e.id!,
+                start: e.start!.dateTime!,
+                end: e.end!.dateTime!,
+                status: e.status === 'cancelled' ? 'cancelled' : 'confirmed',
+                customerName: e.summary || undefined,
+                customerEmail: e.attendees?.[0]?.email || undefined,
             }));
     }
 

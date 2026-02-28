@@ -19,6 +19,17 @@ interface OutlookCalendarSummary {
     primary?: boolean;
 }
 
+interface OutlookSyncedEvent {
+    id: string;
+    start: string;
+    end: string;
+    status: 'confirmed' | 'cancelled' | 'completed' | 'no-show';
+    customerName?: string;
+    customerEmail?: string;
+    customerPhone?: string;
+    serviceType?: string;
+}
+
 export class OutlookCalendarService implements ICalendarService {
 
     getAuthUrl(clientId: string): string {
@@ -174,6 +185,33 @@ export class OutlookCalendarService implements ICalendarService {
                 id: c.id,
                 name: c.name || c.id,
                 primary: Boolean(c.isDefaultCalendar),
+            }));
+    }
+
+    async listEvents(clientId: string, from: string, to: string): Promise<OutlookSyncedEvent[]> {
+        const { graphClient, calendarId } = await this.getAuthenticatedClient(clientId);
+        const calendarViewPath = calendarId === 'primary'
+            ? '/me/calendarView'
+            : `/me/calendars/${encodeURIComponent(calendarId)}/calendarView`;
+
+        const response = await graphClient
+            .api(calendarViewPath)
+            .query({
+                startDateTime: from,
+                endDateTime: to,
+                '$select': 'id,subject,start,end,isCancelled,attendees',
+            })
+            .get();
+
+        return (response.value || [])
+            .filter((e: any) => Boolean(e.id && e.start?.dateTime && e.end?.dateTime))
+            .map((e: any) => ({
+                id: e.id,
+                start: e.start.dateTime,
+                end: e.end.dateTime,
+                status: e.isCancelled ? 'cancelled' : 'confirmed',
+                customerName: e.subject || undefined,
+                customerEmail: e.attendees?.[0]?.emailAddress?.address || undefined,
             }));
     }
 
