@@ -48,7 +48,14 @@ export class BillingService {
     try {
       const existingCustomers = await stripe.customers.list({ email, limit: 1 });
       if (existingCustomers.data.length > 0) {
-        return existingCustomers.data[0];
+        const existing = existingCustomers.data[0];
+        if (existing.metadata?.clientId !== clientId) {
+          return await stripe.customers.update(existing.id, {
+            name: existing.name || businessName,
+            metadata: { ...(existing.metadata || {}), clientId },
+          });
+        }
+        return existing;
       }
       return await this.createCustomer(email, businessName, clientId);
     } catch (error) {
