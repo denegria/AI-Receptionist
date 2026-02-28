@@ -13,6 +13,17 @@ import { logger } from './services/logging';
 import { redisCoordinator } from './services/coordination/redis-coordinator';
 import { startCalendarSyncLoop, stopCalendarSyncLoop } from './services/scheduling/calendar-sync-service';
 
+function errorDetails(error: unknown) {
+    if (error instanceof Error) {
+        return {
+            name: error.name,
+            message: error.message,
+            stack: error.stack,
+        };
+    }
+    return { value: String(error) };
+}
+
 // Ensure required directories exist
 function ensureDirectories() {
     const dirs = [
@@ -158,7 +169,7 @@ const server = app.listen(config.port, '0.0.0.0', async () => {
         console.log(`✓ Socket.IO endpoint: ws://localhost:${config.port}${config.transport.socketPath}`);
         console.log(`✓ Health check: http://localhost:${config.port}/health\n`);
     } catch (error) {
-        logger.error('Failed to start server', { error });
+        logger.error('Failed to start server', { error: errorDetails(error) });
         process.exit(1);
     }
 });
@@ -195,6 +206,14 @@ if (config.transport.mode === 'socketio' || config.transport.mode === 'dual') {
         new StreamHandler(socketAdapter as any, clientId);
     });
 }
+
+process.on('unhandledRejection', (reason) => {
+    logger.error('Unhandled promise rejection', { error: errorDetails(reason) });
+});
+
+process.on('uncaughtException', (error) => {
+    logger.error('Uncaught exception', { error: errorDetails(error) });
+});
 
 // Graceful shutdown
 function gracefulShutdown(signal: string) {

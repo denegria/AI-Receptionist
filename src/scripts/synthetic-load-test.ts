@@ -26,7 +26,7 @@ async function runOneCall(clientId: string, i: number): Promise<{ ok: boolean; d
   return await new Promise((resolve) => {
     const socket = io(baseUrl, {
       path: socketPath,
-      transports: ['websocket'],
+      // Do not force websocket-only; allow Engine.IO to negotiate best transport on Fly edge.
       query: { clientId },
       reconnection: false,
       timeout: 5000,
