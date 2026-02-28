@@ -2,6 +2,7 @@ import { Client } from '@microsoft/microsoft-graph-client';
 import 'isomorphic-fetch'; // Polyfill for graph client
 import { config } from '../../config';
 import { db } from '../../db/client';
+import { calendarCredentialsRepository } from '../../db/repositories/calendar-credentials-repository';
 import { CryptoUtils } from '../../utils/crypto';
 import { ICalendarService, TimeSlot, CalendarEvent } from './interfaces';
 
@@ -56,22 +57,18 @@ export class OutlookCalendarService implements ICalendarService {
         const encRef = tokens.refresh_token ? CryptoUtils.encrypt(tokens.refresh_token) : null;
         const encAcc = tokens.access_token ? CryptoUtils.encrypt(tokens.access_token) : null;
 
-        const stmt = db.prepare(`
-            INSERT INTO calendar_credentials (client_id, provider, refresh_token, access_token, token_expires_at)
-            VALUES (?, 'outlook', ?, ?, ?)
-            ON CONFLICT(client_id) DO UPDATE SET
-                refresh_token = COALESCE(excluded.refresh_token, refresh_token),
-                access_token = excluded.access_token,
-                token_expires_at = excluded.token_expires_at,
-                updated_at = CURRENT_TIMESTAMP
-        `);
-
-        stmt.run(clientId, encRef, encAcc, expiryDate.getTime());
+        calendarCredentialsRepository.upsert({
+            clientId,
+            provider: 'outlook',
+            refreshToken: encRef,
+            accessToken: encAcc,
+            tokenExpiresAt: expiryDate.getTime(),
+            calendarId: 'primary',
+        });
     }
 
-    private async getAuthenticatedClient(clientId: string): Promise<Client> {
-        const stmt = db.prepare('SELECT refresh_token, access_token, token_expires_at FROM calendar_credentials WHERE client_id = ? AND provider = ?');
-        const creds = stmt.get(clientId, 'outlook') as any;
+    private async getAuthenticatedClient(clientId: string): Promise<{ graphClient: Client; calendarId: string }> {
+        const creds = calendarCredentialsRepository.get(clientId, 'outlook') as any;
 
         if (!creds) {
             throw new Error(`No Outlook credentials found for client ${clientId}`);
@@ -86,11 +83,13 @@ export class OutlookCalendarService implements ICalendarService {
             accessToken = await this.refreshAccessToken(clientId, refreshToken);
         }
 
-        return Client.init({
+        const graphClient = Client.init({
             authProvider: (done) => {
                 done(null, accessToken);
             }
         });
+
+        return { graphClient, calendarId: creds.calendar_id || 'primary' };
     }
 
     private async refreshAccessToken(clientId: string, refreshToken: string): Promise<string> {
@@ -134,17 +133,13 @@ export class OutlookCalendarService implements ICalendarService {
     }
 
     async getBusyTimes(clientId: string, start: string, end: string): Promise<TimeSlot[]> {
-        const client = await this.getAuthenticatedClient(clientId);
+        const { graphClient, calendarId } = await this.getAuthenticatedClient(clientId);
 
-        const response = await client.api('/me/calendar/getSchedule').post({
-            schedules: [config.microsoft.clientId], // Wait, this expects email addresses typically? In OAuth "me" context, we might check /me/calendarView
-            startTime: { dateTime: start, timeZone: 'UTC' },
-            endTime: { dateTime: end, timeZone: 'UTC' },
-            availabilityViewInterval: 60
-        });
-        // Actually /getSchedule is for checking others. For "me", we can just list events or use calendarView
+        const calendarViewPath = calendarId === 'primary'
+            ? '/me/calendarView'
+            : `/me/calendars/${encodeURIComponent(calendarId)}/calendarView`;
 
-        const eventsResponse = await client.api('/me/calendarView')
+        const eventsResponse = await graphClient.api(calendarViewPath)
             .query({
                 startDateTime: start,
                 endDateTime: end,
@@ -162,7 +157,7 @@ export class OutlookCalendarService implements ICalendarService {
     }
 
     async createEvent(clientId: string, event: Partial<CalendarEvent>): Promise<CalendarEvent> {
-        const client = await this.getAuthenticatedClient(clientId);
+        const { graphClient, calendarId } = await this.getAuthenticatedClient(clientId);
 
         const newEvent = {
             subject: event.summary,
@@ -180,7 +175,11 @@ export class OutlookCalendarService implements ICalendarService {
             }
         };
 
-        const res = await client.api('/me/events').post(newEvent);
+        const eventsPath = calendarId === 'primary'
+            ? '/me/events'
+            : `/me/calendars/${encodeURIComponent(calendarId)}/events`;
+
+        const res = await graphClient.api(eventsPath).post(newEvent);
 
         return {
             id: res.id,

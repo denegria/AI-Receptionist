@@ -2,6 +2,7 @@ import { google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
 import { config } from '../../config';
 import { db } from '../../db/client';
+import { calendarCredentialsRepository } from '../../db/repositories/calendar-credentials-repository';
 import { CryptoUtils } from '../../utils/crypto';
 import { ICalendarService, TimeSlot, CalendarEvent } from './interfaces';
 
@@ -32,22 +33,18 @@ export class GoogleCalendarService implements ICalendarService {
         const encryptedRefresh = tokens.refresh_token ? CryptoUtils.encrypt(tokens.refresh_token) : null;
         const encryptedAccess = tokens.access_token ? CryptoUtils.encrypt(tokens.access_token) : null;
 
-        const stmt = db.prepare(`
-            INSERT INTO calendar_credentials (client_id, provider, refresh_token, access_token, token_expires_at)
-            VALUES (?, 'google', ?, ?, ?)
-            ON CONFLICT(client_id) DO UPDATE SET
-                refresh_token = COALESCE(excluded.refresh_token, refresh_token),
-                access_token = excluded.access_token,
-                token_expires_at = excluded.token_expires_at,
-                updated_at = CURRENT_TIMESTAMP
-        `);
-
-        stmt.run(clientId, encryptedRefresh, encryptedAccess, tokens.expiry_date);
+        calendarCredentialsRepository.upsert({
+            clientId,
+            provider: 'google',
+            refreshToken: encryptedRefresh,
+            accessToken: encryptedAccess,
+            tokenExpiresAt: tokens.expiry_date ?? null,
+            calendarId: 'primary',
+        });
     }
 
-    private async getAuthenticatedClient(clientId: string): Promise<OAuth2Client> {
-        const stmt = db.prepare('SELECT refresh_token, access_token, token_expires_at FROM calendar_credentials WHERE client_id = ? AND provider = ?');
-        const creds = stmt.get(clientId, 'google') as any;
+    private async getAuthenticatedClient(clientId: string): Promise<{ oauth2Client: OAuth2Client; calendarId: string }> {
+        const creds = calendarCredentialsRepository.get(clientId, 'google') as any;
 
         if (!creds) {
             throw new Error(`No Google credentials found for client ${clientId}`);
@@ -78,23 +75,23 @@ export class GoogleCalendarService implements ICalendarService {
             }
         });
 
-        return oauth2Client;
+        return { oauth2Client, calendarId: creds.calendar_id || 'primary' };
     }
 
     async getBusyTimes(clientId: string, start: string, end: string): Promise<TimeSlot[]> {
         try {
-            const auth = await this.getAuthenticatedClient(clientId);
-            const calendar = google.calendar({ version: 'v3', auth });
+            const { oauth2Client, calendarId } = await this.getAuthenticatedClient(clientId);
+            const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
 
             const response = await calendar.freebusy.query({
                 requestBody: {
                     timeMin: start,
                     timeMax: end,
-                    items: [{ id: 'primary' }]
+                    items: [{ id: calendarId }]
                 }
             });
 
-            const busy = response.data.calendars?.['primary']?.busy || [];
+            const busy = response.data.calendars?.[calendarId]?.busy || [];
 
             return busy.map(b => ({
                 start: b.start!,
@@ -118,11 +115,11 @@ export class GoogleCalendarService implements ICalendarService {
     }
 
     async createEvent(clientId: string, event: Partial<CalendarEvent>): Promise<CalendarEvent> {
-        const auth = await this.getAuthenticatedClient(clientId);
-        const calendar = google.calendar({ version: 'v3', auth });
+        const { oauth2Client, calendarId } = await this.getAuthenticatedClient(clientId);
+        const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
 
         const response = await calendar.events.insert({
-            calendarId: 'primary',
+            calendarId,
             requestBody: {
                 summary: event.summary,
                 description: event.description,

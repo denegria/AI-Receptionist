@@ -7,6 +7,8 @@ CREATE TABLE IF NOT EXISTS calendar_credentials (
   access_token TEXT,
   token_expires_at TEXT,
   calendar_id TEXT DEFAULT 'primary',
+  account_email TEXT,
+  calendar_timezone TEXT,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT DEFAULT CURRENT_TIMESTAMP
 );

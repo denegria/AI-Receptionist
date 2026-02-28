@@ -13,15 +13,15 @@ async function main() {
     const service = new GoogleCalendarService();
     try {
         // @ts-ignore - accessing private or protected method for debugging
-        const auth = await service.getAuthenticatedClient(clientId);
-        const calendar = google.calendar({ version: 'v3', auth });
+        const { oauth2Client, calendarId } = await service.getAuthenticatedClient(clientId);
+        const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
 
         const now = new Date();
         const nextWeek = new Date();
         nextWeek.setDate(nextWeek.getDate() + 7);
 
         const res = await calendar.events.list({
-            calendarId: 'primary',
+            calendarId,
             timeMin: now.toISOString(),
             timeMax: nextWeek.toISOString(),
             singleEvents: true,
