@@ -93,6 +93,19 @@ export class BillingService {
     }
   }
 
+  static async findCustomerByClientId(clientId: string) {
+    const page = await stripe.customers.list({ limit: 100 });
+    return page.data.find((c) => c.metadata?.clientId === clientId) || null;
+  }
+
+  static async hasSavedPaymentMethod(clientId: string): Promise<boolean> {
+    const customer = await this.findCustomerByClientId(clientId);
+    if (!customer?.id) return false;
+
+    const pms = await stripe.paymentMethods.list({ customer: customer.id, type: 'card', limit: 1 });
+    return pms.data.length > 0;
+  }
+
   /**
    * Verify a Stripe Webhook signature
    */

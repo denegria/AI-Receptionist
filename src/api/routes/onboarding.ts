@@ -20,8 +20,8 @@ onboardingRouter.get('/search-numbers', async (req: Request, res: Response) => {
     const numbers = await ProvisioningService.searchNumbers(areaCode as string);
     res.json({ numbers });
   } catch (error: any) {
-    logger.error('Onboarding Search Numbers error', { error: error.message });
-    res.status(500).json({ error: 'Failed to search for numbers' });
+    logger.error('Onboarding Search Numbers error', { error: error.message, areaCode });
+    res.status(500).json({ error: error?.message || 'Failed to search for numbers' });
   }
 });
 
@@ -78,8 +78,25 @@ onboardingRouter.post('/provision', async (req: Request, res: Response) => {
   const { clientId, businessName, timezone, phoneNumber, plan, onboardingConfig } = req.body;
 
   try {
-    // 1. Buy the Twilio number
-    await ProvisioningService.buyNumber(phoneNumber, clientId);
+    const paymentRequired = process.env.ONBOARDING_REQUIRE_PAYMENT_METHOD !== 'false';
+    if (paymentRequired) {
+      const hasPaymentMethod = await BillingService.hasSavedPaymentMethod(clientId);
+      if (!hasPaymentMethod) {
+        return res.status(402).json({
+          error: 'A valid payment method is required before provisioning.',
+          code: 'PAYMENT_METHOD_REQUIRED',
+        });
+      }
+    }
+
+    const normalizedPhoneNumber = typeof phoneNumber === 'string' && phoneNumber.trim().length > 0
+      ? phoneNumber.trim()
+      : `pending-${clientId}`;
+
+    // 1. Buy the Twilio number (unless user skipped)
+    if (!normalizedPhoneNumber.startsWith('pending-')) {
+      await ProvisioningService.buyNumber(normalizedPhoneNumber, clientId);
+    }
 
     // 2. Initialize the client's database
     await ProvisioningService.initializeClientDatabase(clientId);
@@ -97,7 +114,7 @@ onboardingRouter.post('/provision', async (req: Request, res: Response) => {
     const config: ClientConfig = {
       clientId,
       businessName,
-      phoneNumber,
+      phoneNumber: normalizedPhoneNumber,
       timezone: timezone || onboardingConfig?.timezone || 'America/New_York',
       businessHours: onboardingConfig?.businessHours || fallbackBusinessHours,
       holidays: onboardingConfig?.holidays || [],
