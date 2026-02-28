@@ -1,7 +1,34 @@
 import Stripe from 'stripe';
+import { sharedDb } from '../db/shared-client';
 import { logger } from '../utils/logger';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
+
+sharedDb.exec(`
+  CREATE TABLE IF NOT EXISTS billing_customers (
+    client_id TEXT PRIMARY KEY,
+    customer_id TEXT NOT NULL,
+    email TEXT,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
+function saveCustomerMapping(clientId: string, customerId: string, email?: string | null) {
+  const stmt = sharedDb.prepare(`
+    INSERT INTO billing_customers (client_id, customer_id, email, updated_at)
+    VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+    ON CONFLICT(client_id) DO UPDATE SET
+      customer_id = excluded.customer_id,
+      email = excluded.email,
+      updated_at = CURRENT_TIMESTAMP
+  `);
+  stmt.run(clientId, customerId, email || null);
+}
+
+function getMappedCustomerId(clientId: string): string | null {
+  const row = sharedDb.prepare(`SELECT customer_id FROM billing_customers WHERE client_id = ?`).get(clientId) as { customer_id?: string } | undefined;
+  return row?.customer_id || null;
+}
 
 export class BillingService {
   /**
@@ -16,6 +43,7 @@ export class BillingService {
           clientId,
         },
       });
+      saveCustomerMapping(clientId, customer.id, email);
       return customer;
     } catch (error) {
       logger.error('Error creating Stripe customer', { error, email, clientId });
@@ -50,11 +78,14 @@ export class BillingService {
       if (existingCustomers.data.length > 0) {
         const existing = existingCustomers.data[0];
         if (existing.metadata?.clientId !== clientId) {
-          return await stripe.customers.update(existing.id, {
+          const updated = await stripe.customers.update(existing.id, {
             name: existing.name || businessName,
             metadata: { ...(existing.metadata || {}), clientId },
           });
+          saveCustomerMapping(clientId, updated.id, updated.email || email);
+          return updated;
         }
+        saveCustomerMapping(clientId, existing.id, existing.email || email);
         return existing;
       }
       return await this.createCustomer(email, businessName, clientId);
@@ -99,8 +130,26 @@ export class BillingService {
   }
 
   static async findCustomerByClientId(clientId: string) {
-    const page = await stripe.customers.list({ limit: 100 });
-    return page.data.find((c) => c.metadata?.clientId === clientId) || null;
+    const mappedId = getMappedCustomerId(clientId);
+    if (mappedId) {
+      try {
+        const mapped = await stripe.customers.retrieve(mappedId);
+        if (!('deleted' in mapped && mapped.deleted)) {
+          return mapped as Stripe.Customer;
+        }
+      } catch {
+        // fallback to metadata scan
+      }
+    }
+
+    const customers = stripe.customers.list({ limit: 100 });
+    for await (const customer of customers) {
+      if (customer.metadata?.clientId === clientId) {
+        saveCustomerMapping(clientId, customer.id, customer.email || null);
+        return customer;
+      }
+    }
+    return null;
   }
 
   static async hasSavedPaymentMethod(clientId: string): Promise<boolean> {
