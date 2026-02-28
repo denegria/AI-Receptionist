@@ -3,6 +3,7 @@ import { GoogleCalendarService } from '../../services/scheduling/google-calendar
 import { OutlookCalendarService } from '../../services/scheduling/outlook-calendar';
 import { clientRegistryRepository } from '../../db/repositories/client-registry-repository';
 import { calendarCredentialsRepository, CalendarProvider } from '../../db/repositories/calendar-credentials-repository';
+import { ClientConfig } from '../../models/client-config';
 
 export const calendarAuthRouter = Router();
 
@@ -14,19 +15,57 @@ function parseProvider(value: string): CalendarProvider | null {
     return null;
 }
 
-function validateClientId(clientId?: string): string | null {
+function ensureClientRegistration(clientId?: string): string | null {
     if (!clientId) return null;
-    if (!clientRegistryRepository.findById(clientId)) return null;
+    if (clientRegistryRepository.findById(clientId)) return clientId;
+
+    const pendingConfig: ClientConfig = {
+        clientId,
+        businessName: 'Pending Setup',
+        phoneNumber: `pending-${clientId}`,
+        timezone: 'UTC',
+        businessHours: {
+            monday: { start: '09:00', end: '17:00', enabled: true },
+            tuesday: { start: '09:00', end: '17:00', enabled: true },
+            wednesday: { start: '09:00', end: '17:00', enabled: true },
+            thursday: { start: '09:00', end: '17:00', enabled: true },
+            friday: { start: '09:00', end: '17:00', enabled: true },
+            saturday: { start: '09:00', end: '12:00', enabled: false },
+            sunday: { start: '09:00', end: '12:00', enabled: false },
+        },
+        holidays: [],
+        appointmentTypes: [{ name: 'General Inquiry', duration: 30, bufferBefore: 0, bufferAfter: 0 }],
+        calendar: {
+            provider: 'google',
+            calendarId: 'primary',
+            syncEnabled: false,
+            createMeetLinks: false,
+        },
+        routing: {
+            afterHoursAction: 'voicemail',
+            fallbackNumber: '',
+            voicemailEnabled: true,
+        },
+        notifications: {},
+        aiSettings: {
+            greeting: 'Hi, thank you for calling. How can I help you today?',
+            maxRetries: 3,
+            requireServiceType: false,
+        },
+    };
+
+    clientRegistryRepository.register(pendingConfig);
+    clientRegistryRepository.updateStatus(clientId, 'trial');
     return clientId;
 }
 
 // Google OAuth
 calendarAuthRouter.get('/auth/google/login', (req: Request, res: Response) => {
     const clientId = req.query.clientId as string;
-    if (!clientId) return res.status(400).send('Missing clientId');
-    if (!clientRegistryRepository.findById(clientId)) return res.status(404).send('Unknown clientId');
+    const registeredClientId = ensureClientRegistration(clientId);
+    if (!registeredClientId) return res.status(400).send('Missing clientId');
 
-    const url = googleService.getAuthUrl(clientId);
+    const url = googleService.getAuthUrl(registeredClientId);
     res.redirect(url);
 });
 
@@ -34,10 +73,8 @@ calendarAuthRouter.get('/auth/google/callback', async (req: Request, res: Respon
     const { code, state } = req.query;
     if (!code || !state) return res.status(400).send('Missing code or state');
 
-    const clientId = state as string;
-    if (!clientRegistryRepository.findById(clientId)) {
-        return res.status(404).send('Unknown clientId in OAuth state');
-    }
+    const clientId = ensureClientRegistration(state as string);
+    if (!clientId) return res.status(400).send('Missing clientId in OAuth state');
 
     try {
         await googleService.handleCallback(clientId, code as string);
@@ -51,10 +88,10 @@ calendarAuthRouter.get('/auth/google/callback', async (req: Request, res: Respon
 // Outlook OAuth
 calendarAuthRouter.get('/auth/microsoft/login', (req: Request, res: Response) => {
     const clientId = req.query.clientId as string;
-    if (!clientId) return res.status(400).send('Missing clientId');
-    if (!clientRegistryRepository.findById(clientId)) return res.status(404).send('Unknown clientId');
+    const registeredClientId = ensureClientRegistration(clientId);
+    if (!registeredClientId) return res.status(400).send('Missing clientId');
 
-    const url = outlookService.getAuthUrl(clientId);
+    const url = outlookService.getAuthUrl(registeredClientId);
     res.redirect(url);
 });
 
@@ -62,10 +99,8 @@ calendarAuthRouter.get('/auth/microsoft/callback', async (req: Request, res: Res
     const { code, state } = req.query;
     if (!code || !state) return res.status(400).send('Missing code or state');
 
-    const clientId = state as string;
-    if (!clientRegistryRepository.findById(clientId)) {
-        return res.status(404).send('Unknown clientId in OAuth state');
-    }
+    const clientId = ensureClientRegistration(state as string);
+    if (!clientId) return res.status(400).send('Missing clientId in OAuth state');
 
     try {
         await outlookService.handleCallback(clientId, code as string);
@@ -82,7 +117,7 @@ calendarAuthRouter.get('/auth/:provider/status', (req: Request, res: Response) =
     if (!provider) return res.status(400).json({ error: 'Invalid provider' });
 
     const rawClientId = req.query.clientId;
-    const clientId = validateClientId(typeof rawClientId === 'string' ? rawClientId : undefined);
+    const clientId = ensureClientRegistration(typeof rawClientId === 'string' ? rawClientId : undefined);
     if (!clientId) return res.status(404).json({ error: 'Unknown clientId' });
 
     const creds = calendarCredentialsRepository.get(clientId, provider);
@@ -99,7 +134,7 @@ calendarAuthRouter.get('/auth/:provider/calendars', async (req: Request, res: Re
     if (!provider) return res.status(400).json({ error: 'Invalid provider' });
 
     const rawClientId = req.query.clientId;
-    const clientId = validateClientId(typeof rawClientId === 'string' ? rawClientId : undefined);
+    const clientId = ensureClientRegistration(typeof rawClientId === 'string' ? rawClientId : undefined);
     if (!clientId) return res.status(404).json({ error: 'Unknown clientId' });
 
     try {
@@ -136,7 +171,7 @@ calendarAuthRouter.post('/auth/:provider/select-calendar', (req: Request, res: R
         return res.status(400).json({ error: 'Missing clientId or calendarId' });
     }
 
-    if (!validateClientId(clientId)) {
+    if (!ensureClientRegistration(clientId)) {
         return res.status(404).json({ error: 'Unknown clientId' });
     }
 
