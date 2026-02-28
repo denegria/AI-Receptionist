@@ -39,6 +39,20 @@ adminDashboardRouter.get('/overview', (req: Request, res: Response) => {
   const clients = clientRegistryRepository.listAll();
   const dbDir = path.dirname(path.resolve(config.database.path));
 
+  sharedDb.exec(`
+    CREATE TABLE IF NOT EXISTS calendar_sync_runs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      client_id TEXT NOT NULL,
+      provider TEXT NOT NULL,
+      mode TEXT NOT NULL,
+      status TEXT NOT NULL,
+      synced_count INTEGER DEFAULT 0,
+      error TEXT,
+      started_at TEXT NOT NULL,
+      finished_at TEXT
+    )
+  `);
+
   const tenants = clients.map((client) => {
     const dbPath = path.join(dbDir, `client-${client.id}.db`);
     if (!fs.existsSync(dbPath)) {
@@ -74,6 +88,20 @@ adminDashboardRouter.get('/overview', (req: Request, res: Response) => {
 
       const estimatedRevenue = appointments * 400;
 
+      const calendarConn = sharedDb
+        .prepare(`SELECT provider, updated_at FROM calendar_credentials WHERE client_id = ? LIMIT 1`)
+        .get(client.id) as { provider?: string; updated_at?: string } | undefined;
+
+      const lastSync = sharedDb
+        .prepare(
+          `SELECT status, synced_count as syncedCount, finished_at as finishedAt
+           FROM calendar_sync_runs
+           WHERE client_id = ?
+           ORDER BY id DESC
+           LIMIT 1`
+        )
+        .get(client.id) as { status?: string; syncedCount?: number; finishedAt?: string } | undefined;
+
       return {
         tenantId: client.id,
         tenantName: client.business_name,
@@ -81,6 +109,10 @@ adminDashboardRouter.get('/overview', (req: Request, res: Response) => {
         appointments,
         estimatedRevenue,
         health: client.status === 'suspended' ? ('degraded' as const) : ('healthy' as const),
+        calendarConnected: Boolean(calendarConn),
+        calendarProvider: calendarConn?.provider || null,
+        lastCalendarSyncAt: lastSync?.finishedAt || null,
+        lastCalendarSyncStatus: lastSync?.status || null,
       };
     } catch {
       return {
@@ -99,6 +131,8 @@ adminDashboardRouter.get('/overview', (req: Request, res: Response) => {
     totalCalls: tenants.reduce((sum, t) => sum + t.totalCalls, 0),
     totalAppointments: tenants.reduce((sum, t) => sum + t.appointments, 0),
     estimatedRevenue: tenants.reduce((sum, t) => sum + t.estimatedRevenue, 0),
+    calendarConnectedTenants: tenants.filter((t: any) => t.calendarConnected).length,
+    calendarSyncHealthyTenants: tenants.filter((t: any) => t.lastCalendarSyncStatus === 'ok').length,
   };
 
   res.json({ from, to, timezone, tenants, totals });
