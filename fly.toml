@@ -3,6 +3,8 @@ primary_region = 'iad'
 
 [env]
   PUBLIC_URL = "https://ai-receptionist-eowl3q.fly.dev"
+  CLIENT_CONFIGS_PATH = "/app/data/clients"
+  RECORDINGS_PATH = "/app/data/recordings"
 
 [build]
 

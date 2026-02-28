@@ -36,7 +36,7 @@ export class OutlookCalendarService implements ICalendarService {
         const params = new URLSearchParams({
             client_id: config.microsoft.clientId,
             response_type: 'code',
-            redirect_uri: 'http://localhost:3000/auth/microsoft/callback', // We should add this to config properly
+            redirect_uri: config.microsoft.redirectUri,
             response_mode: 'query',
             scope: 'offline_access user.read calendars.readwrite',
             state: clientId
@@ -50,7 +50,7 @@ export class OutlookCalendarService implements ICalendarService {
             client_id: config.microsoft.clientId,
             scope: 'offline_access user.read calendars.readwrite',
             code: code,
-            redirect_uri: 'http://localhost:3000/auth/microsoft/callback',
+            redirect_uri: config.microsoft.redirectUri,
             grant_type: 'authorization_code',
             client_secret: config.microsoft.clientSecret,
         });
@@ -117,7 +117,7 @@ export class OutlookCalendarService implements ICalendarService {
             scope: 'offline_access user.read calendars.readwrite',
             refresh_token: refreshToken,
             grant_type: 'refresh_token',
-            redirect_uri: 'http://localhost:3000/auth/microsoft/callback'
+            redirect_uri: config.microsoft.redirectUri
         });
 
         const response = await fetch(`https://login.microsoftonline.com/${config.microsoft.tenantId}/oauth2/v2.0/token`, {

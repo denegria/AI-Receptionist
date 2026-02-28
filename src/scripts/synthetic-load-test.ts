@@ -10,7 +10,11 @@ function arg(name: string, fallback: string): string {
 const mode = arg('mode', 'single');
 const tenants = Number(arg('tenants', '5'));
 const concurrency = Number(arg('concurrency', '2'));
-const baseUrl = arg('url', process.env.SYNTHETIC_BASE_URL || 'http://127.0.0.1:8080');
+const syntheticBaseUrl = process.env.SYNTHETIC_BASE_URL;
+const baseUrl = arg('url', syntheticBaseUrl || '');
+if (!baseUrl) {
+  throw new Error('Missing required base URL: provide --url or set SYNTHETIC_BASE_URL');
+}
 const socketPath = arg('socketPath', process.env.SOCKET_IO_PATH || '/socket.io-media-stream');
 const scenario = arg('scenario', 'hibye');
 const callMs = Number(arg('callMs', '800'));

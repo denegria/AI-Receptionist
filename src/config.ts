@@ -68,6 +68,7 @@ interface Config {
         clientId: string;
         clientSecret: string;
         tenantId: string;
+        redirectUri: string;
     };
 
     database: {
@@ -172,13 +173,14 @@ export const config: Config = {
     google: {
         clientId: process.env.GOOGLE_CLIENT_ID || '',
         clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
-        redirectUri: process.env.GOOGLE_REDIRECT_URI || (process.env.PUBLIC_URL ? `${process.env.PUBLIC_URL}/auth/google/callback` : 'http://localhost:8080/auth/google/callback'),
+        redirectUri: process.env.GOOGLE_REDIRECT_URI || '',
     },
 
     microsoft: {
         clientId: process.env.MICROSOFT_CLIENT_ID || '',
         clientSecret: process.env.MICROSOFT_CLIENT_SECRET || '',
         tenantId: process.env.MICROSOFT_TENANT_ID || 'common',
+        redirectUri: process.env.MICROSOFT_REDIRECT_URI || '',
     },
 
     database: {
@@ -222,6 +224,14 @@ export function validateEnvironment(): void {
 
     if (config.ai.provider === 'claude' && !process.env.ANTHROPIC_API_KEY) {
         errors.push('ANTHROPIC_API_KEY (required for Claude)');
+    }
+
+    if ((config.google.clientId || config.google.clientSecret) && !config.google.redirectUri) {
+        errors.push('GOOGLE_REDIRECT_URI (required when Google calendar/oauth is configured)');
+    }
+
+    if ((config.microsoft.clientId || config.microsoft.clientSecret) && !config.microsoft.redirectUri) {
+        errors.push('MICROSOFT_REDIRECT_URI (required when Microsoft calendar/oauth is configured)');
     }
 
     if (config.nodeEnv === 'production' && config.encryption.key.length !== 64) {

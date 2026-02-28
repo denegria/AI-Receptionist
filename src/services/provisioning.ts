@@ -36,9 +36,14 @@ export class ProvisioningService {
   static async buyNumber(phoneNumber: string, clientId: string) {
     try {
       // 1. Purchase the number
+      const publicUrl = process.env.PUBLIC_URL;
+      if (!publicUrl) {
+        throw new Error('Missing required environment variable: PUBLIC_URL');
+      }
+
       const purchasedNumber = await twilioClient.incomingPhoneNumbers.create({
         phoneNumber,
-        voiceUrl: `${process.env.PUBLIC_URL || 'http://localhost:3000'}/api/twilio/webhook`,
+        voiceUrl: `${publicUrl}/api/twilio/webhook`,
       });
 
       logger.info('Successfully purchased phone number', { phoneNumber, clientId, sid: purchasedNumber.sid });
