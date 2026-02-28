@@ -78,7 +78,11 @@ onboardingRouter.post('/provision', async (req: Request, res: Response) => {
   const { clientId, businessName, timezone, phoneNumber, plan, onboardingConfig } = req.body;
 
   try {
-    const paymentRequired = process.env.ONBOARDING_REQUIRE_PAYMENT_METHOD !== 'false';
+    const stripeKey = process.env.STRIPE_SECRET_KEY || '';
+    const isStripeTestMode = stripeKey.startsWith('sk_test_');
+    const paymentRequired = process.env.ONBOARDING_REQUIRE_PAYMENT_METHOD === 'true'
+      || (!isStripeTestMode && process.env.ONBOARDING_REQUIRE_PAYMENT_METHOD !== 'false');
+
     if (paymentRequired) {
       const hasPaymentMethod = await BillingService.hasSavedPaymentMethod(clientId);
       if (!hasPaymentMethod) {
