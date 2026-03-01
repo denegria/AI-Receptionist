@@ -50,6 +50,7 @@ export class StreamHandler {
     private isProcessingQueue: boolean = false;
     private callStartTime: number = 0;
     private released: boolean = false;
+    private capturedContact: { name?: string; phone?: string; email?: string } = {};
 
     private readonly SENTENCE_END_REGEX = /[.!?](\s|$)/;
     private readonly ABBREVIATION_REGEX = /\b(Dr|Mr|Mrs|Ms|St|Ave|Inc|Jr|Sr|Prof|gov|com|net|org|edu)\.$/i;
@@ -172,6 +173,9 @@ export class StreamHandler {
                 this.shouldCancelPending = true;
                 this.resetInactivityTimer();
                 this.transitionTo(CallState.CONVERSATION);
+                this.updateCapturedContactFromTranscript(transcript);
+
+                if (this.isAISpeaking) this.interruptAI();
 
                 if (confidence && confidence < config.voice.asrConfidenceThreshold) {
                     this.enqueueSpeech("I'm sorry, I didn't quite catch that. Could you say it again?");
@@ -182,7 +186,9 @@ export class StreamHandler {
                 this.enqueueProcessing("user", transcript);
             } else if (transcript.trim().length > 0) {
                 if (this.isAISpeaking) {
-                    if (transcript.trim().split(' ').length > 2 || (confidence && confidence > 0.8)) {
+                    // During contact capture, avoid cutting caller off on interim speech.
+                    if (this.stateManager.getState() !== CallState.INFO_CAPTURE &&
+                        (transcript.trim().split(' ').length > 2 || (confidence && confidence > 0.8))) {
                         this.interruptAI();
                     }
                 }
@@ -205,6 +211,51 @@ export class StreamHandler {
             this.currentSpeechAbort = null;
         }
         this.isAISpeaking = false;
+    }
+
+    private normalizePhone(input: string): string | null {
+        const digitWords: Record<string, string> = {
+            zero: '0', oh: '0', one: '1', two: '2', to: '2', too: '2', three: '3', four: '4', for: '4',
+            five: '5', six: '6', seven: '7', eight: '8', ate: '8', nine: '9'
+        };
+        const cleaned = input.toLowerCase()
+            .replace(/\b(my number is|phone number is|it's|it is|you can reach me at)\b/g, ' ')
+            .replace(/[^a-z0-9 ]/g, ' ')
+            .split(/\s+/)
+            .filter(Boolean)
+            .map(tok => digitWords[tok] ?? tok)
+            .join('');
+        const digits = cleaned.replace(/\D/g, '');
+        return digits.length >= 10 ? digits : null;
+    }
+
+    private normalizeEmail(input: string): string | null {
+        const normalized = input.toLowerCase()
+            .replace(/\b(my email is|email is|it's|it is)\b/g, ' ')
+            .replace(/\s+at\s+/g, '@')
+            .replace(/\s+dot\s+/g, '.')
+            .replace(/\s+/g, '')
+            .replace(/[^a-z0-9@._+-]/g, '');
+        return /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(normalized) ? normalized : null;
+    }
+
+    private updateCapturedContactFromTranscript(transcript: string) {
+        const phone = this.normalizePhone(transcript);
+        if (phone) this.capturedContact.phone = phone;
+
+        const email = this.normalizeEmail(transcript);
+        if (email) this.capturedContact.email = email;
+
+        // Lightweight name capture only when explicitly framed
+        const nameMatch = transcript.match(/(?:my name is|this is)\s+([a-zA-Z][a-zA-Z\s'-]{1,60})/i);
+        if (nameMatch?.[1]) this.capturedContact.name = nameMatch[1].trim();
+    }
+
+    private maybeTransitionToInfoCapture(assistantText: string) {
+        const lower = assistantText.toLowerCase();
+        if (lower.includes('full name') || lower.includes('phone number') || lower.includes('email')) {
+            this.transitionTo(CallState.INFO_CAPTURE);
+        }
     }
 
     private resetInactivityTimer() {
@@ -347,7 +398,15 @@ export class StreamHandler {
                     if (currentTool) currentTool.input += chunk.delta.partial_json;
                 } else if (chunk.type === 'content_block_stop') {
                     if (currentTool) {
-                        const input = JSON.parse(currentTool.input);
+                        const input = JSON.parse(currentTool.input || '{}');
+
+                        if (currentTool.name === 'book_appointment') {
+                            // Slot gate: enforce validated contact fields before booking.
+                            input.customerName = input.customerName || this.capturedContact.name;
+                            input.customerPhone = input.customerPhone || this.capturedContact.phone;
+                            input.customerEmail = input.customerEmail || this.capturedContact.email;
+                        }
+
                         if (currentFullText) assistantContent.push({ type: 'text', text: currentFullText });
                         assistantContent.push({ type: 'tool_use', id: currentTool.id, name: currentTool.name, input });
                         this.history.push({ role: 'assistant', content: assistantContent });
@@ -360,8 +419,13 @@ export class StreamHandler {
                                 this.transitionTo(CallState.CONFIRMATION);
                                 logger.trackMetric(this.clientId!, 'booking_success');
                             } else {
+                                this.transitionTo(CallState.INFO_CAPTURE);
                                 logger.trackMetric(this.clientId!, 'booking_failed');
                             }
+                        }
+
+                        if (this.shouldCancelPending) {
+                            return { type: 'final' };
                         }
 
                         return { type: 'tool', toolResult, toolId: currentTool.id };
@@ -399,6 +463,7 @@ export class StreamHandler {
             if (currentFullText) {
                 assistantContent.push({ type: 'text', text: currentFullText });
                 this.history.push({ role: 'assistant', content: assistantContent });
+                this.maybeTransitionToInfoCapture(currentFullText);
                 this.logTurn('assistant', currentFullText);
             }
             return { type: 'final' };
