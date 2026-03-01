@@ -87,11 +87,8 @@ export class DeepgramSTTService {
             });
 
             const wsUrl = `wss://api.deepgram.com/v2/listen?${params.toString()}`;
-            this.connection = new WebSocket(wsUrl, {
-                headers: {
-                    Authorization: `Token ${config.deepgram.apiKey}`,
-                },
-            });
+            // Flux docs JS example uses WebSocket subprotocol auth: ['token', API_KEY]
+            this.connection = new WebSocket(wsUrl, ['token', config.deepgram.apiKey]);
 
             this.connection.on('open', () => {
                 this.isConnected = true;
