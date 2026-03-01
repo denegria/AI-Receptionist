@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { config } from '../../config';
 import twilio from 'twilio';
 import { voicemailRepository } from '../../db/repositories/voicemail-repository';
+import { callLogRepository } from '../../db/repositories/call-log-repository';
 import { smsService } from '../../services/telephony/sms-service';
 import { loadClientConfig } from '../../models/client-config';
 import { clientRegistryRepository } from '../../db/repositories/client-registry-repository';
@@ -43,11 +44,6 @@ function canServeClient(clientId: string): { ok: boolean; reason?: string } {
     if (!entry) return { ok: false, reason: 'client_not_found' };
 
     if (entry.status === 'suspended') return { ok: false, reason: 'client_suspended' };
-
-    const blockedStatuses = new Set(['past_due', 'unpaid', 'canceled', 'incomplete_expired']);
-    if (entry.subscription_status && blockedStatuses.has(entry.subscription_status)) {
-        return { ok: false, reason: `billing_${entry.subscription_status}` };
-    }
 
     return { ok: true };
 }
@@ -145,6 +141,11 @@ twilioWebhookRouter.post('/voicemail-callback', validateTwilioRequest, async (re
 
     console.log(`📩 Voicemail Update [${type || 'recording'}] (SID: ${CallSid})`);
 
+    if (!clientId || typeof clientId !== 'string') {
+        console.warn('Voicemail callback missing clientId', { CallSid, type });
+        return res.type('text/xml').send('<Response/>');
+    }
+
     try {
         if (type === 'transcription') {
             // Update transcription text
@@ -162,7 +163,27 @@ twilioWebhookRouter.post('/voicemail-callback', validateTwilioRequest, async (re
             }
         } else {
             // New recording entry (usually fallback path after stream disconnect)
-            if (clientId) logger.trackMetric(clientId as string, 'fallback_triggered');
+            if (clientId) {
+                logger.trackMetric(clientId as string, 'fallback_triggered');
+
+                // Ensure parent call log exists before voicemail insert (FK: voicemails.call_sid -> call_logs.call_sid)
+                try {
+                    callLogRepository.create({
+                        client_id: clientId as string,
+                        call_sid: CallSid,
+                        caller_phone: (req.body.From as string) || 'unknown',
+                        call_direction: 'inbound',
+                        call_status: 'completed'
+                    });
+                } catch (e: any) {
+                    // Ignore duplicate call_sid; rethrow anything else
+                    const message = e?.message || '';
+                    if (!message.includes('UNIQUE constraint failed')) {
+                        throw e;
+                    }
+                }
+            }
+
             voicemailRepository.create({
                 call_sid: CallSid,
                 client_id: clientId as string,

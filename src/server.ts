@@ -84,13 +84,11 @@ import { twilioWebhookRouter } from './api/routes/twilio-webhook';
 import { onboardingRouter } from './api/routes/onboarding';
 import { dashboardRouter } from './api/routes/dashboard';
 import { adminDashboardRouter } from './api/routes/admin-dashboard';
-import { stripeWebhookRouter } from './api/routes/stripe-webhook';
 import { requireAuth } from './api/middleware/auth';
 
 app.use(calendarAuthRouter);
 app.use('/api', requireAuth, calendarAuthRouter);
 app.use(twilioWebhookRouter);
-app.use(stripeWebhookRouter);
 app.use('/api/onboarding', requireAuth, onboardingRouter);
 app.use('/api/dashboard', requireAuth, dashboardRouter);
 app.use('/api/admin', requireAuth, adminDashboardRouter);
