@@ -6,6 +6,7 @@ export class DeepgramSTTService {
     private deepgram: ReturnType<typeof createClient>;
     private connection: any = null;
     private isConnected = false;
+    private hasFluxFailed = false;
 
     private useFluxMode(): boolean {
         const mode = (process.env.DEEPGRAM_STT_MODE || '').toLowerCase();
@@ -28,15 +29,61 @@ export class DeepgramSTTService {
     ): void {
         if (this.isConnected) return;
 
-        if (this.useFluxMode()) {
+        const startLegacy = () => {
+            const fallbackModel = config.deepgram.sttModel.startsWith('flux') ? 'nova-2-phonecall' : config.deepgram.sttModel;
+            this.connection = this.deepgram.listen.live({
+                model: fallbackModel,
+                language: 'en-US',
+                smart_format: true,
+                encoding: 'mulaw',
+                sample_rate: 8000,
+                channels: 1,
+                interim_results: true,
+                utterance_end_ms: 1000
+            });
+
+            this.connection.on('open', () => {
+                this.isConnected = true;
+                console.log('[DEBUG] Deepgram STT Connection Opened');
+            });
+
+            this.connection.on('Results', (data: any) => {
+                const alt = data.channel?.alternatives?.[0];
+                const transcript = alt?.transcript;
+                if (transcript) {
+                    onTranscript(transcript, data.is_final, alt.confidence);
+                }
+            });
+
+            this.connection.on('Metadata', (_data: any) => {
+                // Silenced metadata noise
+            });
+
+            this.connection.on('error', (err: any) => {
+                console.error('[DEBUG] Deepgram STT Error event:', err?.message || err);
+            });
+
+            this.connection.on('close', () => {
+                this.isConnected = false;
+                console.log('[DEBUG] Deepgram STT Connection Closed');
+            });
+
+            this.connection.on('speech_started', () => {
+                console.log('[DEBUG] Deepgram Speech Started event');
+                if (onSpeechStarted) onSpeechStarted();
+            });
+
+            this.connection.on('UtteranceEnd', (_data: any) => {
+                // Silenced UtteranceEnd noise
+            });
+        };
+
+        if (this.useFluxMode() && !this.hasFluxFailed) {
+            // Keep Flux handshake minimal to avoid 400 on unsupported params.
             const params = new URLSearchParams({
                 model: 'flux-general-en',
                 encoding: 'mulaw',
                 sample_rate: '8000',
-                channels: '1',
-                smart_format: 'true',
-                interim_results: 'true',
-                utterance_end_ms: '1000',
             });
 
             const wsUrl = `wss://api.deepgram.com/v2/listen?${params.toString()}`;
@@ -81,6 +128,11 @@ export class DeepgramSTTService {
 
             this.connection.on('error', (err: any) => {
                 console.error('[DEBUG] Deepgram Flux STT Error event:', err?.message || err);
+                if (!this.isConnected && !this.hasFluxFailed) {
+                    this.hasFluxFailed = true;
+                    console.warn('[DEBUG] Flux handshake failed; falling back to legacy live STT');
+                    startLegacy();
+                }
             });
 
             this.connection.on('close', () => {
@@ -91,51 +143,7 @@ export class DeepgramSTTService {
             return;
         }
 
-        this.connection = this.deepgram.listen.live({
-            model: config.deepgram.sttModel,
-            language: 'en-US',
-            smart_format: true,
-            encoding: 'mulaw',
-            sample_rate: 8000,
-            channels: 1,
-            interim_results: true,
-            utterance_end_ms: 1000
-        });
-
-        this.connection.on('open', () => {
-            this.isConnected = true;
-            console.log('[DEBUG] Deepgram STT Connection Opened');
-        });
-
-        this.connection.on('Results', (data: any) => {
-            const alt = data.channel?.alternatives?.[0];
-            const transcript = alt?.transcript;
-            if (transcript) {
-                onTranscript(transcript, data.is_final, alt.confidence);
-            }
-        });
-
-        this.connection.on('Metadata', (_data: any) => {
-            // Silenced metadata noise
-        });
-
-        this.connection.on('error', (err: any) => {
-            console.error('[DEBUG] Deepgram STT Error event:', err?.message || err);
-        });
-
-        this.connection.on('close', () => {
-            this.isConnected = false;
-            console.log('[DEBUG] Deepgram STT Connection Closed');
-        });
-
-        this.connection.on('speech_started', () => {
-            console.log('[DEBUG] Deepgram Speech Started event');
-            if (onSpeechStarted) onSpeechStarted();
-        });
-
-        this.connection.on('UtteranceEnd', (_data: any) => {
-            // Silenced UtteranceEnd noise
-        });
+        startLegacy();
     }
 
     /**
