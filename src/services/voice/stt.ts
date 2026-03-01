@@ -1,10 +1,18 @@
 import { createClient } from '@deepgram/sdk';
+import WebSocket from 'ws';
 import { config } from '../../config';
 
 export class DeepgramSTTService {
     private deepgram: ReturnType<typeof createClient>;
     private connection: any = null;
     private isConnected = false;
+
+    private useFluxMode(): boolean {
+        const mode = (process.env.DEEPGRAM_STT_MODE || '').toLowerCase();
+        if (mode === 'flux') return true;
+        if (mode === 'phonecall') return false;
+        return config.deepgram.sttModel.startsWith('flux');
+    }
 
     constructor() {
         this.deepgram = createClient(config.deepgram.apiKey);
@@ -19,6 +27,69 @@ export class DeepgramSTTService {
         onSpeechStarted?: () => void
     ): void {
         if (this.isConnected) return;
+
+        if (this.useFluxMode()) {
+            const params = new URLSearchParams({
+                model: 'flux-general-en',
+                encoding: 'mulaw',
+                sample_rate: '8000',
+                channels: '1',
+                smart_format: 'true',
+                interim_results: 'true',
+                utterance_end_ms: '1000',
+            });
+
+            const wsUrl = `wss://api.deepgram.com/v2/listen?${params.toString()}`;
+            this.connection = new WebSocket(wsUrl, {
+                headers: {
+                    Authorization: `Token ${config.deepgram.apiKey}`,
+                },
+            });
+
+            this.connection.on('open', () => {
+                this.isConnected = true;
+                console.log('[DEBUG] Deepgram Flux STT Connection Opened');
+            });
+
+            this.connection.on('message', (raw: WebSocket.RawData) => {
+                try {
+                    const data = JSON.parse(raw.toString());
+                    const type = data?.type;
+
+                    if (type === 'Results') {
+                        const alt = data.channel?.alternatives?.[0];
+                        const transcript = alt?.transcript;
+                        if (transcript) {
+                            onTranscript(transcript, !!data.is_final, alt.confidence);
+                        }
+                        return;
+                    }
+
+                    if (type === 'SpeechStarted') {
+                        if (onSpeechStarted) onSpeechStarted();
+                        return;
+                    }
+
+                    // Flux-specific turn signals (reserved for future eager-turn optimization)
+                    if (type === 'EndOfTurn' || type === 'EagerEndOfTurn' || type === 'TurnResumed') {
+                        return;
+                    }
+                } catch {
+                    // ignore malformed/non-json messages
+                }
+            });
+
+            this.connection.on('error', (err: any) => {
+                console.error('[DEBUG] Deepgram Flux STT Error event:', err?.message || err);
+            });
+
+            this.connection.on('close', () => {
+                this.isConnected = false;
+                console.log('[DEBUG] Deepgram Flux STT Connection Closed');
+            });
+
+            return;
+        }
 
         this.connection = this.deepgram.listen.live({
             model: config.deepgram.sttModel,
@@ -44,12 +115,12 @@ export class DeepgramSTTService {
             }
         });
 
-        this.connection.on('Metadata', (data: any) => {
+        this.connection.on('Metadata', (_data: any) => {
             // Silenced metadata noise
         });
 
         this.connection.on('error', (err: any) => {
-            console.error('[DEBUG] Deepgram STT Error event:', err);
+            console.error('[DEBUG] Deepgram STT Error event:', err?.message || err);
         });
 
         this.connection.on('close', () => {
@@ -62,7 +133,7 @@ export class DeepgramSTTService {
             if (onSpeechStarted) onSpeechStarted();
         });
 
-        this.connection.on('UtteranceEnd', (data: any) => {
+        this.connection.on('UtteranceEnd', (_data: any) => {
             // Silenced UtteranceEnd noise
         });
     }
@@ -85,6 +156,8 @@ export class DeepgramSTTService {
                 this.connection.requestClose();
             } else if (typeof this.connection.finish === 'function') {
                 this.connection.finish();
+            } else if (typeof this.connection.close === 'function') {
+                this.connection.close();
             }
             this.connection = null;
             this.isConnected = false;
