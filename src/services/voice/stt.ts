@@ -79,6 +79,7 @@ export class DeepgramSTTService {
         };
 
         if (this.useFluxMode() && !this.hasFluxFailed) {
+            let receivedTranscript = false;
             // Keep Flux handshake minimal to avoid 400 on unsupported params.
             const params = new URLSearchParams({
                 model: 'flux-general-en',
@@ -93,6 +94,17 @@ export class DeepgramSTTService {
             this.connection.on('open', () => {
                 this.isConnected = true;
                 console.log('[DEBUG] Deepgram Flux STT Connection Opened');
+
+                // Safety: if Flux opens but yields no transcripts, fail over to proven phonecall STT.
+                setTimeout(() => {
+                    if (!receivedTranscript && this.connection && this.isConnected && !this.hasFluxFailed) {
+                        this.hasFluxFailed = true;
+                        console.warn('[DEBUG] Flux open but no transcripts; falling back to legacy live STT');
+                        try { this.connection.close?.(); } catch {}
+                        this.isConnected = false;
+                        startLegacy();
+                    }
+                }, 5000);
             });
 
             this.connection.on('message', (raw: WebSocket.RawData) => {
@@ -104,6 +116,7 @@ export class DeepgramSTTService {
                         const alt = data.channel?.alternatives?.[0];
                         const transcript = alt?.transcript;
                         if (transcript) {
+                            receivedTranscript = true;
                             onTranscript(transcript, !!data.is_final, alt.confidence);
                         }
                         return;
