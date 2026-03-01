@@ -10,6 +10,31 @@ export interface ChatMessage {
 
 export class LLMService {
     private anthropic: Anthropic;
+
+    private assistantHasToolUse(content: any, toolUseId?: string): boolean {
+        if (!toolUseId) return false;
+        if (!Array.isArray(content)) return false;
+        return content.some((block: any) => block?.type === 'tool_use' && block?.id === toolUseId);
+    }
+
+    private sanitizeHistoryForTools(history: ChatMessage[]): ChatMessage[] {
+        const out: ChatMessage[] = [];
+        for (const m of history) {
+            if (m.role !== 'tool') {
+                out.push(m);
+                continue;
+            }
+            const prev = out[out.length - 1];
+            if (prev?.role === 'assistant' && this.assistantHasToolUse(prev.content, m.tool_use_id)) {
+                out.push(m);
+            } else {
+                // Drop orphan tool_result to avoid Anthropic invalid_request_error
+                console.warn('[LLM] Dropping orphan tool_result message', { tool_use_id: m.tool_use_id });
+            }
+        }
+        return out;
+    }
+
     private getSystemPrompt(businessName: string, timezone: string): string {
         const now = new Date();
         const formatter = new Intl.DateTimeFormat('en-US', {
@@ -32,6 +57,7 @@ export class LLMService {
     1. **NO PAST BOOKINGS**: Under no circumstances should you offer or book a time that is in the past. Always compare requested times against the current time provided above: ${localTime}.
     2. **Look-Ahead Logic**: If a user asks for a day of the week (e.g., "Monday") and today is Friday or later, ALWAYS assume they mean the following week (e.g., next Monday, Feb 2nd). 
     3. **Date Verbosity**: When confirming a day or listing availability, ALWAYS include the full date (e.g., "Monday, Feb 2nd") so the user knows exactly which week you mean.
+    3b. **Weekday-Date Consistency**: Never state a weekday/date pair unless they match. If uncertain, ask for confirmation instead of guessing.
     4. **List Openings**: After calling 'check_availability', you MUST respond by listing at least 3 specific openings found. NEVER just say "I have openings," tell them the times.
     5. **Time First**: Ask when they want to come in. Wait for their answer.
     6. **Check**: Call 'check_availability' ONLY after they specify a time.
@@ -70,7 +96,8 @@ export class LLMService {
     }
 
     async generateResponse(history: ChatMessage[], context?: { businessName: string, timezone: string }): Promise<any> {
-        const messages = history.filter(m => m.role !== 'system').map(m => {
+        const safeHistory = this.sanitizeHistoryForTools(history);
+        const messages = safeHistory.filter(m => m.role !== 'system').map(m => {
             // ... (rest of the map logic)
             if (m.role === 'tool') {
                 return {
@@ -131,7 +158,8 @@ export class LLMService {
 
         // Format messages and add cache breakpoint to history
         // Rule: Latest messages are most likely to change, so we cache a few turns back.
-        const messages = history.filter(m => m.role !== 'system').map((m, index, arr) => {
+        const safeHistory = this.sanitizeHistoryForTools(history);
+        const messages = safeHistory.filter(m => m.role !== 'system').map((m, index, arr) => {
             const isCacheBreakpoint = index === arr.length - 4; // Cache the 4th to last message
 
             if (m.role === 'tool') {
