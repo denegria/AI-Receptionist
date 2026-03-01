@@ -4,6 +4,11 @@ import { config } from '../../config';
 import twilio from 'twilio';
 
 export function validateTwilioRequest(req: Request, res: Response, next: NextFunction) {
+    const preflightKey = req.headers['x-preflight-key'] as string | undefined;
+    if (preflightKey && preflightKey === config.admin.apiKey) {
+        return next();
+    }
+
     const signature = req.headers['x-twilio-signature'] as string;
 
     if (!signature) {

@@ -4,8 +4,10 @@ import twilio from 'twilio';
 import { voicemailRepository } from '../../db/repositories/voicemail-repository';
 import { smsService } from '../../services/telephony/sms-service';
 import { loadClientConfig } from '../../models/client-config';
+import { clientRegistryRepository } from '../../db/repositories/client-registry-repository';
 import { validateTwilioRequest } from '../middleware/twilio-validator';
 import { redisCoordinator } from '../../services/coordination/redis-coordinator';
+import { logger } from '../../services/logging';
 import crypto from 'crypto';
 
 const VoiceResponse = twilio.twiml.VoiceResponse;
@@ -25,17 +27,77 @@ function webhookKey(req: Request, suffix: string): string {
     return crypto.createHash('sha1').update(parts.filter(Boolean).join('|')).digest('hex');
 }
 
+function resolveClientId(req: Request): string | null {
+    const fromQuery = (req.query.clientId as string | undefined)?.trim();
+    if (fromQuery) return fromQuery;
 
-twilioWebhookRouter.post('/voice', validateTwilioRequest, async (req: Request, res: Response) => {
+    const toNumber = (req.body.To as string | undefined)?.trim();
+    if (!toNumber) return null;
+
+    const byPhone = clientRegistryRepository.findByPhone(toNumber);
+    return byPhone?.id ?? null;
+}
+
+function canServeClient(clientId: string): { ok: boolean; reason?: string } {
+    const entry = clientRegistryRepository.findById(clientId);
+    if (!entry) return { ok: false, reason: 'client_not_found' };
+
+    if (entry.status === 'suspended') return { ok: false, reason: 'client_suspended' };
+
+    const blockedStatuses = new Set(['past_due', 'unpaid', 'canceled', 'incomplete_expired']);
+    if (entry.subscription_status && blockedStatuses.has(entry.subscription_status)) {
+        return { ok: false, reason: `billing_${entry.subscription_status}` };
+    }
+
+    return { ok: true };
+}
+
+function buildStreamUrl(req: Request, callSid: string, clientId: string): string {
+    const configuredPublicUrl = process.env.PUBLIC_URL?.trim();
+    if (configuredPublicUrl) {
+        const base = new URL(configuredPublicUrl);
+        base.protocol = base.protocol === 'https:' ? 'wss:' : 'ws:';
+        base.pathname = '/media-stream';
+        base.search = '';
+        base.searchParams.set('callSid', callSid);
+        base.searchParams.set('clientId', clientId);
+        return base.toString();
+    }
+
+    const host = req.headers.host;
+    const proto = (req.headers['x-forwarded-proto'] as string) || req.protocol;
+    const wsProto = proto === 'https' ? 'wss' : 'ws';
+    return `${wsProto}://${host}/media-stream?callSid=${encodeURIComponent(callSid)}&clientId=${encodeURIComponent(clientId)}`;
+}
+
+async function handleVoice(req: Request, res: Response) {
     const fresh = await redisCoordinator.markWebhookProcessed(webhookKey(req, 'voice'));
     if (!fresh) return res.status(200).send('<Response/>');
     const twiml = new VoiceResponse();
     const callSid = req.body.CallSid;
-    const clientId = req.query.clientId as string || 'abc';
+    const clientId = resolveClientId(req);
+
+    if (!clientId) {
+        twiml.say({ voice: 'Polly.Amy' }, 'We are unable to route your call right now. Please try again later.');
+        twiml.hangup();
+        res.type('text/xml');
+        return res.send(twiml.toString());
+    }
+
+    const serve = canServeClient(clientId);
+    if (!serve.ok) {
+        logger.trackMetric(clientId, 'voice_webhook_error');
+        twiml.say({ voice: 'Polly.Amy' }, 'Your account is currently unavailable. Please contact support.');
+        twiml.hangup();
+        res.type('text/xml');
+        return res.send(twiml.toString());
+    }
+
+    logger.trackMetric(clientId, 'voice_webhook_ok');
 
     console.log(`📞 Incoming call (SID: ${callSid}) for Client: ${clientId}`);
 
-    const streamUrl = `wss://${req.headers.host}/media-stream?callSid=${callSid}&clientId=${clientId}`;
+    const streamUrl = buildStreamUrl(req, callSid, clientId);
     console.log(`📡 Connecting to Stream: ${streamUrl}`);
 
     const connect = twiml.connect();
@@ -58,7 +120,12 @@ twilioWebhookRouter.post('/voice', validateTwilioRequest, async (req: Request, r
 
     res.type('text/xml');
     res.send(twiml.toString());
-});
+}
+
+twilioWebhookRouter.post('/voice', validateTwilioRequest, handleVoice);
+twilioWebhookRouter.post('/api/twilio/voice', validateTwilioRequest, handleVoice);
+// Backward-compatible alias for legacy configured numbers
+twilioWebhookRouter.post('/api/twilio/webhook', validateTwilioRequest, handleVoice);
 
 twilioWebhookRouter.post('/status-callback', validateTwilioRequest, async (req: Request, res: Response) => {
     const fresh = await redisCoordinator.markWebhookProcessed(webhookKey(req, 'status'));
@@ -94,7 +161,8 @@ twilioWebhookRouter.post('/voicemail-callback', validateTwilioRequest, async (re
                 );
             }
         } else {
-            // New recording entry
+            // New recording entry (usually fallback path after stream disconnect)
+            if (clientId) logger.trackMetric(clientId as string, 'fallback_triggered');
             voicemailRepository.create({
                 call_sid: CallSid,
                 client_id: clientId as string,

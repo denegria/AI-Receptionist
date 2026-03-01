@@ -113,7 +113,15 @@ class Logger {
     /**
      * Track a metric directly (for call count, bookings, etc.)
      */
-    public trackMetric(clientId: string, metricName: 'call_count' | 'booking_success' | 'booking_failed', value: number = 1) {
+    public trackMetric(clientId: string, metricName:
+        | 'call_count'
+        | 'booking_success'
+        | 'booking_failed'
+        | 'voice_webhook_ok'
+        | 'voice_webhook_error'
+        | 'stream_connect_ok'
+        | 'stream_connect_error'
+        | 'fallback_triggered', value: number = 1) {
         try {
             metricsRepository.track(clientId, metricName, value);
         } catch (err) {

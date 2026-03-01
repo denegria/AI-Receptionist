@@ -56,6 +56,7 @@ const { app } = expressWs(express());
 
 // Middleware
 app.set('trust proxy', 1); // Required for Fly.io/Cloud load balancers
+app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
@@ -83,11 +84,13 @@ import { twilioWebhookRouter } from './api/routes/twilio-webhook';
 import { onboardingRouter } from './api/routes/onboarding';
 import { dashboardRouter } from './api/routes/dashboard';
 import { adminDashboardRouter } from './api/routes/admin-dashboard';
+import { stripeWebhookRouter } from './api/routes/stripe-webhook';
 import { requireAuth } from './api/middleware/auth';
 
 app.use(calendarAuthRouter);
 app.use('/api', requireAuth, calendarAuthRouter);
 app.use(twilioWebhookRouter);
+app.use(stripeWebhookRouter);
 app.use('/api/onboarding', requireAuth, onboardingRouter);
 app.use('/api/dashboard', requireAuth, dashboardRouter);
 app.use('/api/admin', requireAuth, adminDashboardRouter);
@@ -142,11 +145,15 @@ if (config.transport.mode === 'legacy-ws' || config.transport.mode === 'dual') {
         const callSid = (req.query.callSid as string) || (req.headers['x-twilio-callsid'] as string);
         const clientId = (req.query.clientId as string) || (req.headers['x-twilio-clientid'] as string) || 'abc';
         logger.info(`📞 WebSocket requested`, { callSid, clientId });
+        if (clientId && clientId !== 'abc') logger.trackMetric(clientId, 'stream_connect_ok');
 
         new StreamHandler(ws as any, clientId);
 
         ws.on('close', () => logger.info(`📞 Client disconnected`, { callSid }));
-        ws.on('error', (error) => logger.error(`WebSocket error`, { callSid, error }));
+        ws.on('error', (error) => {
+            if (clientId && clientId !== 'abc') logger.trackMetric(clientId, 'stream_connect_error');
+            logger.error(`WebSocket error`, { callSid, error });
+        });
     });
 }
 

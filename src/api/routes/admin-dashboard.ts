@@ -5,6 +5,7 @@ import { config } from '../../config';
 import { getClientDatabase } from '../../db/client';
 import { sharedDb } from '../../db/shared-client';
 import { clientRegistryRepository } from '../../db/repositories/client-registry-repository';
+import { metricsRepository } from '../../db/repositories/metrics-repository';
 
 export const adminDashboardRouter = Router();
 
@@ -174,6 +175,77 @@ adminDashboardRouter.post('/actions', (req: Request, res: Response) => {
     tenantId,
     status: 'queued',
     message: 'Action accepted and audited (scaffold).',
+  });
+});
+
+adminDashboardRouter.get('/twilio-observability', (req: Request, res: Response) => {
+  const windowMinRaw = Number(req.query.windowMin || 15);
+  const windowMin = Number.isFinite(windowMinRaw) ? Math.max(1, Math.min(1440, windowMinRaw)) : 15;
+  const sinceIso = new Date(Date.now() - windowMin * 60 * 1000).toISOString();
+
+  const clients = clientRegistryRepository.listAll();
+  const dbDir = path.dirname(path.resolve(config.database.path));
+
+  const tenants = clients.map((client) => {
+    const dbPath = path.join(dbDir, `client-${client.id}.db`);
+    if (!fs.existsSync(dbPath)) {
+      return {
+        tenantId: client.id,
+        tenantName: client.business_name,
+        available: false,
+      };
+    }
+
+    const get = (metricName: any) => {
+      const points = metricsRepository.getMetrics(client.id, metricName, sinceIso);
+      return points.reduce((sum, p) => sum + p.metric_value, 0);
+    };
+
+    const webhookOk = get('voice_webhook_ok');
+    const webhookErr = get('voice_webhook_error');
+    const streamOk = get('stream_connect_ok');
+    const streamErr = get('stream_connect_error');
+    const fallback = get('fallback_triggered');
+    const calls = Math.max(webhookOk, streamOk);
+
+    return {
+      tenantId: client.id,
+      tenantName: client.business_name,
+      available: true,
+      calls,
+      webhookOk,
+      webhookErr,
+      streamOk,
+      streamErr,
+      fallback,
+      fallbackRatePct: calls > 0 ? Number(((fallback / calls) * 100).toFixed(2)) : 0,
+      streamErrorRatePct: streamOk + streamErr > 0 ? Number(((streamErr / (streamOk + streamErr)) * 100).toFixed(2)) : 0,
+    };
+  });
+
+  const totals = tenants.reduce(
+    (acc: any, t: any) => {
+      if (!t.available) return acc;
+      acc.calls += t.calls;
+      acc.webhookOk += t.webhookOk;
+      acc.webhookErr += t.webhookErr;
+      acc.streamOk += t.streamOk;
+      acc.streamErr += t.streamErr;
+      acc.fallback += t.fallback;
+      return acc;
+    },
+    { calls: 0, webhookOk: 0, webhookErr: 0, streamOk: 0, streamErr: 0, fallback: 0 }
+  );
+
+  res.json({
+    since: sinceIso,
+    windowMin,
+    tenants,
+    totals: {
+      ...totals,
+      fallbackRatePct: totals.calls > 0 ? Number(((totals.fallback / totals.calls) * 100).toFixed(2)) : 0,
+      streamErrorRatePct: totals.streamOk + totals.streamErr > 0 ? Number(((totals.streamErr / (totals.streamOk + totals.streamErr)) * 100).toFixed(2)) : 0,
+    },
   });
 });
 

@@ -16,6 +16,7 @@ interface Config {
         authToken: string;
         phoneNumber: string;
         statusCallbackUrl?: string;
+        twimlAppSid?: string;
     };
 
     deepgram: {
@@ -128,6 +129,7 @@ export const config: Config = {
         authToken: getEnvVar('TWILIO_AUTH_TOKEN'),
         phoneNumber: getEnvVar('TWILIO_PHONE_NUMBER'),
         statusCallbackUrl: process.env.TWILIO_STATUS_CALLBACK_URL,
+        twimlAppSid: process.env.TWILIO_TWIML_APP_SID,
     },
 
     deepgram: {

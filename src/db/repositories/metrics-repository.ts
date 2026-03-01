@@ -15,7 +15,12 @@ export type MetricName =
     | 'tokens_input'
     | 'tokens_output'
     | 'booking_success'
-    | 'booking_failed';
+    | 'booking_failed'
+    | 'voice_webhook_ok'
+    | 'voice_webhook_error'
+    | 'stream_connect_ok'
+    | 'stream_connect_error'
+    | 'fallback_triggered';
 
 export class MetricsRepository {
     /**

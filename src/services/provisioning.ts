@@ -31,20 +31,30 @@ export class ProvisioningService {
   }
 
   /**
-   * Buy a phone number and configure its voice URL
+   * Buy a phone number and configure Twilio routing.
+   * Preferred: voiceApplicationSid (TwiML App).
+   * Fallback: direct voiceUrl webhook.
    */
   static async buyNumber(phoneNumber: string, clientId: string) {
     try {
-      // 1. Purchase the number
-      const publicUrl = process.env.PUBLIC_URL;
-      if (!publicUrl) {
-        throw new Error('Missing required environment variable: PUBLIC_URL');
+      const createParams: Record<string, string> = { phoneNumber };
+
+      if (config.twilio.twimlAppSid) {
+        createParams.voiceApplicationSid = config.twilio.twimlAppSid;
+      } else {
+        const publicUrl = process.env.PUBLIC_URL;
+        if (!publicUrl) {
+          throw new Error('Missing required environment variable: PUBLIC_URL (required when TWILIO_TWIML_APP_SID is not set)');
+        }
+        createParams.voiceUrl = `${publicUrl.replace(/\/$/, '')}/voice`;
       }
 
-      const purchasedNumber = await twilioClient.incomingPhoneNumbers.create({
-        phoneNumber,
-        voiceUrl: `${publicUrl}/api/twilio/webhook`,
-      });
+      if (config.twilio.statusCallbackUrl) {
+        createParams.statusCallback = config.twilio.statusCallbackUrl;
+        createParams.statusCallbackMethod = 'POST';
+      }
+
+      const purchasedNumber = await twilioClient.incomingPhoneNumbers.create(createParams as any);
 
       logger.info('Successfully purchased phone number', { phoneNumber, clientId, sid: purchasedNumber.sid });
       return purchasedNumber;
