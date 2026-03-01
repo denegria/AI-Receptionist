@@ -7,6 +7,10 @@ export class DeepgramSTTService {
     private connection: any = null;
     private isConnected = false;
     private hasFluxFailed = false;
+    private fluxActive = false;
+    private fluxChunkBuffer: Buffer[] = [];
+    private fluxBufferedBytes = 0;
+    private fluxEventLogCount = 0;
 
     private useFluxMode(): boolean {
         const mode = (process.env.DEEPGRAM_STT_MODE || '').toLowerCase();
@@ -30,6 +34,9 @@ export class DeepgramSTTService {
         if (this.isConnected) return;
 
         const startLegacy = () => {
+            this.fluxActive = false;
+            this.fluxChunkBuffer = [];
+            this.fluxBufferedBytes = 0;
             const fallbackModel = config.deepgram.sttModel.startsWith('flux') ? 'nova-2-phonecall' : config.deepgram.sttModel;
             this.connection = this.deepgram.listen.live({
                 model: fallbackModel,
@@ -93,12 +100,15 @@ export class DeepgramSTTService {
 
             this.connection.on('open', () => {
                 this.isConnected = true;
+                this.fluxActive = true;
+                this.fluxEventLogCount = 0;
                 console.log('[DEBUG] Deepgram Flux STT Connection Opened');
 
                 // Safety: if Flux opens but yields no transcripts, fail over to proven phonecall STT.
                 setTimeout(() => {
                     if (!receivedTranscript && this.connection && this.isConnected && !this.hasFluxFailed) {
                         this.hasFluxFailed = true;
+                        this.fluxActive = false;
                         console.warn('[DEBUG] Flux open but no transcripts; falling back to legacy live STT');
                         try { this.connection.close?.(); } catch {}
                         this.isConnected = false;
@@ -111,6 +121,10 @@ export class DeepgramSTTService {
                 try {
                     const data = JSON.parse(raw.toString());
                     const type = data?.type;
+                    if (type && this.fluxEventLogCount < 10) {
+                        this.fluxEventLogCount += 1;
+                        console.log('[DEBUG] Flux event type:', type);
+                    }
 
                     if (type === 'Results') {
                         const alt = data.channel?.alternatives?.[0];
@@ -140,6 +154,7 @@ export class DeepgramSTTService {
                 console.error('[DEBUG] Deepgram Flux STT Error event:', err?.message || err);
                 if (!this.isConnected && !this.hasFluxFailed) {
                     this.hasFluxFailed = true;
+                    this.fluxActive = false;
                     console.warn('[DEBUG] Flux handshake failed; falling back to legacy live STT');
                     startLegacy();
                 }
@@ -147,6 +162,7 @@ export class DeepgramSTTService {
 
             this.connection.on('close', () => {
                 this.isConnected = false;
+                this.fluxActive = false;
                 console.log('[DEBUG] Deepgram Flux STT Connection Closed');
             });
 
@@ -160,9 +176,27 @@ export class DeepgramSTTService {
      * Sends audio buffer to Deepgram
      */
     public send(audio: Buffer): void {
-        if (this.connection && this.isConnected) {
-            this.connection.send(audio);
+        if (!this.connection || !this.isConnected) return;
+
+        // Flux docs recommend ~80ms chunks for best turn-taking behavior.
+        // Twilio packets are typically 20ms, so batch 4 packets (mulaw 8k => 160 bytes/20ms; target 640 bytes).
+        if (this.fluxActive) {
+            const TARGET_BYTES = 640;
+            this.fluxChunkBuffer.push(audio);
+            this.fluxBufferedBytes += audio.length;
+
+            while (this.fluxBufferedBytes >= TARGET_BYTES) {
+                const merged = Buffer.concat(this.fluxChunkBuffer);
+                const frame = merged.subarray(0, TARGET_BYTES);
+                const rest = merged.subarray(TARGET_BYTES);
+                this.connection.send(frame);
+                this.fluxChunkBuffer = rest.length ? [rest] : [];
+                this.fluxBufferedBytes = rest.length;
+            }
+            return;
         }
+
+        this.connection.send(audio);
     }
 
     /**
@@ -170,6 +204,14 @@ export class DeepgramSTTService {
      */
     public stop(): void {
         if (this.connection) {
+            if (this.fluxActive && this.fluxBufferedBytes > 0) {
+                try {
+                    const merged = Buffer.concat(this.fluxChunkBuffer);
+                    if (merged.length) this.connection.send(merged);
+                } catch {
+                    // ignore final flush errors
+                }
+            }
             if (typeof this.connection.requestClose === 'function') {
                 this.connection.requestClose();
             } else if (typeof this.connection.finish === 'function') {
@@ -179,6 +221,9 @@ export class DeepgramSTTService {
             }
             this.connection = null;
             this.isConnected = false;
+            this.fluxActive = false;
+            this.fluxChunkBuffer = [];
+            this.fluxBufferedBytes = 0;
         }
     }
 }
