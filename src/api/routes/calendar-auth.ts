@@ -228,24 +228,29 @@ calendarAuthRouter.get('/calendar/settings', async (req: Request, res: Response)
         accounts,
         selectedAccountId: connected?.id || '',
         selectedCalendarId,
+        selectedCalendarIds: selectedCalendarId ? [selectedCalendarId] : [],
     });
 });
 
 calendarAuthRouter.put('/calendar/settings', (req: Request, res: Response) => {
-    const { clientId: rawClientId, selectedAccountId, selectedCalendarId } = req.body || {};
+    const { clientId: rawClientId, selectedAccountId, selectedCalendarId, selectedCalendarIds } = req.body || {};
     const clientId = ensureClientRegistration(typeof rawClientId === 'string' ? rawClientId : undefined);
     if (!clientId) return res.status(400).json({ error: 'Missing clientId' });
 
     const accountId = typeof selectedAccountId === 'string' ? selectedAccountId : '';
-    const calendarId = typeof selectedCalendarId === 'string' ? selectedCalendarId : '';
+    const calendarIds = Array.isArray(selectedCalendarIds)
+        ? selectedCalendarIds.filter((id: unknown): id is string => typeof id === 'string' && id.trim().length > 0)
+        : typeof selectedCalendarId === 'string' && selectedCalendarId.trim().length > 0
+            ? [selectedCalendarId]
+            : [];
 
     const provider = accountId.startsWith('google-') ? 'google' : accountId.startsWith('outlook-') ? 'outlook' : null;
     if (!provider) return res.status(400).json({ error: 'Invalid selectedAccountId' });
-    if (!calendarId) return res.status(400).json({ error: 'Missing selectedCalendarId' });
+    if (!calendarIds.length) return res.status(400).json({ error: 'Missing selectedCalendarIds' });
 
     try {
-        calendarCredentialsRepository.setCalendarSelection(clientId, provider, calendarId);
-        return res.json({ success: true });
+        calendarCredentialsRepository.setCalendarSelection(clientId, provider, calendarIds[0]);
+        return res.json({ success: true, selectedCalendarIds: calendarIds });
     } catch (error: any) {
         return res.status(400).json({ error: error.message || 'Failed to save calendar selection' });
     }
