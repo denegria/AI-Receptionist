@@ -55,6 +55,18 @@ export class CalendarCredentialsRepository {
     ensureCalendarCredentialColumns();
   }
 
+  listByClient(clientId: string): CalendarCredentialRow[] {
+    ensureClientExists(clientId);
+    const stmt = db.prepare(`SELECT * FROM calendar_credentials WHERE client_id = ? ORDER BY updated_at DESC`);
+    return stmt.all(clientId) as CalendarCredentialRow[];
+  }
+
+  disconnect(clientId: string, provider: CalendarProvider): void {
+    ensureClientExists(clientId);
+    const stmt = db.prepare(`DELETE FROM calendar_credentials WHERE client_id = ? AND provider = ?`);
+    stmt.run(clientId, provider);
+  }
+
   upsert(input: UpsertCalendarCredentialInput): void {
     ensureClientExists(input.clientId);
 

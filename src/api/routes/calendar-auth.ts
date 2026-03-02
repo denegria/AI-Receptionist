@@ -182,3 +182,95 @@ calendarAuthRouter.post('/auth/:provider/select-calendar', (req: Request, res: R
         return res.status(400).json({ error: error.message || 'Failed to set calendar selection' });
     }
 });
+
+calendarAuthRouter.get('/calendar/settings', async (req: Request, res: Response) => {
+    const rawClientId = req.query.clientId;
+    const clientId = ensureClientRegistration(typeof rawClientId === 'string' ? rawClientId : undefined);
+    if (!clientId) return res.status(400).json({ error: 'Missing clientId' });
+
+    const credentials = calendarCredentialsRepository.listByClient(clientId);
+    const connectedByProvider = new Map(credentials.map((c) => [c.provider, c]));
+
+    const providers: CalendarProvider[] = ['google', 'outlook'];
+
+    const accounts = await Promise.all(providers.map(async (provider) => {
+        const cred = connectedByProvider.get(provider) || null;
+        const isExpired = Boolean(cred?.token_expires_at && Number(cred.token_expires_at) > 0 && Number(cred.token_expires_at) < Date.now());
+
+        let calendars: Array<{ id: string; name: string }> = [];
+        if (cred) {
+            try {
+                const rows = provider === 'google'
+                    ? await googleService.listCalendars(clientId)
+                    : await outlookService.listCalendars(clientId);
+                calendars = rows.map((r: any) => ({ id: r.id, name: r.name || r.id }));
+            } catch {
+                calendars = [];
+            }
+        }
+
+        return {
+            id: `${provider}-${cred?.id || 'default'}`,
+            provider,
+            label: provider === 'google' ? 'Google Calendar' : 'Outlook Calendar',
+            email: cred?.account_email || '',
+            status: cred ? (isExpired ? 'expired' : 'connected') : 'disconnected',
+            calendars,
+        };
+    }));
+
+    const connected = accounts.find((a) => a.status !== 'disconnected') || accounts[0];
+    const selectedCalendarId = connected?.calendars.find((c) => c.id === (connectedByProvider.get(connected.provider)?.calendar_id || ''))?.id
+        || connected?.calendars[0]?.id
+        || '';
+
+    return res.json({
+        accounts,
+        selectedAccountId: connected?.id || '',
+        selectedCalendarId,
+    });
+});
+
+calendarAuthRouter.put('/calendar/settings', (req: Request, res: Response) => {
+    const { clientId: rawClientId, selectedAccountId, selectedCalendarId } = req.body || {};
+    const clientId = ensureClientRegistration(typeof rawClientId === 'string' ? rawClientId : undefined);
+    if (!clientId) return res.status(400).json({ error: 'Missing clientId' });
+
+    const accountId = typeof selectedAccountId === 'string' ? selectedAccountId : '';
+    const calendarId = typeof selectedCalendarId === 'string' ? selectedCalendarId : '';
+
+    const provider = accountId.startsWith('google-') ? 'google' : accountId.startsWith('outlook-') ? 'outlook' : null;
+    if (!provider) return res.status(400).json({ error: 'Invalid selectedAccountId' });
+    if (!calendarId) return res.status(400).json({ error: 'Missing selectedCalendarId' });
+
+    try {
+        calendarCredentialsRepository.setCalendarSelection(clientId, provider, calendarId);
+        return res.json({ success: true });
+    } catch (error: any) {
+        return res.status(400).json({ error: error.message || 'Failed to save calendar selection' });
+    }
+});
+
+calendarAuthRouter.post('/calendar/actions', (req: Request, res: Response) => {
+    const { clientId: rawClientId, action, accountId } = req.body || {};
+    const clientId = ensureClientRegistration(typeof rawClientId === 'string' ? rawClientId : undefined);
+    if (!clientId) return res.status(400).json({ error: 'Missing clientId' });
+
+    const actionValue = typeof action === 'string' ? action : '';
+    if (!['connect', 'reconnect', 'disconnect'].includes(actionValue)) {
+        return res.status(400).json({ error: 'Invalid action' });
+    }
+
+    const inferredProvider = typeof accountId === 'string' && accountId.startsWith('outlook-') ? 'outlook' : 'google';
+
+    if (actionValue === 'disconnect') {
+        calendarCredentialsRepository.disconnect(clientId, inferredProvider);
+        return res.json({ success: true });
+    }
+
+    const authUrl = inferredProvider === 'google'
+        ? googleService.getAuthUrl(clientId)
+        : outlookService.getAuthUrl(clientId);
+
+    return res.json({ success: true, authUrl, provider: inferredProvider });
+});
