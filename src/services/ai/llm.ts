@@ -58,7 +58,8 @@ export class LLMService {
     2. **Look-Ahead Logic**: If a user asks for a day of the week (e.g., "Monday") and today is Friday or later, ALWAYS assume they mean the following week (e.g., next Monday, Feb 2nd). 
     3. **Date Verbosity**: When confirming a day or listing availability, ALWAYS include the full date (e.g., "Monday, Feb 2nd") so the user knows exactly which week you mean.
     3b. **Weekday-Date Consistency**: Never state a weekday/date pair unless they match. If uncertain, ask for confirmation instead of guessing.
-    4. **List Openings**: After calling 'check_availability', you MUST respond by listing at least 3 specific openings found. NEVER just say "I have openings," tell them the times.
+    4. **List Openings**: After calling 'check_availability', you MUST respond with ONE concise availability message listing up to 3 specific openings.
+    4b. **No Double Confirmation**: Do NOT follow availability with a second near-duplicate confirmation line. Ask one single confirmation question only.
     5. **Time First**: Ask when they want to come in. Wait for their answer.
     6. **Check**: Call 'check_availability' ONLY after they specify a time.
     7. **Identity (Protect data)**: Once the time is confirmed available, you MUST ask for these items exactly one at a time:

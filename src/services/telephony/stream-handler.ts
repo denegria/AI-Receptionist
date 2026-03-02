@@ -51,6 +51,8 @@ export class StreamHandler {
     private callStartTime: number = 0;
     private released: boolean = false;
     private capturedContact: { name?: string; phone?: string; email?: string } = {};
+    private lastSpokenText: string = '';
+    private lastSpokenAt: number = 0;
 
     private readonly SENTENCE_END_REGEX = /[.!?](\s|$)/;
     private readonly ABBREVIATION_REGEX = /\b(Dr|Mr|Mrs|Ms|St|Ave|Inc|Jr|Sr|Prof|gov|com|net|org|edu)\.$/i;
@@ -270,6 +272,8 @@ export class StreamHandler {
 
     private async speak(text: string) {
         if (!text.trim()) return;
+        this.lastSpokenText = text;
+        this.lastSpokenAt = Date.now();
 
         if (this.currentSpeechAbort) this.currentSpeechAbort.abort();
         this.currentSpeechAbort = new AbortController();
@@ -303,9 +307,26 @@ export class StreamHandler {
         }
     }
 
+    private isAvailabilityUtterance(text: string): boolean {
+        const t = text.toLowerCase();
+        return t.includes('availability') || t.includes('openings') || t.includes('work for you') || t.includes('does that work for you');
+    }
+
     private enqueueSpeech(text: string) {
-        if (!text.trim()) return;
-        this.speechQueue.push(text);
+        const trimmed = text.trim();
+        if (!trimmed) return;
+
+        // Single availability response rule: prevent back-to-back availability confirmations.
+        const now = Date.now();
+        if (
+            this.isAvailabilityUtterance(trimmed) &&
+            this.isAvailabilityUtterance(this.lastSpokenText) &&
+            now - this.lastSpokenAt < 8000
+        ) {
+            return;
+        }
+
+        this.speechQueue.push(trimmed);
         this.processSpeechQueue().catch(err => console.error('[CRITICAL] Queue Error:', err));
     }
 
