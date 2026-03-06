@@ -80,8 +80,12 @@ onboardingRouter.post('/provision', async (req: Request, res: Response) => {
   try {
     const stripeKey = process.env.STRIPE_SECRET_KEY || '';
     const isStripeTestMode = stripeKey.startsWith('sk_test_');
+    const isStripeLiveMode = stripeKey.startsWith('sk_live_');
     const paymentRequired = process.env.ONBOARDING_REQUIRE_PAYMENT_METHOD === 'true'
       || (!isStripeTestMode && process.env.ONBOARDING_REQUIRE_PAYMENT_METHOD !== 'false');
+
+    const allowTwilioProvisioning =
+      process.env.ONBOARDING_ALLOW_TWILIO_PROVISIONING === 'true' && isStripeLiveMode;
 
     if (paymentRequired) {
       const hasPaymentMethod = await BillingService.hasSavedPaymentMethod(clientId);
@@ -93,13 +97,25 @@ onboardingRouter.post('/provision', async (req: Request, res: Response) => {
       }
     }
 
-    const normalizedPhoneNumber = typeof phoneNumber === 'string' && phoneNumber.trim().length > 0
+    let normalizedPhoneNumber = typeof phoneNumber === 'string' && phoneNumber.trim().length > 0
       ? phoneNumber.trim()
       : `pending-${clientId}`;
 
-    // 1. Buy the Twilio number (unless user skipped)
+    // 1. Buy the Twilio number (unless user skipped).
+    // Guardrail: provisioning is only allowed when explicitly enabled AND Stripe is live-mode.
     if (!normalizedPhoneNumber.startsWith('pending-')) {
-      await ProvisioningService.buyNumber(normalizedPhoneNumber, clientId);
+      if (allowTwilioProvisioning) {
+        await ProvisioningService.buyNumber(normalizedPhoneNumber, clientId);
+      } else {
+        logger.warn('Twilio provisioning blocked by onboarding guardrail', {
+          clientId,
+          selectedPhoneNumber: normalizedPhoneNumber,
+          allowTwilioProvisioning,
+          isStripeLiveMode,
+          isStripeTestMode,
+        });
+        normalizedPhoneNumber = `pending-${clientId}`;
+      }
     }
 
     // 2. Initialize the client's database
