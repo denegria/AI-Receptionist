@@ -233,6 +233,53 @@ dashboardRouter.get('/calls', (req: Request, res: Response) => {
   res.json({ tenantId, from, to, timezone, items });
 });
 
+dashboardRouter.get('/voicemails', (req: Request, res: Response) => {
+  const tenantId = requireTenantId(req, res);
+  if (!tenantId) return;
+
+  if (!dbExistsForTenant(tenantId)) {
+    return res.status(404).json({ error: `No client database found for tenant ${tenantId}` });
+  }
+
+  const { from, to, timezone } = rangeFromQuery(req);
+  const db = getClientDatabase(tenantId);
+
+  const rows = db
+    .prepare(
+      `SELECT v.id, v.call_sid, v.recording_url, v.transcription_text, v.duration, v.created_at,
+              c.caller_phone, c.call_status
+       FROM voicemails v
+       LEFT JOIN call_logs c
+         ON c.call_sid = v.call_sid AND c.client_id = v.client_id
+       WHERE v.client_id = ? AND datetime(v.created_at) >= datetime(?) AND datetime(v.created_at) <= datetime(?)
+       ORDER BY datetime(v.created_at) DESC
+       LIMIT 100`
+    )
+    .all(tenantId, from, to) as Array<{
+      id: number;
+      call_sid: string;
+      recording_url: string | null;
+      transcription_text: string | null;
+      duration: number | null;
+      created_at: string;
+      caller_phone: string | null;
+      call_status: string | null;
+    }>;
+
+  const items = rows.map((row) => ({
+    id: String(row.id || row.call_sid),
+    callSid: row.call_sid,
+    phone: row.caller_phone || 'Unknown',
+    startedAt: new Date(row.created_at).toISOString(),
+    durationSeconds: row.duration || 0,
+    recordingUrl: row.recording_url || null,
+    transcriptionText: row.transcription_text || null,
+    status: row.call_status === 'completed' ? 'completed' : row.call_status === 'failed' ? 'failed' : 'missed',
+  }));
+
+  res.json({ tenantId, from, to, timezone, items });
+});
+
 dashboardRouter.get('/conversions', (req: Request, res: Response) => {
   const tenantId = requireTenantId(req, res);
   if (!tenantId) return;
