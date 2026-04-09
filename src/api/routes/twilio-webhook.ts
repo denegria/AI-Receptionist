@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { config } from '../../config';
 import twilio from 'twilio';
 import { voicemailRepository } from '../../db/repositories/voicemail-repository';
+import { callRecordingRepository } from '../../db/repositories/call-recording-repository';
 import { callLogRepository } from '../../db/repositories/call-log-repository';
 import { smsService } from '../../services/telephony/sms-service';
 import { loadClientConfig } from '../../models/client-config';
@@ -13,6 +14,7 @@ import crypto from 'crypto';
 
 const VoiceResponse = twilio.twiml.VoiceResponse;
 export const twilioWebhookRouter = Router();
+const twilioClient = twilio(config.twilio.accountSid, config.twilio.authToken);
 
 
 function webhookKey(req: Request, suffix: string): string {
@@ -66,6 +68,49 @@ function buildStreamUrl(req: Request, callSid: string, clientId: string): string
     return `${wsProto}://${host}/media-stream?callSid=${encodeURIComponent(callSid)}&clientId=${encodeURIComponent(clientId)}`;
 }
 
+function buildAbsoluteUrl(req: Request, pathname: string, query: Record<string, string | undefined> = {}): string {
+    const configuredPublicUrl = process.env.PUBLIC_URL?.trim();
+    const base = configuredPublicUrl
+        ? new URL(configuredPublicUrl)
+        : new URL(`${((req.headers['x-forwarded-proto'] as string) || req.protocol)}://${req.headers.host}`);
+
+    base.pathname = pathname;
+    base.search = '';
+    for (const [key, value] of Object.entries(query)) {
+        if (value) base.searchParams.set(key, value);
+    }
+    return base.toString();
+}
+
+async function maybeStartCallRecording(req: Request, clientId: string, callSid: string): Promise<void> {
+    const clientConfig = loadClientConfig(clientId);
+    if (!clientConfig.routing.callRecordingEnabled) return;
+
+    callRecordingRepository.upsert({
+        client_id: clientId,
+        call_sid: callSid,
+        call_direction: 'inbound',
+        caller_phone: (req.body.From as string) || null,
+        status: 'processing',
+    });
+
+    try {
+        await twilioClient.calls(callSid).recordings.create({
+            recordingStatusCallback: buildAbsoluteUrl(req, '/recording-status-callback', { clientId }),
+            recordingStatusCallbackMethod: 'POST',
+        });
+    } catch (error) {
+        console.error('Failed to start call recording:', error);
+        callRecordingRepository.upsert({
+            client_id: clientId,
+            call_sid: callSid,
+            call_direction: 'inbound',
+            caller_phone: (req.body.From as string) || null,
+            status: 'failed',
+        });
+    }
+}
+
 async function handleVoice(req: Request, res: Response) {
     const fresh = await redisCoordinator.markWebhookProcessed(webhookKey(req, 'voice'));
     if (!fresh) return res.status(200).send('<Response/>');
@@ -92,6 +137,8 @@ async function handleVoice(req: Request, res: Response) {
     logger.trackMetric(clientId, 'voice_webhook_ok');
 
     console.log(`📞 Incoming call (SID: ${callSid}) for Client: ${clientId}`);
+
+    await maybeStartCallRecording(req, clientId, callSid);
 
     const streamUrl = buildStreamUrl(req, callSid, clientId);
     console.log(`📡 Connecting to Stream: ${streamUrl}`);
@@ -131,6 +178,42 @@ twilioWebhookRouter.post('/status-callback', validateTwilioRequest, async (req: 
     // For now, we'll just log the event.
     console.log('📞 Call Status Update:', req.body);
     res.status(200).send(); // Acknowledge Twilio's request
+});
+
+twilioWebhookRouter.post('/recording-status-callback', validateTwilioRequest, async (req: Request, res: Response) => {
+    const fresh = await redisCoordinator.markWebhookProcessed(webhookKey(req, 'recording-status'));
+    if (!fresh) return res.status(200).send('<Response/>');
+
+    const clientId = resolveClientId(req);
+    const { CallSid, RecordingSid, RecordingUrl, RecordingDuration, RecordingStatus, From, Direction } = req.body;
+
+    if (!clientId) {
+        console.warn('Recording callback missing clientId', { CallSid, RecordingSid });
+        return res.type('text/xml').send('<Response/>');
+    }
+
+    const normalizedStatus = RecordingStatus === 'completed'
+        ? 'ready'
+        : RecordingStatus === 'failed' || RecordingStatus === 'absent'
+            ? 'failed'
+            : 'processing';
+
+    try {
+        callRecordingRepository.upsert({
+            client_id: clientId,
+            call_sid: CallSid,
+            recording_sid: RecordingSid || null,
+            recording_url: RecordingUrl || null,
+            duration: RecordingDuration ? parseInt(RecordingDuration as string, 10) : null,
+            call_direction: Direction === 'outbound-api' || Direction === 'outbound-dial' ? 'outbound' : 'inbound',
+            caller_phone: (From as string) || null,
+            status: normalizedStatus,
+        });
+    } catch (error) {
+        console.error('Error handling recording status callback:', error);
+    }
+
+    return res.type('text/xml').send('<Response/>');
 });
 
 twilioWebhookRouter.post('/voicemail-callback', validateTwilioRequest, async (req: Request, res: Response) => {

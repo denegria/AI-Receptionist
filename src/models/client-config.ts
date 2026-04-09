@@ -38,6 +38,7 @@ export interface ClientConfig {
         afterHoursAction: 'ai_receptionist' | 'voicemail' | 'forward';
         fallbackNumber: string;
         voicemailEnabled: boolean;
+        callRecordingEnabled: boolean;
     };
 
     notifications?: {

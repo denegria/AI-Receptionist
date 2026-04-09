@@ -4,6 +4,7 @@ import path from 'path';
 import { config } from '../../config';
 import { getClientDatabase } from '../../db/client';
 import { clientRegistryRepository } from '../../db/repositories/client-registry-repository';
+import { callRecordingRepository } from '../../db/repositories/call-recording-repository';
 import { calendarSyncService, getLastCalendarSync } from '../../services/scheduling/calendar-sync-service';
 
 export const dashboardRouter = Router();
@@ -385,6 +386,49 @@ dashboardRouter.post('/calendar/sync', async (req: Request, res: Response) => {
     return res.json({ success: true, result });
   } catch (error: any) {
     return res.status(400).json({ success: false, error: error.message || 'Sync failed' });
+  }
+});
+
+dashboardRouter.get('/recordings', (req: Request, res: Response) => {
+  const tenantId = requireTenantId(req, res);
+  if (!tenantId) return;
+
+  if (!dbExistsForTenant(tenantId)) {
+    return res.status(404).json({ error: `No client database found for tenant ${tenantId}` });
+  }
+
+  const limitRaw = Number(req.query.limit || 25);
+  const pageRaw = Number(req.query.page || 1);
+  const limit = Number.isFinite(limitRaw) ? limitRaw : 25;
+  const page = Number.isFinite(pageRaw) ? pageRaw : 1;
+  const from = typeof req.query.from === 'string' ? req.query.from : undefined;
+  const to = typeof req.query.to === 'string' ? req.query.to : undefined;
+
+  try {
+    const result = callRecordingRepository.findPagedByClient(tenantId, { from, to, limit, page });
+    const items = result.items.map((row) => ({
+      id: row.recording_sid || `${row.call_sid}:${row.id}`,
+      callSid: row.call_sid,
+      recordingSid: row.recording_sid || null,
+      recordingUrl: row.recording_url || null,
+      durationSeconds: row.duration || 0,
+      direction: row.call_direction,
+      callerPhone: row.caller_phone || 'Unknown',
+      status: row.status,
+      transcript: row.transcript || null,
+      createdAt: row.created_at ? new Date(row.created_at).toISOString() : null,
+      updatedAt: row.updated_at ? new Date(row.updated_at).toISOString() : null,
+    }));
+
+    return res.json({
+      tenantId,
+      from: result.filters.from,
+      to: result.filters.to,
+      items,
+      pagination: result.pagination,
+    });
+  } catch (error: any) {
+    return res.status(400).json({ error: error.message || 'Failed to load recordings' });
   }
 });
 
