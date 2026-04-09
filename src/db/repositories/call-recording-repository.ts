@@ -25,6 +25,10 @@ export interface CallRecordingListParams {
     page?: number;
 }
 
+/**
+ * Lazy safety for already-provisioned client DBs created before call_recordings existed.
+ * New DBs get this table from src/db/schema.sql.
+ */
 function ensureSchema(clientId: string): void {
     const db = getClientDatabase(clientId);
     db.exec(`
@@ -81,6 +85,20 @@ export class CallRecordingRepository {
             record.status,
             record.transcript ?? null
         );
+    }
+
+    findByCallSid(clientId: string, callSid: string): CallRecordingRecord | null {
+        ensureSchema(clientId);
+        const db = getClientDatabase(clientId);
+        const row = db.prepare(`
+            SELECT id, client_id, call_sid, recording_sid, recording_url, duration,
+                   call_direction, caller_phone, status, transcript, created_at, updated_at
+            FROM call_recordings
+            WHERE client_id = ? AND call_sid = ?
+            LIMIT 1
+        `).get(clientId, callSid) as CallRecordingRecord | undefined;
+
+        return row ?? null;
     }
 
     findPagedByClient(clientId: string, params: CallRecordingListParams = {}) {

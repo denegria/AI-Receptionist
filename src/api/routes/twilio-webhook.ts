@@ -22,7 +22,9 @@ function webhookKey(req: Request, suffix: string): string {
         req.path,
         suffix,
         req.body.CallSid,
+        req.body.RecordingSid,
         req.body.RecordingUrl,
+        req.body.RecordingStatus,
         req.body.CallStatus,
         req.query.clientId,
         req.query.type,
@@ -85,6 +87,11 @@ function buildAbsoluteUrl(req: Request, pathname: string, query: Record<string, 
 async function maybeStartCallRecording(req: Request, clientId: string, callSid: string): Promise<void> {
     const clientConfig = loadClientConfig(clientId);
     if (!clientConfig.routing.callRecordingEnabled) return;
+
+    const existing = callRecordingRepository.findByCallSid(clientId, callSid);
+    if (existing?.recording_sid || existing?.status === 'ready') {
+        return;
+    }
 
     callRecordingRepository.upsert({
         client_id: clientId,
