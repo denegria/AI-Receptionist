@@ -156,6 +156,7 @@ onboardingRouter.post('/provision', async (req: Request, res: Response) => {
             : 'voicemail',
         fallbackNumber: onboardingConfig?.routing?.fallbackNumber || '',
         voicemailEnabled: onboardingConfig?.routing?.voicemailEnabled ?? true,
+        callRecordingEnabled: onboardingConfig?.routing?.callRecordingEnabled ?? false,
       },
       notifications: {
         sms: onboardingConfig?.notifications?.sms || '',

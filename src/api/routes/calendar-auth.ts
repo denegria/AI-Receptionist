@@ -45,6 +45,7 @@ function ensureClientRegistration(clientId?: string): string | null {
             afterHoursAction: 'voicemail',
             fallbackNumber: '',
             voicemailEnabled: true,
+            callRecordingEnabled: false,
         },
         notifications: {},
         aiSettings: {
