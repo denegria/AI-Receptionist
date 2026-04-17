@@ -8,6 +8,7 @@
     "dev": "nodemon --exec npx ts-node src/server.ts",
     "build": "npx tsc && npx shx mkdir -p dist/db/migrations && npx shx cp -r src/db/migrations/* dist/db/migrations/ && npx shx cp src/db/schema.sql dist/db/schema.sql",
     "start": "node dist/server.js",
+    "seed:golden-tenant": "ts-node src/scripts/seed-golden-tenant.ts",
     "test:synthetic:single": "ts-node src/scripts/synthetic-load-test.ts --mode single --concurrency 3 --scenario hibye",
     "test:synthetic:matrix": "ts-node src/scripts/synthetic-load-test.ts --mode matrix --tenants 5 --concurrency 2 --scenario hibye",
     "twilio:preflight": "ts-node src/scripts/twilio-preflight.ts",
